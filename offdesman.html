@@ -13,39 +13,23 @@
     href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzAwMkM1RiIvPjxyZWN0IHg9IjQiIHk9IjciIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTExIDIxaDEwTTE2IDIxdjQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
   <link rel="apple-touch-icon"
     href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzAwMkM1RiIvPjxyZWN0IHg9IjQiIHk9IjciIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTExIDIxaDEwTTE2IDIxdjQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
-  <!-- PWA Manifest -->
-  <link rel="manifest" id="pwa-manifest" href="">
-  <!-- Adaptive theme-color: auto-matches app background (light/dark) -->
-  <meta name="theme-color" id="theme-color-meta" content="#f4f4f2" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#111110" media="(prefers-color-scheme: dark)">
+  <!-- PWA Manifest — must be a real file, not blob: URL -->
+  <link rel="manifest" href="./manifest.json">
+  <!-- Adaptive theme-color: single tag updated by JS when theme toggles -->
+  <meta name="theme-color" id="theme-color-meta" content="#f4f4f2">
   <!-- Apple PWA -->
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="OfficeDesk">
   <meta name="mobile-web-app-capable" content="yes">
   <script>
-    // ── Inline PWA Manifest (no separate file needed) ──
-    (function() {
-      const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#002C5F"/><rect x="80" y="140" width="352" height="210" rx="24" fill="none" stroke="#fff" stroke-width="28"/><path d="M176 350h160M256 350v72" stroke="#fff" stroke-width="28" stroke-linecap="round"/></svg>`;
-      const iconUrl = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
-      const manifest = {
-        name: "OfficeDesk",
-        short_name: "OfficeDesk",
-        description: "OfficeDesk — Utility Suite",
-        start_url: "./offdesman.html",
-        display: "standalone",
-        orientation: "portrait-primary",
-        background_color: "#f4f4f2",
-        theme_color: "#f4f4f2",
-        categories: ["productivity", "utilities"],
-        icons: [
-          { src: iconUrl, sizes: "192x192", type: "image/svg+xml", purpose: "any maskable" },
-          { src: iconUrl, sizes: "512x512", type: "image/svg+xml", purpose: "any maskable" }
-        ]
-      };
-      const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-      document.getElementById('pwa-manifest').href = URL.createObjectURL(blob);
-    })();
+    // ── Register Service Worker (required for Android install prompt) ──
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js', { scope: './' })
+          .catch(err => console.warn('SW registration failed:', err));
+      });
+    }
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
@@ -1425,20 +1409,10 @@
       localStorage.setItem("od-theme", t); 
       document.getElementById("ico-moon").style.display = t === "dark" ? "none" : ""; 
       document.getElementById("ico-sun").style.display = t === "dark" ? "" : "none";
-      // ── Adaptive Android status bar color ──
+      // ── Adaptive Android status bar: update theme-color to match --bg ──
       const themeColors = { light: '#f4f4f2', dark: '#111110' };
       const color = themeColors[t] || '#f4f4f2';
-      document.querySelectorAll('meta[name="theme-color"]').forEach(m => m.setAttribute('content', color));
-      try {
-        const iconSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="100" fill="#002C5F"/><rect x="80" y="140" width="352" height="210" rx="24" fill="none" stroke="#fff" stroke-width="28"/><path d="M176 350h160M256 350v72" stroke="#fff" stroke-width="28" stroke-linecap="round"/></svg>';
-        const iconUrl = 'data:image/svg+xml,' + encodeURIComponent(iconSvg);
-        const manifest = { name:"OfficeDesk", short_name:"OfficeDesk", description:"OfficeDesk — Utility Suite", start_url:"./offdesman.html", display:"standalone", orientation:"portrait-primary", background_color:color, theme_color:color, categories:["productivity","utilities"], icons:[{src:iconUrl,sizes:"192x192",type:"image/svg+xml",purpose:"any maskable"},{src:iconUrl,sizes:"512x512",type:"image/svg+xml",purpose:"any maskable"}] };
-        const blob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
-        const el = document.getElementById('pwa-manifest');
-        const old = el.href;
-        el.href = URL.createObjectURL(blob);
-        if (old && old.startsWith('blob:')) URL.revokeObjectURL(old);
-      } catch(e) {}
+      document.getElementById('theme-color-meta').setAttribute('content', color);
       ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe', 'pwareg-iframe'].forEach(id => {
         const iframe = document.getElementById(id);
         if (iframe && iframe.contentWindow) {
