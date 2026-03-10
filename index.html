@@ -5,9 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>DOCX Field Injector</title>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pizzip/3.1.4/pizzip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/docxtemplater/3.37.11/docxtemplater.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.49.0/build/docxtemplater.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
@@ -151,13 +151,13 @@ body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-heigh
 
 <script>
 // ─────────────────────────────────────────────────────────────────
-// FIELDS
+// FIELDS (Updated with your default subjects)
 // ─────────────────────────────────────────────────────────────────
 const TYRE_FIELDS = [
   { section:"Letter Details", fields:[
     { id:"date",       label:"Date",                 type:"date", fmt:"dash" },
     { id:"recipient",  label:"Recipient (To)",       type:"text"  },
-    { id:"subject",    label:"Subject",              type:"text"  }
+    { id:"subject",    label:"Subject",              type:"text", def:"Tyre Buldge Problem While Driving" }
   ]},
   { section:"Dealer Details", fields:[
     { id:"dealerCode", label:"Dealer Code",          type:"text"  },
@@ -193,7 +193,7 @@ const BATTERY_FIELDS = [
   { section:"Letter Details", fields:[
     { id:"date",       label:"Date",                 type:"date", fmt:"dash" },
     { id:"recipient",  label:"Recipient (To)",       type:"text"  },
-    { id:"subject",    label:"Subject",              type:"text"  }
+    { id:"subject",    label:"Subject",              type:"text", def:"Vehicle starting problem issue." }
   ]},
   { section:"Dealer Details", fields:[
     { id:"dealerCode", label:"Dealer Code",          type:"text"  },
@@ -429,7 +429,7 @@ btnInject.addEventListener('click',async()=>{
 
   try {
     const arrayBuffer = await uploadedFile.arrayBuffer();
-    const zip = new PizZip(arrayBuffer);
+    const zip = new window.PizZip(arrayBuffer); // Fixed instantiation
     const doc = new window.docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
 
     doc.render(data);
