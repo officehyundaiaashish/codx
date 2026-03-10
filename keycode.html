@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Key Code Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #f4f4f2;
+      --surface: #ffffff;
+      --surface2: #f0f0ee;
+      --border: #e3e3df;
+      --text: #181816;
+      --text2: #6a6a67;
+      --text3: #9a9a97;
+      --accent: #002C5F;
+      --accent-h: #001F47;
+      --accent-s: #e8edf5;
+      --radius: 10px;
+      --radius-lg: 16px;
+      --shadow: 0 1px 3px rgba(0,0,0,.06), 0 4px 12px rgba(0,0,0,.04);
+      --shadow-lg: 0 4px 24px rgba(0,0,0,.09);
+      --font: "DM Sans", sans-serif;
+      --mono: "DM Mono", monospace;
+      --tr: 180ms ease;
+    }
+    [data-theme=dark] {
+      --bg: #111110;
+      --surface: #1c1c1a;
+      --surface2: #232321;
+      --border: #2d2d2b;
+      --text: #f0f0ee;
+      --text2: #888885;
+      --text3: #525250;
+      --accent: #4D8FD6;
+      --accent-h: #3A7BC8;
+      --accent-s: #001A3A;
+      --shadow: 0 1px 4px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
+      --shadow-lg: 0 4px 28px rgba(0,0,0,.45);
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { font-size: 14px; }
+    body {
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      padding: 20px;
+      transition: background var(--tr), color var(--tr);
+    }
+    .ph {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .ph-title {
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -.4px;
+      margin-bottom: 4px;
+    }
+    .ph-sub {
+      font-size: 12.5px;
+      color: var(--text2);
+    }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      background: var(--accent-s);
+      color: var(--accent);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      margin-bottom: 14px;
+      transition: background var(--tr), border-color var(--tr);
+    }
+    .card-title {
+      font-size: 13.5px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 14px;
+      color: var(--text);
+      justify-content: space-between;
+    }
+    .card-title svg {
+      color: var(--accent);
+    }
+    .fg {
+      display: grid;
+      gap: 12px;
+    }
+    .fg.c3 {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .field.s2 {
+      grid-column: span 2;
+    }
+    .field.s3 {
+      grid-column: span 3;
+    }
+    .field label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text2);
+    }
+    .req {
+      color: #d64545;
+    }
+    .field input, .field select, .field textarea {
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      font-family: var(--font);
+      transition: all var(--tr);
+    }
+    .field input:focus, .field select:focus, .field textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px var(--accent-s);
+    }
+    .vrow {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 10px;
+      position: relative;
+      transition: all var(--tr);
+    }
+    .vrow:hover {
+      border-color: var(--accent);
+    }
+    .vrow-num {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text3);
+      margin-bottom: 10px;
+      letter-spacing: .5px;
+    }
+    .vrow-rm {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      width: 24px;
+      height: 24px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all var(--tr);
+    }
+    .vrow-rm:hover {
+      background: #d64545;
+      border-color: #d64545;
+      color: white;
+    }
+    .divhr {
+      height: 1px;
+      background: var(--border);
+      margin: 20px 0;
+    }
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 16px;
+      border: none;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all var(--tr);
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-family: var(--font);
+    }
+    .btn-p {
+      background: var(--accent);
+      color: white;
+    }
+    .btn-p:hover {
+      background: var(--accent-h);
+    }
+    .btn-g {
+      background: var(--surface2);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-g:hover {
+      background: var(--border);
+    }
+    .btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+    }
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,.25);
+      backdrop-filter: blur(2px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 500;
+    }
+    #loader.show {
+      display: flex;
+    }
+    .ld-card {
+      background: var(--surface);
+      border-radius: 16px;
+      padding: 28px 36px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-lg);
+    }
+    .spin {
+      width: 32px;
+      height: 32px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: sp 650ms linear infinite;
+    }
+    @keyframes sp {
+      to { transform: rotate(360deg); }
+    }
+    .ld-card p {
+      font-size: 13.5px;
+      color: var(--text2);
+      font-weight: 500;
+    }
+    #toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 11px 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12.5px;
+      font-weight: 500;
+      box-shadow: var(--shadow-lg);
+      opacity: 0;
+      transition: all 280ms ease;
+      z-index: 600;
+    }
+    #toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+    #toast.ok {
+      color: #16a34a;
+      border-color: #16a34a;
+    }
+    #toast.err {
+      color: #d64545;
+      border-color: #d64545;
+    }
+    #toast.info {
+      color: var(--accent);
+      border-color: var(--accent);
+    }
+    @media(max-width:768px) {
+      .fg.c3 { grid-template-columns: 1fr; }
+      .field.s2, .field.s3 { grid-column: span 1; }
+    }
+  </style>
+</head>
+<body>
+  <div id="toast"></div>
+  <div id="loader"><div class="ld-card"><div class="spin"></div><p>Processing...</p></div></div>
+
+  <div class="ph">
+    <div>
+      <div class="ph-title">Key Code Request Form</div>
+      <div class="ph-sub">Multiple vehicles per export — shared fields apply to all rows</div>
+    </div>
+    <span class="chip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>XLS Export</span>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span style="display:flex;align-items:center;gap:7px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>
+        Shared Details
+      </span>
+      <span style="font-weight:400;color:var(--text3);font-size:12px;">(applies to all vehicles)</span>
+    </div>
+    <div class="fg c3">
+      <div class="field"><label>Date <span class="req">*</span></label><input type="date" id="kc-date"></div>
+      <div class="field"><label>Dealer Code</label><input type="text" id="kc-dcode" value="N3235" placeholder="e.g. N3235"></div>
+      <div class="field"><label>Dealer Name</label><input type="text" id="kc-dname" value="KHANNA AUTOMART PVT. LTD." placeholder="Full dealer name"></div>
+      <div class="field"><label>Requester Name <span class="req">*</span></label><input type="text" id="kc-rname" value="NARENDRA KUMAR" placeholder="e.g. NARENDRA KUMAR"></div>
+      <div class="field"><label>Requester Contact No.</label><input type="tel" id="kc-rcontact" value="8979040022" placeholder="e.g. 8979040022"></div>
+      <div class="field"><label>TPSM Name</label><input type="text" id="kc-tpsm" placeholder="e.g. AVINASH"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span style="display:flex;align-items:center;gap:7px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>
+        Vehicles
+      </span>
+      <button class="btn btn-g" style="padding:5px 12px;font-size:12px;" onclick="kcAddRow()">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg> Add Vehicle
+      </button>
+    </div>
+    <div id="kc-rows"></div>
+  </div>
+
+  <div class="divhr"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-bottom:6px;">
+    <span style="font-size:11.5px;color:var(--text3);" id="kc-save-status"></span>
+    <button class="btn btn-g" style="padding:6px 12px;font-size:12px;" onclick="clearKcSaved()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg> Clear Saved</button>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn btn-p" id="kc-exportBtn" onclick="exportKeyCode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export to Excel</button>
+  </div>
+
+  <script>
+    // Theme sync listener
+    window.addEventListener('message', (e) => {
+      if (e.data && e.data.type === 'theme') {
+        document.documentElement.setAttribute('data-theme', e.data.theme);
+      }
+    });
+
+    const KC_SHARED_IDS = ["kc-date", "kc-dcode", "kc-dname", "kc-rname", "kc-rcontact", "kc-tpsm"];
+    const KC_SAVE_KEY = "od_keycode_v1";
+    let kcRows = [];
+
+    function kcRowHTML(i, row = {}) {
+      return `<div class="vrow" id="kcrow-${i}">
+    <div class="vrow-num">VEHICLE ${i + 1}</div>
+    <button class="vrow-rm" onclick="kcRemoveRow(${i})" title="Remove">
+      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+    </button>
+    <div class="fg c3">
+      <div class="field s2"><label>Model</label><input type="text" class="kr-model" placeholder="e.g. VENUE 1.2 Kappa MT S" value="${row.model || ''}"></div>
+      <div class="field"><label>Mileage (km)</label><input type="number" class="kr-mileage" placeholder="e.g. 76620" value="${row.mileage || ''}"></div>
+      <div class="field s2"><label>VIN <span class="req">*</span></label><input type="text" class="kr-vin" placeholder="17-char VIN" style="font-family:var(--mono);font-size:12.5px;" value="${row.vin || ''}"></div>
+      <div class="field"><label>RO No.</label><input type="text" class="kr-ro" placeholder="e.g. R202400947" value="${row.ro || ''}"></div>
+      <div class="field s3"><label>Key Pin Code / Key Number</label><input type="text" class="kr-keycode" placeholder="Enter key pin code or key number" style="font-family:var(--mono);letter-spacing:.5px;" value="${row.keycode || ''}"></div>
+    </div>
+  </div>`;
+    }
+
+    function kcRenderRows() {
+      const c = document.getElementById('kc-rows');
+      if (!c) return;
+      c.innerHTML = kcRows.map((r, i) => kcRowHTML(i, r)).join('');
+      c.querySelectorAll('input').forEach(el => el.addEventListener('input', () => { kcReadRows(); kcScheduleSave(); }));
+    }
+
+    function kcReadRows() {
+      const rows = document.querySelectorAll('#kc-rows .vrow');
+      kcRows = Array.from(rows).map(row => ({
+        model: row.querySelector('.kr-model')?.value.trim() || '',
+        vin: row.querySelector('.kr-vin')?.value.trim() || '',
+        mileage: row.querySelector('.kr-mileage')?.value.trim() || '',
+        ro: row.querySelector('.kr-ro')?.value.trim() || '',
+        keycode: row.querySelector('.kr-keycode')?.value.trim() || ''
+      }));
+    }
+
+    function kcAddRow() {
+      kcReadRows();
+      kcRows.push({ model: '', vin: '', mileage: '', ro: '', keycode: '' });
+      kcRenderRows();
+      kcScheduleSave();
+      const rows = document.querySelectorAll('#kc-rows .vrow');
+      rows[rows.length - 1]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+
+    function kcRemoveRow(i) {
+      kcReadRows();
+      if (kcRows.length <= 1) {
+        toast('At least one vehicle required', 'info');
+        return;
+      }
+      kcRows.splice(i, 1);
+      kcRenderRows();
+      kcScheduleSave();
+    }
+
+    let kcSaveTimer;
+    function kcScheduleSave() {
+      clearTimeout(kcSaveTimer);
+      kcSaveTimer = setTimeout(kcSaveData, 600);
+    }
+
+    function kcSaveData() {
+      kcReadRows();
+      const shared = {};
+      KC_SHARED_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) shared[id] = el.value;
+      });
+      try {
+        localStorage.setItem(KC_SAVE_KEY, JSON.stringify({ shared, rows: kcRows }));
+      } catch (e) {}
+      const el = document.getElementById('kc-save-status');
+      if (el) el.textContent = 'Saved ' + new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    function kcRestoreData() {
+      try {
+        const raw = localStorage.getItem(KC_SAVE_KEY);
+        if (!raw) return false;
+        const data = JSON.parse(raw);
+        if (data.shared) KC_SHARED_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && data.shared[id] !== undefined) el.value = data.shared[id];
+        });
+        if (data.rows && data.rows.length) kcRows = data.rows;
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function clearKcSaved() {
+      try {
+        localStorage.removeItem(KC_SAVE_KEY);
+      } catch (e) {}
+      const el = document.getElementById('kc-save-status');
+      if (el) {
+        el.textContent = 'Cleared';
+        setTimeout(() => { el.textContent = ''; }, 2000);
+      }
+      toast('Key code saved data cleared', 'info');
+    }
+
+    function kcSetDefaultDate() {
+      const el = document.getElementById('kc-date');
+      if (el && !el.value) {
+        const t = new Date();
+        el.value = t.toISOString().split('T')[0];
+      }
+    }
+
+    function initKcForm() {
+      if (!kcRows.length) kcRows = [{ model: '', vin: '', mileage: '', ro: '', keycode: '' }];
+      kcSetDefaultDate();
+      const restored = kcRestoreData();
+      if (!restored) kcSetDefaultDate();
+      kcRenderRows();
+      const el = document.getElementById('kc-save-status');
+      if (restored && el) el.textContent = 'Draft restored';
+      KC_SHARED_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', kcScheduleSave);
+        el.addEventListener('change', kcScheduleSave);
+      });
+    }
+
+    async function exportKeyCode() {
+      kcReadRows();
+      const validRows = kcRows.filter(r => r.vin.trim());
+      if (!validRows.length) {
+        toast('At least one VIN is required', 'err');
+        return;
+      }
+      const rname = document.getElementById('kc-rname')?.value.trim();
+      if (!rname) {
+        toast('Requester Name is required', 'err');
+        return;
+      }
+
+      const btn = document.getElementById('kc-exportBtn');
+      btn.disabled = true;
+      showLoader(true);
+
+      try {
+        if (typeof ExcelJS === 'undefined') {
+          await new Promise((res, rej) => {
+            const s = document.createElement('script');
+            s.src = 'https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js';
+            s.onload = res;
+            s.onerror = rej;
+            document.head.appendChild(s);
+          });
+        }
+
+        const g = id => document.getElementById(id)?.value.trim() || '';
+        const date = g('kc-date'), dcode = g('kc-dcode'), dname = g('kc-dname');
+        const rcontact = g('kc-rcontact'), tpsm = g('kc-tpsm');
+
+        const HEADERS = ["S. No.", "Date", "Dealer Code", "Dealer Name", "Model", "VIN", "Mileage", "Ro No.", "Requester Name", "Requester Contact No.", "TPSM Name", "Key Pin Code or Key Number"];
+        const WIDTHS = [6, 12, 13, 28, 22, 21, 10, 14, 17, 22, 14, 26];
+
+        const wb = new ExcelJS.Workbook();
+        const sheetName = (dcode || 'KeyCode').substring(0, 31);
+        const ws = wb.addWorksheet(sheetName);
+
+        ws.columns = WIDTHS.map((w, i) => ({ header: '', key: 'c' + i, width: w }));
+
+        const hdrRow = ws.addRow(HEADERS);
+        hdrRow.height = 30;
+        hdrRow.eachCell(cell => {
+          cell.font = { bold: true, size: 11, color: { argb: 'FFFFFFFF' } };
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF00A550' } };
+          cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+          cell.border = {
+            top: { style: 'thin', color: { argb: 'FF888888' } },
+            bottom: { style: 'thin', color: { argb: 'FF888888' } },
+            left: { style: 'thin', color: { argb: 'FF888888' } },
+            right: { style: 'thin', color: { argb: 'FF888888' } }
+          };
+        });
+
+        validRows.forEach((row, ri) => {
+          const vals = [
+            ri + 1, date, dcode, dname,
+            row.model, row.vin,
+            row.mileage ? parseInt(row.mileage) : '',
+            row.ro, rname, rcontact, tpsm, row.keycode
+          ];
+          const dataRow = ws.addRow(vals);
+          dataRow.height = 20;
+          dataRow.eachCell({ includeEmpty: true }, cell => {
+            cell.font = { size: 11 };
+            cell.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+            cell.border = {
+              top: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+              bottom: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+              left: { style: 'thin', color: { argb: 'FFCCCCCC' } },
+              right: { style: 'thin', color: { argb: 'FFCCCCCC' } }
+            };
+          });
+        });
+
+        const buf = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buf], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const vinList = validRows.map(r => r.vin).join(',');
+        a.download = `${vinList}_${dcode || 'DEALER'}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+        toast(`Excel downloaded — ${validRows.length} vehicle(s)`, 'ok');
+      } catch (err) {
+        toast('Export error: ' + err.message, 'err');
+        console.error(err);
+      } finally {
+        showLoader(false);
+        btn.disabled = false;
+      }
+    }
+
+    let tt;
+    function toast(msg, type) {
+      const icons = {
+        ok: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>',
+        err: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>',
+        info: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'
+      };
+      const el = document.getElementById("toast");
+      el.className = "show " + (type || "info");
+      el.innerHTML = (icons[type] || icons.info) + msg;
+      clearTimeout(tt);
+      tt = setTimeout(() => { el.className = ""; }, 3500);
+    }
+
+    function showLoader(s) {
+      document.getElementById("loader").className = s ? "show" : "";
+    }
+
+    document.addEventListener("DOMContentLoaded", initKcForm);
+  </script>
+</body>
+</html>
