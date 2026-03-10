@@ -221,7 +221,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
   <div class="actions" id="actionsBar" style="display:none">
     <button class="btn btn-clear" id="btnClear" tabindex="0">Clear</button>
     <button class="fill-test-btn" id="btnFillTest" tabindex="0">Fill Test Entry</button>
-    <button class="fill-test-btn" id="btnGenDocx" tabindex="0">Gen DOCX</button>
     <button class="btn btn-inject" id="btnInject" tabindex="0">Generate XLSX</button>
   </div>
 </div>
@@ -605,6 +604,8 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   for(let i=1;i<=17;i++)['Date','Kms','JobType','Status'].forEach(f=>data[`sh${i}${f}`]=get(`sh${i}${f}`));
   for(let i=1;i<=11;i++)['No','Name','Qty','Rate','Tag'].forEach(f=>data[`part${i}${f}`]=get(`part${i}${f}`));
   for(let i=1;i<=6;i++)['OpCode','Name','Qty','Rate'].forEach(f=>data[`labour${i}${f}`]=get(`labour${i}${f}`));
+  // Collect photo dataURLs from PHOTOS store
+  const photoKeys=['vinPhoto','meterPhoto','part1Photo','part2Photo','part3Photo','part4Photo','part5Photo','part6Photo','part7Photo','part8Photo','part9Photo'];
 
   const btnInject=document.getElementById('btnInject');
   btnInject.disabled=true;btnInject.textContent='Processing…';clearStatus();
@@ -650,6 +651,132 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
       }
     }
 
+    // ── Inject photos into Photographs sheet ──
+    // The xlsx Photographs sheet has merged cells with labels like "VIN PHOTO\n{vinPhoto}"
+    // We embed each photo as an image in xl/media/ and wire up a drawing XML for sheet4
+    const photoSlotMap=[
+      {key:'vinPhoto',   col:0, row:4},  // A4:E10
+      {key:'meterPhoto', col:6, row:4},  // G4:K10
+      {key:'part1Photo', col:12,row:4},  // M4:Q10
+      {key:'part2Photo', col:18,row:4},  // S4:W10
+      {key:'part3Photo', col:24,row:4},  // Y4:AC10
+      {key:'part4Photo', col:12,row:12}, // M12:Q18
+      {key:'part5Photo', col:18,row:12}, // S12:W18
+      {key:'part6Photo', col:24,row:12}, // Y12:AC18
+      {key:'part7Photo', col:12,row:20}, // M20:Q26
+      {key:'part8Photo', col:18,row:20}, // S20:W26
+      {key:'part9Photo', col:24,row:20}, // Y20:AC26
+    ];
+
+    // Helper: dataURL → Uint8Array of raw bytes
+    function dataUrlToBytes(dataUrl){
+      const b64=dataUrl.split(',')[1];
+      const bin=atob(b64);
+      const arr=new Uint8Array(bin.length);
+      for(let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+      return arr;
+    }
+    function mimeFromDataUrl(dataUrl){
+      return dataUrl.split(';')[0].split(':')[1]||'image/jpeg';
+    }
+    function extFromMime(mime){
+      if(mime==='image/png') return 'png';
+      if(mime==='image/gif') return 'gif';
+      if(mime==='image/webp') return 'webp';
+      return 'jpg';
+    }
+
+    // Build EMU dimensions for each photo cell block (approx 5 cols × 7 rows at xlsx default sizes)
+    // Each col ~960000 EMU (≈1 inch), each row ~571500 EMU — tuned to the zoomed-out sheet
+    const colEmu = 9144000;  // 5 cols merged
+    const rowEmu = 4000320;  // 7 rows merged
+
+    // Col index → EMU offset from left (each col=10 default width ≈ 914400 EMU each)
+    const colOffsets=[0,6,12,18,24].map(c=>c*914400);
+    // Row index → EMU offset from top (row height 39.95pt ≈ 533400 EMU each, row1=15.75pt)
+    const rowOffsets={4:571500,12:571500+(7*533400)+533400,20:571500+(7*533400)+533400+(7*533400)+533400+533400};
+
+    const photoEntries=[];
+    for(const {key,col,row} of photoSlotMap){
+      const photo=PHOTOS[key];
+      if(!photo||!photo.dataUrl) continue;
+      const mime=mimeFromDataUrl(photo.dataUrl);
+      const ext=extFromMime(mime);
+      const bytes=dataUrlToBytes(photo.dataUrl);
+      const idx=photoEntries.length+1;
+      const mediaName=`image${idx}.${ext}`;
+      zip.file(`xl/media/${mediaName}`,bytes);
+      // col position: A=0,G=6,M=12,S=18,Y=24
+      const colIdx=col; // 0-based col index of first col in merge
+      const rowIdx=row-1; // 0-based
+      photoEntries.push({idx,mediaName,mime,colIdx,rowIdx});
+    }
+
+    if(photoEntries.length>0){
+      // Build drawing XML
+      let drawingXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">\n`;
+      const drawingRels=[];
+      photoEntries.forEach(({idx,mediaName,mime,colIdx,rowIdx},i)=>{
+        const rId=`rId${i+1}`;
+        // Each photo occupies a 5-col × 7-row merged area
+        const toCol=colIdx+5, toRow=rowIdx+7;
+        drawingXml+=`<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>${colIdx}</xdr:col><xdr:colOff>91440</xdr:colOff><xdr:row>${rowIdx}</xdr:row><xdr:rowOff>91440</xdr:rowOff></xdr:from><xdr:to><xdr:col>${toCol}</xdr:col><xdr:colOff>-91440</xdr:colOff><xdr:row>${toRow}</xdr:row><xdr:rowOff>-91440</xdr:rowOff></xdr:to><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${100+i}" name="Photo${idx}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="0"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:twoCellAnchor>\n`;
+        drawingRels.push({rId,target:`../media/${mediaName}`,mime});
+      });
+      drawingXml+=`</xdr:wsDr>`;
+
+      // Build drawing rels XML
+      let drawingRelsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n`;
+      drawingRels.forEach(({rId,target,mime})=>{
+        drawingRelsXml+=`<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${target}"/>\n`;
+      });
+      drawingRelsXml+=`</Relationships>`;
+
+      zip.file('xl/drawings/drawing1.xml', drawingXml);
+      zip.file('xl/drawings/_rels/drawing1.xml.rels', drawingRelsXml);
+
+      // Patch sheet4.xml to reference the drawing
+      const sh4Path=Object.keys(zip.files).find(p=>p.match(/xl\/worksheets\/sheet4\.xml$/i));
+      if(sh4Path){
+        let sh4=await zip.files[sh4Path].async('string');
+        if(!sh4.includes('<drawing ')){
+          sh4=sh4.replace('</worksheet>','<drawing r:id="rId_drawing1"/></worksheet>');
+          sh4=sh4.replace('<worksheet ','<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
+          // Make sure xmlns:r is not duplicated
+          sh4=sh4.replace(/xmlns:r="[^"]*"\s+xmlns:r="[^"]*"/,'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"');
+          zip.file(sh4Path,sh4);
+        }
+        // Add sheet4 rels for the drawing
+        const sh4RelsPath='xl/worksheets/_rels/sheet4.xml.rels';
+        let sh4Rels;
+        try{ sh4Rels=await zip.files[sh4RelsPath]?.async('string'); }catch(e){}
+        if(!sh4Rels){
+          sh4Rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId_drawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`;
+        } else {
+          sh4Rels=sh4Rels.replace('</Relationships>','<Relationship Id="rId_drawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>');
+        }
+        zip.file(sh4RelsPath, sh4Rels);
+      }
+
+      // Patch [Content_Types].xml to register drawing and media types
+      const ctPath='[Content_Types].xml';
+      let ct=await zip.files[ctPath].async('string');
+      if(!ct.includes('drawing1.xml')){
+        ct=ct.replace('</Types>','<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>');
+      }
+      // Add image content types if missing
+      const mimesSeen=new Set();
+      drawingRels.forEach(({mime})=>{
+        if(mimesSeen.has(mime)) return; mimesSeen.add(mime);
+        const ext=extFromMime(mime);
+        const ctStr=`Extension="${ext}" ContentType="${mime}"`;
+        if(!ct.includes(ctStr)){
+          ct=ct.replace('</Types>',`<Default ${ctStr}/></Types>`);
+        }
+      });
+      zip.file(ctPath, ct);
+    }
+
     // Generate output preserving everything else (styles, themes, drawings, etc.)
     const outBuf=await zip.generateAsync({
       type:'arraybuffer',
@@ -667,81 +794,6 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   }catch(err){showStatus('Error: '+err.message,'error');console.error(err);}
   finally{btnInject.disabled=false;btnInject.textContent='Generate XLSX';}
 });
-
-// ─────── GENERATE DOCX (pure value injection — formatting 100% preserved) ───────
-let docxTemplateBuffer=null;
-
-// Try to load docx template alongside xlsx template
-window.addEventListener('DOMContentLoaded',()=>{
-  fetch('pwareg.docx').then(r=>r.ok?r.arrayBuffer():null).then(buf=>{if(buf)docxTemplateBuffer=buf;}).catch(()=>{});
-},{capture:true,once:false,passive:true});
-
-document.getElementById('btnGenDocx').addEventListener('click',async()=>{
-  if(!docxTemplateBuffer){showStatus('pwareg.docx template not found — place pwareg.docx alongside pwareg.html.','error');return;}
-  const get=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
-  const getDate=id=>{const st=CAL[id];return(st&&st.date)?fmtDash(st.date):'';};
-  const data={};
-  ['dealerCode','dealerName','model','tmType','vin','engineNo','tmNumber','mileage','numVehicles','causalPartNo','partName','affectedPart','dtc','partSupplier','partLotNo','causeCode','occurrence','natureCode','timePeriod','speedRange','problemCondition','subject','introduction','detailedSymptom','investigationResult','correctiveAction','comment','serviceManager','warrantyManager','partsManager','serviceAdvisor','repairOrderNo','regNo','vinNo'].forEach(id=>data[id]=get(id));
-  ['fuelType','ew','mailYN','roadCondition'].forEach(id=>data[id]=get(id));
-  ['productionDate','deliveryDate','reportDate','repairDate'].forEach(id=>data[id]=getDate(id));
-  for(let i=1;i<=17;i++)['Date','Kms','JobType','Status'].forEach(f=>data[`sh${i}${f}`]=get(`sh${i}${f}`));
-  for(let i=1;i<=11;i++)['No','Name','Qty','Rate','Tag'].forEach(f=>data[`part${i}${f}`]=get(`part${i}${f}`));
-  for(let i=1;i<=6;i++)['OpCode','Name','Qty','Rate'].forEach(f=>data[`labour${i}${f}`]=get(`labour${i}${f}`));
-
-  const btnGenDocx=document.getElementById('btnGenDocx');
-  btnGenDocx.disabled=true;btnGenDocx.textContent='Processing…';clearStatus();
-  try{
-    const xmlEsc=s=>String(s)
-      .replace(/&/g,'&amp;')
-      .replace(/</g,'&lt;')
-      .replace(/>/g,'&gt;')
-      .replace(/"/g,'&quot;')
-      .replace(/'/g,'&apos;');
-
-    // DOCX placeholders can be split across XML runs — reassemble before replacing
-    const replacePlaceholders=xml=>{
-      // First, collapse split runs that together form a {key} pattern
-      // e.g. <w:t>{dealer</w:t>...<w:t>Code}</w:t> → join then replace
-      // Strategy: strip all run-break tags between { and } to get a clean replaceable string
-      let result=xml;
-      // Replace placeholders that survived intact in a single <w:t> node
-      result=result.replace(/\{([^{}<>]+)\}/g,(_,key)=>{
-        const v=data[key];
-        return xmlEsc((v===undefined||v===null)?'':v);
-      });
-      return result;
-    };
-
-    const zip=await JSZip.loadAsync(docxTemplateBuffer);
-
-    // Process document.xml and all header/footer XMLs
-    const xmlPaths=Object.keys(zip.files).filter(p=>
-      p.match(/word\/(document|header\d*|footer\d*|endnotes|footnotes)\.xml$/i)
-    );
-    for(const xp of xmlPaths){
-      let xml=await zip.files[xp].async('string');
-      if(xml.includes('{')){
-        xml=replacePlaceholders(xml);
-        zip.file(xp,xml);
-      }
-    }
-
-    const outBuf=await zip.generateAsync({
-      type:'arraybuffer',
-      compression:'DEFLATE',
-      compressionOptions:{level:6}
-    });
-
-    const blob=new Blob([outBuf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
-    const vinClean=(data.vin||'NOVIN').replace(/[^a-zA-Z0-9]/g,'');
-    const dcClean=(data.dealerCode||'N3235').replace(/[^a-zA-Z0-9]/g,'');
-    const fname=`${vinClean}_${dcClean}_OfficialFormat.docx`;
-    saveAs(blob,fname);
-    showStatus('✓ Downloaded: '+fname,'success');
-  }catch(err){showStatus('Error: '+err.message,'error');console.error(err);}
-  finally{btnGenDocx.disabled=false;btnGenDocx.textContent='Gen DOCX';}
-});
-
 
 function saveHistory(entry){
   const key=entry.vin||entry.regNo;if(key)HISTORY=HISTORY.filter(h=>(h.vin||h.regNo)!==key);
