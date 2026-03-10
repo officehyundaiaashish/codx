@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DOCX Field Injector</title>
+<title>Tyre/Battery Letter Head</title>
 
 <script src="https://cdn.jsdelivr.net/npm/pizzip@3.1.7/dist/pizzip.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/docxtemplater@3.49.0/build/docxtemplater.js"></script>
@@ -17,17 +17,6 @@ body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-heigh
 .card-header{padding:18px 22px 14px;border-bottom:1px solid #eeece6}
 .card-header h1{font-size:14px;font-weight:500;letter-spacing:.01em}
 .card-header p{font-size:10.5px;color:#bbb;margin-top:2px}
-.upload-zone{margin:18px 22px 0;border:1.5px dashed #ccc9c0;border-radius:8px;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;background:#faf9f6}
-.upload-zone:hover,.upload-zone.drag{border-color:#888;background:#f1f0eb}
-.upload-zone input{display:none}
-.uz-icon{font-size:20px;margin-bottom:4px}
-.uz-label{font-size:12px;color:#666}
-.uz-sub{font-size:10px;color:#bbb;margin-top:2px}
-.file-badge{display:none;margin:10px 22px 0;background:#f5f4f0;border:1px solid #e0ded6;border-radius:6px;padding:7px 11px;font-size:11px;color:#555;align-items:center;gap:7px}
-.file-badge.show{display:flex}
-.file-badge .fname{font-family:'DM Mono',monospace;font-size:10px;flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.file-badge .rem{cursor:pointer;color:#ccc;transition:color .15s;font-size:13px;line-height:1;background:none;border:none;padding:0}
-.file-badge .rem:hover{color:#d00}
 
 /* Mode picker */
 .mode-wrap{margin:14px 22px 0;display:none}
@@ -56,7 +45,6 @@ body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-heigh
 .hi-mode.battery{background:#fff3e0;color:#c07a20}
 .hi-del{background:none;border:none;color:#ddd;cursor:pointer;font-size:12px;line-height:1;padding:2px 4px;transition:color .12s}
 .hi-del:hover{color:#d00}
-.hist-empty{font-size:11px;color:#ccc;text-align:center;padding:10px 0}
 
 /* Form */
 .form-section{padding:14px 22px 0}
@@ -108,20 +96,8 @@ body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-heigh
 <body>
 <div class="card">
   <div class="card-header">
-    <h1>DOCX Field Injector</h1>
-    <p>Upload · fill · inject &amp; download</p>
-  </div>
-
-  <div class="upload-zone" id="uploadZone">
-    <input type="file" id="fileInput" accept=".docx"/>
-    <div class="uz-icon">📄</div>
-    <div class="uz-label">Click to upload or drag &amp; drop</div>
-    <div class="uz-sub">.docx files only</div>
-  </div>
-  <div class="file-badge" id="fileBadge">
-    <span>📎</span>
-    <span class="fname" id="fileNameEl"></span>
-    <button class="rem" id="removeFile">&#x2715;</button>
+    <h1>Tyre/Battery Letter Head</h1>
+    <p>Fill out the form below to automatically generate your DOCX report.</p>
   </div>
 
   <div class="mode-wrap" id="modeWrap">
@@ -145,13 +121,13 @@ body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-heigh
 
   <div class="actions" id="actionsBar" style="display:none">
     <button class="btn btn-clear" id="btnClear">Clear</button>
-    <button class="btn btn-inject" id="btnInject">Inject &amp; Download</button>
+    <button class="btn btn-inject" id="btnInject">Generate DOCX</button>
   </div>
 </div>
 
 <script>
 // ─────────────────────────────────────────────────────────────────
-// FIELDS (Updated with your default subjects)
+// FIELDS (Including defaults)
 // ─────────────────────────────────────────────────────────────────
 const TYRE_FIELDS = [
   { section:"Letter Details", fields:[
@@ -227,18 +203,13 @@ const BATTERY_FIELDS = [
 // ─────────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────────
-let uploadedFile = null;
+let templateBuffer = null; // Stores the fetched head.docx
 let currentMode  = 'tyre';
 const CAL = {};
 let HISTORY = [];
 try{ HISTORY = JSON.parse(localStorage.getItem('inj_hist')||'[]'); }catch(e){}
 
 // DOM elements
-const uploadZone = document.getElementById('uploadZone');
-const fileInput  = document.getElementById('fileInput');
-const fileBadge  = document.getElementById('fileBadge');
-const fileNameEl = document.getElementById('fileNameEl');
-const removeFile = document.getElementById('removeFile');
 const formWrap   = document.getElementById('formWrap');
 const actionsBar = document.getElementById('actionsBar');
 const btnClear   = document.getElementById('btnClear');
@@ -257,11 +228,34 @@ const getGroups= ()=> currentMode==='tyre' ? TYRE_FIELDS : BATTERY_FIELDS;
 const allFields= ()=> getGroups().flatMap(g=>g.fields);
 const dateFields=()=> allFields().filter(f=>f.type==='date');
 
+// ─────────────────────────────────────────────────────────────────
+// INITIALIZE & FETCH DOCUMENT ON LOAD
+// ─────────────────────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+  formWrap.innerHTML = '<div class="no-file-msg" style="color:#666;">Loading template (head.docx)...</div>';
+  try {
+    // Automatically fetches head.docx from the same folder
+    const response = await fetch('head.docx');
+    if (!response.ok) throw new Error('File not found');
+    templateBuffer = await response.arrayBuffer();
+    
+    // Once loaded, show the UI
+    modeWrap.classList.add('show');
+    actionsBar.style.display = 'flex';
+    buildForm();
+    renderHistory();
+    clearStatus();
+  } catch (err) {
+    showStatus('Error: Could not load head.docx. Make sure it is uploaded in the same GitHub folder.', 'error');
+    formWrap.innerHTML = '<div class="no-file-msg">Template missing. Please check your repository.</div>';
+  }
+});
+
 function setMode(mode){
   currentMode=mode;
   document.getElementById('modeTyre').classList.toggle('active',mode==='tyre');
   document.getElementById('modeBattery').classList.toggle('active',mode==='battery');
-  if(uploadedFile) buildForm();
+  if(templateBuffer) buildForm();
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -353,32 +347,6 @@ function buildForm(){
   const sp=document.createElement('div'); sp.style.height='4px'; formWrap.appendChild(sp);
 }
 
-uploadZone.addEventListener('click',()=>fileInput.click());
-uploadZone.addEventListener('dragover',e=>{e.preventDefault();uploadZone.classList.add('drag')});
-uploadZone.addEventListener('dragleave',()=>uploadZone.classList.remove('drag'));
-uploadZone.addEventListener('drop',e=>{e.preventDefault();uploadZone.classList.remove('drag');handleFile(e.dataTransfer.files[0])});
-fileInput.addEventListener('change',()=>handleFile(fileInput.files[0]));
-
-function handleFile(file){
-  if(!file||!file.name.toLowerCase().endsWith('.docx')){showStatus('Please upload a valid .docx file.','error');return;}
-  uploadedFile=file;
-  fileNameEl.textContent=file.name;
-  fileBadge.classList.add('show');
-  uploadZone.style.display='none';
-  clearStatus();
-  modeWrap.classList.add('show');
-  buildForm();
-  renderHistory();
-  actionsBar.style.display='flex';
-}
-removeFile.addEventListener('click',()=>{
-  uploadedFile=null; fileInput.value='';
-  fileBadge.classList.remove('show'); uploadZone.style.display='';
-  modeWrap.classList.remove('show');
-  formWrap.innerHTML='<div class="no-file-msg">Upload a .docx file to see fields.</div>';
-  actionsBar.style.display='none'; clearStatus();
-});
-
 btnClear.addEventListener('click',()=>{
   allFields().forEach(f=>{
     if(f.type==='date'){
@@ -395,10 +363,10 @@ btnClear.addEventListener('click',()=>{
 });
 
 // ─────────────────────────────────────────────────────────────────
-// DOCXTEMPLATER LOGIC 
+// DOCXTEMPLATER LOGIC (Handles empty fields perfectly)
 // ─────────────────────────────────────────────────────────────────
 btnInject.addEventListener('click',async()=>{
-  if(!uploadedFile){showStatus('No file uploaded.','error');return;}
+  if(!templateBuffer){showStatus('Template not loaded yet.','error');return;}
 
   const data = {};
   const histEntry = {mode: currentMode};
@@ -407,30 +375,37 @@ btnInject.addEventListener('click',async()=>{
   data.isTyre = (currentMode === 'tyre');
   data.isBattery = (currentMode === 'battery');
 
-  // 2. GATHER FORM DATA
+  // 2. GATHER FORM DATA (Replaces blank fields with an empty string)
   allFields().forEach(f => {
     if(f.type === 'date') {
       const st = CAL[f.id];
-      if(!st?.date) return;
-      const val = f.fmt === 'slash' ? fmtSlash(st.date) : fmtDash(st.date);
-      data[f.id] = val;
-      histEntry[f.id] = val;
+      const val = (st && st.date) ? (f.fmt === 'slash' ? fmtSlash(st.date) : fmtDash(st.date)) : '';
+      data[f.id] = val; // Ensures it's an empty string if blank
+      if(val) histEntry[f.id] = val;
     } else {
-      const val = document.getElementById(f.id)?.value?.trim();
-      if(!val) return;
-      data[f.id] = val;
-      histEntry[f.id] = val;
+      const val = document.getElementById(f.id)?.value?.trim() || '';
+      data[f.id] = val; // Ensures it's an empty string if blank
+      if(val) histEntry[f.id] = val;
     }
   });
 
-  if(Object.keys(data).length <= 2){showStatus('Fill in at least one field.','error');return;}
+  // Only proceed if they filled out something other than the defaults
+  if(Object.keys(histEntry).length <= 2){showStatus('Fill in at least one field.','error');return;}
 
   btnInject.disabled=true; btnInject.textContent='Processing\u2026'; clearStatus();
 
   try {
-    const arrayBuffer = await uploadedFile.arrayBuffer();
-    const zip = new window.PizZip(arrayBuffer); // Fixed instantiation
-    const doc = new window.docxtemplater(zip, { paragraphLoop: true, linebreaks: true });
+    // Clone the buffer so we can reuse it later without reloading the page
+    const zip = new window.PizZip(templateBuffer.slice(0)); 
+    
+    const doc = new window.docxtemplater(zip, { 
+        paragraphLoop: true, 
+        linebreaks: true,
+        // This is the magic rule that stops "undefined" from printing
+        nullGetter: function() {
+            return ""; 
+        }
+    });
 
     doc.render(data);
 
@@ -439,7 +414,8 @@ btnInject.addEventListener('click',async()=>{
         mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    const name = uploadedFile.name.replace(/\.docx$/i,'_filled.docx');
+    const reg = data.regNo ? `_${data.regNo}` : '';
+    const name = `LetterHead_${currentMode}${reg}_filled.docx`;
     saveAs(blob, name);
     
     showStatus('\u2713 Downloaded: '+name,'success');
@@ -447,7 +423,7 @@ btnInject.addEventListener('click',async()=>{
   } catch(err) {
     showStatus('Error: '+err.message,'error'); console.error(err);
   } finally {
-    btnInject.disabled=false; btnInject.textContent='Inject \u0026 Download';
+    btnInject.disabled=false; btnInject.textContent='Generate DOCX';
   }
 });
 
@@ -512,7 +488,6 @@ function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;')
 function showStatus(m,t){statusEl.textContent=m;statusEl.className='status '+t;}
 function clearStatus(){statusEl.textContent='';statusEl.className='status';}
 
-formWrap.innerHTML='<div class="no-file-msg">Upload a .docx file to see fields.</div>';
 renderHistory();
 </script>
 </body>
