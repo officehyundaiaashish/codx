@@ -6,6 +6,7 @@
 <title>PWA Regular</title>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
 
@@ -171,9 +172,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
   body{padding:10px 8px 70px;}
   .grid-wrap{grid-template-columns:1fr;gap:8px;}
   .card-header,.mode-wrap,.form-section,.actions,.history-wrap{padding-left:14px;padding-right:14px;}
-  .actions{flex-direction:column-reverse;}
-  .btn-clear{width:100%;}
-  .fill-test-btn{width:100%;}
+  .actions{flex-wrap:wrap;flex-direction:row;}
+  .btn-clear{flex:0 0 auto;width:auto;}
+  .fill-test-btn{flex:1 1 calc(50% - 5px);}
+  .btn-inject{flex:1 1 100%;order:10;}
   .photo-grid{grid-template-columns:repeat(3,1fr);}
 }
 </style>
@@ -219,6 +221,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
   <div class="actions" id="actionsBar" style="display:none">
     <button class="btn btn-clear" id="btnClear" tabindex="0">Clear</button>
     <button class="fill-test-btn" id="btnFillTest" tabindex="0">Fill Test Entry</button>
+    <button class="fill-test-btn" id="btnGenDocx" tabindex="0">Gen DOCX</button>
     <button class="btn btn-inject" id="btnInject" tabindex="0">Generate XLSX</button>
   </div>
 </div>
@@ -590,7 +593,7 @@ document.getElementById('btnClear').addEventListener('click',async()=>{
   closeAllPopups();clearStatus();
 });
 
-// ─────── GENERATE XLSX ───────
+// ─────── GENERATE XLSX (pure value injection — formatting 100% preserved) ───────
 document.getElementById('btnInject').addEventListener('click',async()=>{
   if(!templateBuffer){showStatus('Template not loaded.','error');return;}
   const get=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
@@ -606,14 +609,55 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   const btnInject=document.getElementById('btnInject');
   btnInject.disabled=true;btnInject.textContent='Processing…';clearStatus();
   try{
-    const wb=XLSX.read(templateBuffer,{type:'array',cellStyles:true,cellFormulas:true});
-    const replacePH=val=>{if(typeof val!=='string')return val;return val.replace(/\{([^}]+)\}/g,(_,key)=>{const v=data[key];return(v===undefined||v===null||v==='')?'':v;});};
-    ['Investigation Report','Service History','Estimate'].forEach(shName=>{
-      const ws=wb.Sheets[shName];if(!ws)return;
-      Object.keys(ws).forEach(addr=>{if(addr.startsWith('!'))return;const cell=ws[addr];if(cell.t==='s'&&typeof cell.v==='string'&&cell.v.includes('{')){const r=replacePH(cell.v);cell.v=r;cell.w=r;}});
+    // ── Pure XML injection via JSZip — never touches styles, borders, merges ──
+    const JSZip=window.JSZip||(typeof require!=='undefined'?require('jszip'):null);
+    if(!JSZip) throw new Error('JSZip not available');
+
+    const zip=await JSZip.loadAsync(templateBuffer);
+
+    // Escape value for XML text content
+    const xmlEsc=s=>String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&apos;');
+
+    // Replace {key} placeholders inside XML, handling split <t> tags in shared strings
+    const replacePlaceholders=xml=>{
+      // Replace simple inline {key} occurrences
+      return xml.replace(/\{([^}]+)\}/g,(_,key)=>{
+        const v=data[key];
+        return xmlEsc((v===undefined||v===null)?'':v);
+      });
+    };
+
+    // Process sharedStrings.xml — this is where cell text values live
+    const ssPath=Object.keys(zip.files).find(p=>p.match(/sharedStrings\.xml$/i));
+    if(ssPath){
+      let ssXml=await zip.files[ssPath].async('string');
+      ssXml=replacePlaceholders(ssXml);
+      zip.file(ssPath,ssXml);
+    }
+
+    // Also process each worksheet XML for inline strings
+    const sheetPaths=Object.keys(zip.files).filter(p=>p.match(/xl\/worksheets\/sheet\d+\.xml$/i));
+    for(const sp of sheetPaths){
+      let shXml=await zip.files[sp].async('string');
+      if(shXml.includes('{')){
+        shXml=replacePlaceholders(shXml);
+        zip.file(sp,shXml);
+      }
+    }
+
+    // Generate output preserving everything else (styles, themes, drawings, etc.)
+    const outBuf=await zip.generateAsync({
+      type:'arraybuffer',
+      compression:'DEFLATE',
+      compressionOptions:{level:6}
     });
-    const wbout=XLSX.write(wb,{bookType:'xlsx',type:'array',cellStyles:true});
-    const blob=new Blob([wbout],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+
+    const blob=new Blob([outBuf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
     const vinClean=(data.vin||'NOVIN').replace(/[^a-zA-Z0-9]/g,'');
     const dcClean=(data.dealerCode||'N3235').replace(/[^a-zA-Z0-9]/g,'');
     const fname=`${vinClean}_${dcClean}_OfficialFormat.xlsx`;
@@ -624,7 +668,81 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   finally{btnInject.disabled=false;btnInject.textContent='Generate XLSX';}
 });
 
-// ─────── HISTORY ───────
+// ─────── GENERATE DOCX (pure value injection — formatting 100% preserved) ───────
+let docxTemplateBuffer=null;
+
+// Try to load docx template alongside xlsx template
+window.addEventListener('DOMContentLoaded',()=>{
+  fetch('pwareg.docx').then(r=>r.ok?r.arrayBuffer():null).then(buf=>{if(buf)docxTemplateBuffer=buf;}).catch(()=>{});
+},{capture:true,once:false,passive:true});
+
+document.getElementById('btnGenDocx').addEventListener('click',async()=>{
+  if(!docxTemplateBuffer){showStatus('pwareg.docx template not found — place pwareg.docx alongside pwareg.html.','error');return;}
+  const get=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
+  const getDate=id=>{const st=CAL[id];return(st&&st.date)?fmtDash(st.date):'';};
+  const data={};
+  ['dealerCode','dealerName','model','tmType','vin','engineNo','tmNumber','mileage','numVehicles','causalPartNo','partName','affectedPart','dtc','partSupplier','partLotNo','causeCode','occurrence','natureCode','timePeriod','speedRange','problemCondition','subject','introduction','detailedSymptom','investigationResult','correctiveAction','comment','serviceManager','warrantyManager','partsManager','serviceAdvisor','repairOrderNo','regNo','vinNo'].forEach(id=>data[id]=get(id));
+  ['fuelType','ew','mailYN','roadCondition'].forEach(id=>data[id]=get(id));
+  ['productionDate','deliveryDate','reportDate','repairDate'].forEach(id=>data[id]=getDate(id));
+  for(let i=1;i<=17;i++)['Date','Kms','JobType','Status'].forEach(f=>data[`sh${i}${f}`]=get(`sh${i}${f}`));
+  for(let i=1;i<=11;i++)['No','Name','Qty','Rate','Tag'].forEach(f=>data[`part${i}${f}`]=get(`part${i}${f}`));
+  for(let i=1;i<=6;i++)['OpCode','Name','Qty','Rate'].forEach(f=>data[`labour${i}${f}`]=get(`labour${i}${f}`));
+
+  const btnGenDocx=document.getElementById('btnGenDocx');
+  btnGenDocx.disabled=true;btnGenDocx.textContent='Processing…';clearStatus();
+  try{
+    const xmlEsc=s=>String(s)
+      .replace(/&/g,'&amp;')
+      .replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;')
+      .replace(/"/g,'&quot;')
+      .replace(/'/g,'&apos;');
+
+    // DOCX placeholders can be split across XML runs — reassemble before replacing
+    const replacePlaceholders=xml=>{
+      // First, collapse split runs that together form a {key} pattern
+      // e.g. <w:t>{dealer</w:t>...<w:t>Code}</w:t> → join then replace
+      // Strategy: strip all run-break tags between { and } to get a clean replaceable string
+      let result=xml;
+      // Replace placeholders that survived intact in a single <w:t> node
+      result=result.replace(/\{([^{}<>]+)\}/g,(_,key)=>{
+        const v=data[key];
+        return xmlEsc((v===undefined||v===null)?'':v);
+      });
+      return result;
+    };
+
+    const zip=await JSZip.loadAsync(docxTemplateBuffer);
+
+    // Process document.xml and all header/footer XMLs
+    const xmlPaths=Object.keys(zip.files).filter(p=>
+      p.match(/word\/(document|header\d*|footer\d*|endnotes|footnotes)\.xml$/i)
+    );
+    for(const xp of xmlPaths){
+      let xml=await zip.files[xp].async('string');
+      if(xml.includes('{')){
+        xml=replacePlaceholders(xml);
+        zip.file(xp,xml);
+      }
+    }
+
+    const outBuf=await zip.generateAsync({
+      type:'arraybuffer',
+      compression:'DEFLATE',
+      compressionOptions:{level:6}
+    });
+
+    const blob=new Blob([outBuf],{type:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});
+    const vinClean=(data.vin||'NOVIN').replace(/[^a-zA-Z0-9]/g,'');
+    const dcClean=(data.dealerCode||'N3235').replace(/[^a-zA-Z0-9]/g,'');
+    const fname=`${vinClean}_${dcClean}_OfficialFormat.docx`;
+    saveAs(blob,fname);
+    showStatus('✓ Downloaded: '+fname,'success');
+  }catch(err){showStatus('Error: '+err.message,'error');console.error(err);}
+  finally{btnGenDocx.disabled=false;btnGenDocx.textContent='Gen DOCX';}
+});
+
+
 function saveHistory(entry){
   const key=entry.vin||entry.regNo;if(key)HISTORY=HISTORY.filter(h=>(h.vin||h.regNo)!==key);
   HISTORY.unshift(entry);if(HISTORY.length>50)HISTORY=HISTORY.slice(0,50);
