@@ -287,11 +287,7 @@ body {
       <span class="hist-title">Saved Records</span>
       <button class="hist-clr" id="btnHistoryClearAll" tabindex="0">Clear all</button>
     </div>
-    <div style="display: flex; gap: 8px; margin-bottom: 16px;">
-      <button class="btn btn-clear" style="height: 36px; min-height: 36px; font-size: 13px;" onclick="backupData()" tabindex="0">Backup Data</button>
-      <button class="btn btn-clear" style="height: 36px; min-height: 36px; font-size: 13px;" onclick="document.getElementById('restoreFile').click()" tabindex="0">Restore Data</button>
-      <input type="file" id="restoreFile" style="display:none" accept=".json" onchange="restoreData(event)">
-    </div>
+
     
     <input type="text" id="historySearch" class="search-input" placeholder="Search by Reg. No or Name..." autocomplete="off" tabindex="0">
     <div class="hist-list" id="histList"></div>
@@ -505,42 +501,6 @@ function setMode(mode){
       buildForm();
     }
   }
-}
-
-// ─────────────────────────────────────────────────────────────────
-// BACKUP & RESTORE LOGIC
-// ─────────────────────────────────────────────────────────────────
-function backupData() {
-  const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(HISTORY));
-  const a = document.createElement('a');
-  a.setAttribute("href", dataStr);
-  a.setAttribute("download", "letterhead_backup.json");
-  document.body.appendChild(a); 
-  a.click();
-  a.remove();
-}
-
-function restoreData(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    try {
-      const imported = JSON.parse(e.target.result);
-      if(Array.isArray(imported)) {
-        HISTORY = imported;
-        localStorage.setItem('inj_hist', JSON.stringify(HISTORY));
-        renderHistory(historySearch.value);
-        showStatus('Data restored successfully!', 'success');
-      } else {
-        showStatus('Invalid backup file format.', 'error');
-      }
-    } catch(err) {
-      showStatus('Error reading backup file.', 'error');
-    }
-    event.target.value = ''; // Reset input
-  };
-  reader.readAsText(file);
 }
 
 // ─────────────────────────────────────────────────────────────────
