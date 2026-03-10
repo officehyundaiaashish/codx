@@ -1178,6 +1178,15 @@
           </svg>Letter Heads
           <span class="nav-badge">DOCX</span>
         </button>
+        <button class="nav-item" data-view="pwareg">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="8" y1="13" x2="16" y2="13"/>
+            <line x1="8" y1="17" x2="13" y2="17"/>
+          </svg>PWA Regular
+          <span class="nav-badge">XLSX</span>
+        </button>
       </div>
       <div class="sb-ver">OfficeDesk v1.0 &nbsp;·&nbsp; Khanna Automart</div>
     </aside>
@@ -1239,6 +1248,20 @@
             <span class="tag tag-live">Active</span>
           </div>
 
+          <div class="tool-card live" onclick="switchView('pwareg')">
+            <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="8" y1="13" x2="16" y2="13"/>
+                <line x1="8" y1="17" x2="13" y2="17"/>
+              </svg>
+            </div>
+            <div class="tool-name">PWA Regular</div>
+            <div class="tool-desc">Generate Prior Work Approval Excel reports.</div>
+            <span class="tag tag-live">Active</span>
+          </div>
+
           <div class="tool-card coming">
             <div class="tool-icon" style="background:var(--surface2);color:var(--text3)">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1284,6 +1307,10 @@
       <div class="view view-letterheads-container" id="view-letterheads">
         <iframe id="letterheads-iframe" src="./letthead.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
+      <!-- PWA REGULAR FORM -->
+      <div class="view view-letterheads-container" id="view-pwareg">
+        <iframe id="pwareg-iframe" src="./pwareg.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+      </div>
     </main>
   </div>
   <div id="loader">
@@ -1303,7 +1330,7 @@
       applyTheme(theme);
       
       // Pre-sync theme to all iframes immediately
-      ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe'].forEach(id => {
+      ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe', 'pwareg-iframe'].forEach(id => {
         const iframe = document.getElementById(id);
         if (iframe) {
           const sendTheme = () => {
@@ -1323,7 +1350,7 @@
       const view = document.getElementById("view-" + v);
       if (view) view.classList.add("active");
       document.querySelectorAll(`.nav-item[data-view="${v}"],.bnav-item[data-view="${v}"]`).forEach(el => el.classList.add("active"));
-      const labels = { dashboard: "Dashboard", alcazar: "Alcazar Form", keycode: "Key Code Form", letterheads: "Letter Heads" }; 
+      const labels = { dashboard: "Dashboard", alcazar: "Alcazar Form", keycode: "Key Code Form", letterheads: "Letter Heads", pwareg: "PWA Regular" }; 
       document.title = "OfficeDesk — " + (labels[v] || "Utility Suite");
     }
 
@@ -1337,7 +1364,7 @@
       localStorage.setItem("od-theme", t); 
       document.getElementById("ico-moon").style.display = t === "dark" ? "none" : ""; 
       document.getElementById("ico-sun").style.display = t === "dark" ? "" : "none"; 
-      ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe'].forEach(id => {
+      ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe', 'pwareg-iframe'].forEach(id => {
         const iframe = document.getElementById(id);
         if (iframe && iframe.contentWindow) {
           iframe.contentWindow.postMessage({ type: 'theme', theme: t }, '*');
@@ -1360,8 +1387,8 @@
     }
 
     // ── Backup / Restore All ──
-    const IFRAME_IDS = ['alcazar-iframe', 'keycode-iframe', 'letterheads-iframe'];
-    const TOOL_NAMES = { 'alcazar-iframe': 'alcazar', 'keycode-iframe': 'keycode', 'letterheads-iframe': 'letterheads' };
+    const IFRAME_IDS = ['alcazar-iframe', 'keycode-iframe', 'letterheads-iframe', 'pwareg-iframe'];
+    const TOOL_NAMES = { 'alcazar-iframe': 'alcazar', 'keycode-iframe': 'keycode', 'letterheads-iframe': 'letterheads', 'pwareg-iframe': 'pwareg' };
 
     function backupAll() {
       const collected = {};
@@ -1487,6 +1514,15 @@
         <polyline points="14 2 14 8 20 8"/>
       </svg>
       Letter Heads
+    </button>
+    <button class="bnav-item" data-view="pwareg">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+        <polyline points="14 2 14 8 20 8"/>
+        <line x1="8" y1="13" x2="16" y2="13"/>
+        <line x1="8" y1="17" x2="13" y2="17"/>
+      </svg>
+      PWA Regular
     </button>
   </nav>
 
