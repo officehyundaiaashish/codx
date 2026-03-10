@@ -10,109 +10,165 @@
 <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap');
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:36px 14px 60px}
-.card{background:#fff;border:1px solid #dedad2;border-radius:13px;width:100%;max-width:570px;box-shadow:0 2px 24px rgba(0,0,0,0.08)}
-.card-header{padding:18px 22px 14px;border-bottom:1px solid #eeece6}
-.card-header h1{font-size:14px;font-weight:500;letter-spacing:.01em}
-.card-header p{font-size:10.5px;color:#bbb;margin-top:2px}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { 
+  font-family: 'Inter', sans-serif; 
+  background: #f4f5f7; 
+  color: #1f2937; 
+  min-height: 100vh; 
+  display: flex; 
+  align-items: flex-start; 
+  justify-content: center; 
+  padding: 40px 20px 80px; 
+}
+
+.card { 
+  background: #ffffff; 
+  border-radius: 12px; 
+  width: 100%; 
+  max-width: 800px; /* Widened for 2-column layout */
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); 
+  overflow: hidden;
+}
+
+.card-header { 
+  padding: 24px 32px 20px; 
+  border-bottom: 1px solid #f3f4f6; 
+}
+.card-header h1 { font-size: 20px; font-weight: 600; color: #111827; letter-spacing: -0.01em; }
+.card-header p { font-size: 14px; color: #6b7280; margin-top: 4px; }
 
 /* Mode picker */
-.mode-wrap{margin:14px 22px 0;display:none}
-.mode-wrap.show{display:block}
-.mode-lbl{font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#bbb;margin-bottom:7px}
-.mode-btns{display:flex;gap:6px}
-.mode-btn{flex:1;height:33px;border-radius:7px;border:1.5px solid #e0ded6;background:#faf9f6;font-size:12px;font-family:'DM Sans',sans-serif;color:#777;cursor:pointer;transition:all .18s;font-weight:500}
-.mode-btn:hover{border-color:#aaa;color:#333}
-.mode-btn.active{background:#1a1a1a;border-color:#1a1a1a;color:#fff}
+.mode-wrap { padding: 20px 32px 0; display: none; }
+.mode-wrap.show { display: block; }
+.mode-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 10px; letter-spacing: 0.05em; }
+.mode-btns { display: flex; gap: 12px; }
+.mode-btn { 
+  flex: 1; height: 44px; border-radius: 8px; border: 1px solid #e5e7eb; 
+  background: #f9fafb; font-size: 14px; font-weight: 500; color: #4b5563; 
+  cursor: pointer; transition: all 0.2s ease; 
+}
+.mode-btn:hover { border-color: #d1d5db; background: #f3f4f6; color: #111827; }
+.mode-btn.active { background: #111827; border-color: #111827; color: #ffffff; }
 
-/* History */
-.history-wrap{margin:14px 22px 0;display:none}
-.history-wrap.show{display:block}
-.hist-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
-.hist-title{font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#bbb}
-.hist-clr{font-size:10px;color:#ccc;cursor:pointer;background:none;border:none;font-family:'DM Sans',sans-serif;padding:0;transition:color .15s}
-.hist-clr:hover{color:#d00}
-.hist-list{display:flex;flex-direction:column;gap:4px;max-height:150px;overflow-y:auto}
-.hist-item{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid #eeece6;border-radius:6px;cursor:pointer;background:#faf9f6;transition:border-color .15s,background .15s}
-.hist-item:hover{border-color:#bbb;background:#f2f0eb}
-.hi-info{flex:1;min-width:0}
-.hi-name{font-size:11px;font-weight:500;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.hi-meta{font-size:9.5px;color:#bbb;margin-top:1px}
-.hi-mode{font-size:8.5px;padding:1px 5px;border-radius:3px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin-right:4px}
-.hi-mode.tyre{background:#e8f4ff;color:#3a7abf}
-.hi-mode.battery{background:#fff3e0;color:#c07a20}
-.hi-del{background:none;border:none;color:#ddd;cursor:pointer;font-size:12px;line-height:1;padding:2px 4px;transition:color .12s}
-.hi-del:hover{color:#d00}
+/* History Section & Search */
+.history-wrap { padding: 24px 32px 0; display: none; border-top: 1px solid #f3f4f6; margin-top: 24px; }
+.history-wrap.show { display: block; }
+.hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.hist-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.05em; }
+.hist-clr { font-size: 13px; color: #9ca3af; cursor: pointer; background: none; border: none; transition: color 0.2s; padding: 0; }
+.hist-clr:hover { color: #ef4444; }
 
-/* Form */
-.form-section{padding:14px 22px 0}
-.sec-lbl{font-size:9.5px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:#c0bdb6;margin-bottom:8px;padding-bottom:5px;border-bottom:1px solid #f0ede6}
-.field-row{display:flex;align-items:center;margin-bottom:5px;border:1px solid #e5e3dc;border-radius:7px;overflow:hidden;background:#fff;transition:border-color .18s,box-shadow .18s}
-.field-row:focus-within{border-color:#aaa;box-shadow:0 0 0 3px rgba(0,0,0,0.04)}
-.field-row label{font-size:10.5px;color:#999;padding:0 10px;white-space:nowrap;min-width:152px;background:#faf9f6;border-right:1px solid #eeece6;height:34px;display:flex;align-items:center;flex-shrink:0}
-.field-row input{flex:1;border:none;outline:none;font-size:12px;font-family:'DM Mono',monospace;padding:0 10px;height:34px;color:#1a1a1a;background:transparent}
-.field-row input::placeholder{color:#d0cec8;font-family:'DM Sans',sans-serif;font-size:11px}
-.field-row input.pre{color:#bbb}
+.search-input { 
+  width: 100%; height: 38px; border: 1px solid #e5e7eb; border-radius: 8px; 
+  padding: 0 12px; font-size: 14px; margin-bottom: 12px; outline: none; transition: border-color 0.2s;
+  background: #f9fafb;
+}
+.search-input:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-/* Date picker */
-.date-row{display:flex;align-items:center;margin-bottom:5px;border:1px solid #e5e3dc;border-radius:7px;background:#fff;transition:border-color .18s,box-shadow .18s;position:relative;overflow:visible}
-.date-row.active{border-color:#aaa;box-shadow:0 0 0 3px rgba(0,0,0,0.04)}
-.dr-label{font-size:10.5px;color:#999;padding:0 10px;white-space:nowrap;min-width:152px;background:#faf9f6;border-right:1px solid #eeece6;height:34px;display:flex;align-items:center;flex-shrink:0;border-radius:7px 0 0 7px}
-.date-trigger{flex:1;height:34px;display:flex;align-items:center;padding:0 10px;cursor:pointer;user-select:none;gap:5px}
-.dval{font-size:12px;font-family:'DM Mono',monospace;color:#1a1a1a;flex:1}
-.dval.empty{color:#d0cec8;font-family:'DM Sans',sans-serif;font-size:11px}
-.darr{font-size:9px;opacity:.3;transition:opacity .15s,transform .22s cubic-bezier(.4,0,.2,1)}
-.date-row.active .darr{opacity:.65;transform:rotate(180deg)}
-.cal-pop{position:absolute;top:calc(100% + 5px);left:0;z-index:400;background:#fff;border:1px solid #dedad2;border-radius:10px;padding:12px;box-shadow:0 10px 36px rgba(0,0,0,0.13);width:234px;opacity:0;transform:translateY(-6px) scale(.983);pointer-events:none;transition:opacity .16s cubic-bezier(.4,0,.2,1),transform .16s cubic-bezier(.4,0,.2,1)}
-.cal-pop.open{opacity:1;transform:translateY(0) scale(1);pointer-events:all}
-.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-.mnth{font-size:11px;font-weight:500;color:#222;letter-spacing:.02em}
-.cal-nav button{background:none;border:1px solid #e5e3dc;border-radius:5px;width:22px;height:22px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;color:#666;transition:background .1s;line-height:1}
-.cal-nav button:hover{background:#f5f4f0}
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px}
-.dn{font-size:8px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:#ccc;text-align:center;padding:2px 0 5px}
-.cd{font-size:11px;font-family:'DM Mono',monospace;text-align:center;padding:5px 1px;border-radius:5px;cursor:pointer;color:#222;transition:background .08s,color .08s,transform .1s}
-.cd:hover{background:#f0ede6;transform:scale(1.1)}
-.cd.sel{background:#1a1a1a!important;color:#fff!important;transform:none!important}
-.cd.today{font-weight:700;color:#555}
-.cd.om{color:#e0ded6;cursor:default;pointer-events:none}
+.hist-list { display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px; }
+.hist-item { 
+  display: flex; align-items: center; gap: 12px; padding: 12px 16px; 
+  border: 1px solid #f3f4f6; border-radius: 8px; cursor: pointer; 
+  background: #ffffff; transition: all 0.2s; 
+}
+.hist-item:hover { border-color: #d1d5db; background: #f9fafb; }
+.hi-info { flex: 1; min-width: 0; }
+.hi-name { font-size: 14px; font-weight: 600; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.hi-meta { font-size: 12px; color: #6b7280; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
+.hi-mode { font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+.hi-mode.tyre { background: #dbeafe; color: #1e40af; }
+.hi-mode.battery { background: #fef3c7; color: #92400e; }
+.hi-del { background: none; border: none; color: #d1d5db; cursor: pointer; font-size: 16px; padding: 4px; transition: color 0.2s; }
+.hi-del:hover { color: #ef4444; }
 
-.status{margin:0 22px 10px;font-size:11px;padding:7px 11px;border-radius:6px;display:none}
-.status.error{background:#fff0f0;color:#c00;border:1px solid #fcc;display:block}
-.status.success{background:#f2fbf4;color:#166534;border:1px solid #c3f0cd;display:block}
-.actions{display:flex;gap:7px;padding:16px 22px 20px}
-.btn{flex:1;height:35px;border-radius:7px;border:none;font-size:12px;font-family:'DM Sans',sans-serif;font-weight:500;cursor:pointer;transition:background .15s,transform .1s}
-.btn:active{transform:scale(.98)}
-.btn-inject{background:#1a1a1a;color:#fff;letter-spacing:.02em}
-.btn-inject:hover{background:#0a0a0a}
-.btn-inject:disabled{background:#ccc;cursor:not-allowed;transform:none}
-.btn-clear{background:#f0ede6;color:#777}
-.btn-clear:hover{background:#e5e2da}
-.no-file-msg{text-align:center;font-size:11.5px;color:#ccc;padding:20px 22px 22px}
+/* Forms - Clean 2 Column Grid */
+.form-section { padding: 24px 32px 0; }
+.sec-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 16px; border-bottom: 1px solid #f3f4f6; padding-bottom: 8px; letter-spacing: 0.05em; }
+.grid-wrap { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+
+.field-col { display: flex; flex-direction: column; gap: 6px; }
+.field-col label { font-size: 13px; font-weight: 500; color: #374151; }
+.field-col input { 
+  height: 42px; border: 1px solid #d1d5db; border-radius: 8px; 
+  padding: 0 14px; font-size: 14px; color: #111827; background: #fff; 
+  transition: border-color 0.2s, box-shadow 0.2s; width: 100%; outline: none;
+}
+.field-col input::placeholder { color: #9ca3af; }
+.field-col input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.field-col input.pre { color: #6b7280; }
+
+/* Date picker simplified */
+.date-trigger { 
+  height: 42px; display: flex; align-items: center; padding: 0 14px; 
+  cursor: pointer; user-select: none; gap: 8px; border: 1px solid #d1d5db; 
+  border-radius: 8px; background: #fff; transition: border-color 0.2s; position: relative;
+}
+.date-trigger.active { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.dval { font-size: 14px; color: #111827; flex: 1; }
+.dval.empty { color: #9ca3af; }
+.darr { font-size: 10px; color: #9ca3af; transition: transform 0.2s; }
+.date-trigger.active .darr { transform: rotate(180deg); }
+
+/* Calendar Popup */
+.cal-pop { 
+  position: absolute; top: calc(100% + 8px); left: 0; z-index: 400; 
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; 
+  padding: 16px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); 
+  width: 260px; opacity: 0; transform: translateY(-8px); pointer-events: none; 
+  transition: all 0.2s ease; 
+}
+.cal-pop.open { opacity: 1; transform: translateY(0); pointer-events: all; }
+.cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+.mnth { font-size: 14px; font-weight: 600; color: #111827; }
+.cal-nav button { background: none; border: 1px solid #e5e7eb; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #4b5563; transition: background 0.2s; }
+.cal-nav button:hover { background: #f3f4f6; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.dn { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #9ca3af; text-align: center; padding-bottom: 8px; }
+.cd { font-size: 13px; text-align: center; padding: 8px 2px; border-radius: 6px; cursor: pointer; color: #374151; transition: all 0.15s; }
+.cd:hover { background: #f3f4f6; }
+.cd.sel { background: #111827 !important; color: #fff !important; font-weight: 500; }
+.cd.today { font-weight: 700; color: #3b82f6; }
+.cd.om { color: #d1d5db; pointer-events: none; }
+
+/* Status & Actions */
+.status { margin: 24px 32px 0; font-size: 14px; padding: 12px 16px; border-radius: 8px; display: none; font-weight: 500; }
+.status.error { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; display: block; }
+.status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; display: block; }
+
+.actions { display: flex; gap: 12px; padding: 24px 32px 32px; border-top: 1px solid #f3f4f6; margin-top: 24px; }
+.btn { flex: 1; height: 48px; border-radius: 8px; border: none; font-size: 15px; font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-inject { background: #111827; color: #fff; }
+.btn-inject:hover { background: #374151; }
+.btn-inject:disabled { background: #9ca3af; cursor: not-allowed; }
+.btn-clear { background: #f3f4f6; color: #4b5563; }
+.btn-clear:hover { background: #e5e7eb; }
+.no-file-msg { text-align: center; font-size: 14px; color: #6b7280; padding: 40px; font-weight: 500; }
 </style>
 </head>
 <body>
 <div class="card">
   <div class="card-header">
     <h1>Tyre/Battery Letter Head</h1>
-    <p>Fill out the form below to automatically generate your DOCX report.</p>
+    <p>Fill out the form below to automatically generate your clean DOCX report.</p>
   </div>
 
   <div class="mode-wrap" id="modeWrap">
-    <div class="mode-lbl">Letter Type</div>
+    <div class="mode-lbl">Select Letter Type</div>
     <div class="mode-btns">
-      <button class="mode-btn active" id="modeTyre"    onclick="setMode('tyre')">🔵 &nbsp;Tyre</button>
-      <button class="mode-btn"        id="modeBattery" onclick="setMode('battery')">🟡 &nbsp;Battery</button>
+      <button class="mode-btn active" id="modeTyre"    onclick="setMode('tyre')">Tyre Report</button>
+      <button class="mode-btn"        id="modeBattery" onclick="setMode('battery')">Battery Report</button>
     </div>
   </div>
 
   <div class="history-wrap" id="histWrap">
     <div class="hist-header">
-      <span class="hist-title">Previous Entries</span>
+      <span class="hist-title">Saved Entries</span>
       <button class="hist-clr" onclick="clearAllHistory()">Clear all</button>
     </div>
+    <input type="text" id="historySearch" class="search-input" placeholder="Search by Reg. No or Name..." autocomplete="off">
     <div class="hist-list" id="histList"></div>
   </div>
 
@@ -120,7 +176,7 @@ body{font-family:'DM Sans',sans-serif;background:#eae9e3;color:#1a1a1a;min-heigh
   <div id="formWrap"></div>
 
   <div class="actions" id="actionsBar" style="display:none">
-    <button class="btn btn-clear" id="btnClear">Clear</button>
+    <button class="btn btn-clear" id="btnClear">Clear Form</button>
     <button class="btn btn-inject" id="btnInject">Generate DOCX</button>
   </div>
 </div>
@@ -135,21 +191,17 @@ const TYRE_FIELDS = [
     { id:"recipient",  label:"Recipient (To)",       type:"text"  },
     { id:"subject",    label:"Subject",              type:"text", def:"Tyre Buldge Problem While Driving" }
   ]},
-  { section:"Dealer Details", fields:[
+  { section:"Dealer & Customer Details", fields:[
     { id:"dealerCode", label:"Dealer Code",          type:"text"  },
-    { id:"dealerName", label:"Dealer Name",          type:"text"  }
-  ]},
-  { section:"Sale Details", fields:[
-    { id:"saleDate",   label:"Sale Date",            type:"date", fmt:"slash" }
-  ]},
-  { section:"Customer Details", fields:[
+    { id:"dealerName", label:"Dealer Name",          type:"text"  },
+    { id:"saleDate",   label:"Sale Date",            type:"date", fmt:"slash" },
     { id:"custName",   label:"Customer Name",        type:"text"  },
     { id:"custPhone",  label:"Contact Number",       type:"text"  }
   ]},
   { section:"Vehicle Details", fields:[
+    { id:"regNo",      label:"Registration No.",     type:"text"  },
     { id:"vehMake",    label:"Vehicle Make",         type:"text"  },
     { id:"chassis",    label:"Chassis No.",          type:"text"  },
-    { id:"regNo",      label:"Registration No.",     type:"text"  },
     { id:"mileage",    label:"Mileage at Complaint", type:"text"  }
   ]},
   { section:"Tyre Details", fields:[
@@ -171,21 +223,17 @@ const BATTERY_FIELDS = [
     { id:"recipient",  label:"Recipient (To)",       type:"text"  },
     { id:"subject",    label:"Subject",              type:"text", def:"Vehicle starting problem issue." }
   ]},
-  { section:"Dealer Details", fields:[
+  { section:"Dealer & Customer Details", fields:[
     { id:"dealerCode", label:"Dealer Code",          type:"text"  },
-    { id:"dealerName", label:"Dealer Name",          type:"text"  }
-  ]},
-  { section:"Sale Details", fields:[
-    { id:"saleDate",   label:"Sale Date",            type:"date", fmt:"slash" }
-  ]},
-  { section:"Customer Details", fields:[
+    { id:"dealerName", label:"Dealer Name",          type:"text"  },
+    { id:"saleDate",   label:"Sale Date",            type:"date", fmt:"slash" },
     { id:"custName",   label:"Customer Name",        type:"text"  },
     { id:"custPhone",  label:"Contact Number",       type:"text"  }
   ]},
   { section:"Vehicle Details", fields:[
+    { id:"regNo",      label:"Registration No.",     type:"text"  },
     { id:"vehMake",    label:"Vehicle Make",         type:"text"  },
     { id:"chassis",    label:"Chassis No.",          type:"text"  },
-    { id:"regNo",      label:"Registration No.",     type:"text"  },
     { id:"mileage",    label:"Mileage at Complaint", type:"text"  }
   ]},
   { section:"Battery Details", fields:[
@@ -203,7 +251,7 @@ const BATTERY_FIELDS = [
 // ─────────────────────────────────────────────────────────────────
 // STATE
 // ─────────────────────────────────────────────────────────────────
-let templateBuffer = null; // Stores the fetched head.docx
+let templateBuffer = null;
 let currentMode  = 'tyre';
 const CAL = {};
 let HISTORY = [];
@@ -218,6 +266,7 @@ const statusEl   = document.getElementById('status');
 const modeWrap   = document.getElementById('modeWrap');
 const histWrap   = document.getElementById('histWrap');
 const histList   = document.getElementById('histList');
+const historySearch = document.getElementById('historySearch');
 
 // Helpers
 const pad      = n => String(n).padStart(2,'0');
@@ -232,21 +281,19 @@ const dateFields=()=> allFields().filter(f=>f.type==='date');
 // INITIALIZE & FETCH DOCUMENT ON LOAD
 // ─────────────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', async () => {
-  formWrap.innerHTML = '<div class="no-file-msg" style="color:#666;">Loading template (head.docx)...</div>';
+  formWrap.innerHTML = '<div class="no-file-msg">Fetching template (head.docx)...</div>';
   try {
-    // Automatically fetches head.docx from the same folder
     const response = await fetch('head.docx');
     if (!response.ok) throw new Error('File not found');
     templateBuffer = await response.arrayBuffer();
     
-    // Once loaded, show the UI
     modeWrap.classList.add('show');
     actionsBar.style.display = 'flex';
     buildForm();
     renderHistory();
     clearStatus();
   } catch (err) {
-    showStatus('Error: Could not load head.docx. Make sure it is uploaded in the same GitHub folder.', 'error');
+    showStatus('Error: Could not load head.docx from the server.', 'error');
     formWrap.innerHTML = '<div class="no-file-msg">Template missing. Please check your repository.</div>';
   }
 });
@@ -259,16 +306,16 @@ function setMode(mode){
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CALENDAR & UI LOGIC
+// CALENDAR LOGIC
 // ─────────────────────────────────────────────────────────────────
 function renderCal(id){
   const st=CAL[id], pop=document.getElementById('cp_'+id);
   if(!pop||!st) return;
   const y=st.year,m=st.month,fd=new Date(y,m,1).getDay();
   const dim=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate(),now=new Date();
-  let h=`<div class="cal-nav"><button class="cpb" data-id="${id}" data-dir="-1">&#8249;</button>
+  let h=`<div class="cal-nav"><button type="button" class="cpb" data-id="${id}" data-dir="-1">&#8249;</button>
     <span class="mnth">${MONTHS[m]} ${y}</span>
-    <button class="cpb" data-id="${id}" data-dir="1">&#8250;</button></div>
+    <button type="button" class="cpb" data-id="${id}" data-dir="1">&#8250;</button></div>
     <div class="cal-grid">${['S','M','T','W','T','F','S'].map(x=>`<div class="dn">${x}</div>`).join('')}`;
   for(let i=0;i<fd;i++) h+=`<div class="cd om">${prev-fd+1+i}</div>`;
   for(let d=1;d<=dim;d++){
@@ -301,50 +348,63 @@ function openCal(id){
   CAL[id].year=ref.getFullYear(); CAL[id].month=ref.getMonth();
   renderCal(id);
   document.getElementById('cp_'+id)?.classList.add('open');
-  document.getElementById('dr_'+id)?.classList.add('active');
+  document.getElementById('dt_'+id)?.classList.add('active');
   CAL[id].open=true;
 }
 function closeCal(id){
   document.getElementById('cp_'+id)?.classList.remove('open');
-  document.getElementById('dr_'+id)?.classList.remove('active');
+  document.getElementById('dt_'+id)?.classList.remove('active');
   if(CAL[id]) CAL[id].open=false;
 }
 function closeAllCals(){ dateFields().forEach(f=>closeCal(f.id)); }
 document.addEventListener('click',closeAllCals);
 
+// ─────────────────────────────────────────────────────────────────
+// FORM BUILDER (Using CSS Grid layout)
+// ─────────────────────────────────────────────────────────────────
 function buildForm(){
   formWrap.innerHTML='';
   getGroups().forEach(group=>{
     const sec=document.createElement('div'); sec.className='form-section';
     const lbl=document.createElement('div'); lbl.className='sec-lbl'; lbl.textContent=group.section;
     sec.appendChild(lbl);
+    
+    const grid=document.createElement('div'); grid.className='grid-wrap';
+    
     group.fields.forEach(f=>{
+      const col = document.createElement('div'); col.className = 'field-col';
       if(f.type==='date'){
         if(!CAL[f.id]) CAL[f.id]={date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth()};
-        const row=document.createElement('div'); row.className='date-row'; row.id='dr_'+f.id;
-        row.innerHTML=`<div class="dr-label">${f.label}</div>
-          <div class="date-trigger" id="dt_${f.id}">
-            <span class="dval empty" id="dv_${f.id}">Pick a date</span>
-            <span class="darr">&#x25BE;</span>
-          </div><div class="cal-pop" id="cp_${f.id}"></div>`;
-        sec.appendChild(row);
+        col.innerHTML=`
+          <label>${f.label}</label>
+          <div style="position:relative;">
+            <div class="date-trigger" id="dt_${f.id}">
+              <span class="dval empty" id="dv_${f.id}">Pick a date</span>
+              <span class="darr">&#x25BE;</span>
+            </div>
+            <div class="cal-pop" id="cp_${f.id}"></div>
+          </div>`;
+        grid.appendChild(col);
         requestAnimationFrame(()=>{
           document.getElementById('dt_'+f.id)?.addEventListener('click',e=>{
             e.stopPropagation(); CAL[f.id]?.open?closeCal(f.id):openCal(f.id);
           });
         });
       } else {
-        const row=document.createElement('div'); row.className='field-row';
         const label=document.createElement('label'); label.htmlFor=f.id; label.textContent=f.label;
         const input=document.createElement('input'); input.type='text'; input.id=f.id;
         if(f.def){ input.value=f.def; input.classList.add('pre'); input.addEventListener('focus',()=>input.classList.remove('pre')); }
         else input.placeholder='Enter value\u2026';
-        row.appendChild(label); row.appendChild(input); sec.appendChild(row);
+        
+        // Make Subject take up full width (span 2 columns) if needed, but lets keep it uniform for now.
+        if (f.id === 'subject') col.style.gridColumn = '1 / -1'; 
+        
+        col.appendChild(label); col.appendChild(input); grid.appendChild(col);
       }
     });
+    sec.appendChild(grid);
     formWrap.appendChild(sec);
   });
-  const sp=document.createElement('div'); sp.style.height='4px'; formWrap.appendChild(sp);
 }
 
 btnClear.addEventListener('click',()=>{
@@ -363,7 +423,7 @@ btnClear.addEventListener('click',()=>{
 });
 
 // ─────────────────────────────────────────────────────────────────
-// DOCXTEMPLATER LOGIC (Handles empty fields perfectly)
+// DOCXTEMPLATER LOGIC 
 // ─────────────────────────────────────────────────────────────────
 btnInject.addEventListener('click',async()=>{
   if(!templateBuffer){showStatus('Template not loaded yet.','error');return;}
@@ -371,40 +431,33 @@ btnInject.addEventListener('click',async()=>{
   const data = {};
   const histEntry = {mode: currentMode};
 
-  // 1. ADD CONDITIONAL LOGIC BASED ON MODE
   data.isTyre = (currentMode === 'tyre');
   data.isBattery = (currentMode === 'battery');
 
-  // 2. GATHER FORM DATA (Replaces blank fields with an empty string)
   allFields().forEach(f => {
     if(f.type === 'date') {
       const st = CAL[f.id];
       const val = (st && st.date) ? (f.fmt === 'slash' ? fmtSlash(st.date) : fmtDash(st.date)) : '';
-      data[f.id] = val; // Ensures it's an empty string if blank
+      data[f.id] = val; 
       if(val) histEntry[f.id] = val;
     } else {
       const val = document.getElementById(f.id)?.value?.trim() || '';
-      data[f.id] = val; // Ensures it's an empty string if blank
+      data[f.id] = val; 
       if(val) histEntry[f.id] = val;
     }
   });
 
-  // Only proceed if they filled out something other than the defaults
   if(Object.keys(histEntry).length <= 2){showStatus('Fill in at least one field.','error');return;}
 
   btnInject.disabled=true; btnInject.textContent='Processing\u2026'; clearStatus();
 
   try {
-    // Clone the buffer so we can reuse it later without reloading the page
     const zip = new window.PizZip(templateBuffer.slice(0)); 
     
     const doc = new window.docxtemplater(zip, { 
         paragraphLoop: true, 
         linebreaks: true,
-        // This is the magic rule that stops "undefined" from printing
-        nullGetter: function() {
-            return ""; 
-        }
+        nullGetter: function() { return ""; }
     });
 
     doc.render(data);
@@ -414,8 +467,13 @@ btnInject.addEventListener('click',async()=>{
         mimeType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    const reg = data.regNo ? `_${data.regNo}` : '';
-    const name = `LetterHead_${currentMode}${reg}_filled.docx`;
+    // Generate Dynamic Filename: Regno_Make_lethead.docx
+    const regNoClean = (data.regNo || 'NoReg').replace(/[^a-zA-Z0-9]/g, '');
+    const makeClean = currentMode === 'tyre' 
+        ? (data.tyreMake || 'Make').replace(/[^a-zA-Z0-9]/g, '') 
+        : (data.battMake || 'Make').replace(/[^a-zA-Z0-9]/g, '');
+        
+    const name = `${regNoClean}_${makeClean}_lethead.docx`;
     saveAs(blob, name);
     
     showStatus('\u2713 Downloaded: '+name,'success');
@@ -428,11 +486,15 @@ btnInject.addEventListener('click',async()=>{
 });
 
 // ─────────────────────────────────────────────────────────────────
-// HISTORY LOGIC
+// HISTORY & SEARCH LOGIC
 // ─────────────────────────────────────────────────────────────────
 function saveHistory(entry){
+  // Check if an entry with this RegNo already exists, if so remove it to push the new one to the top
+  if(entry.regNo) {
+    HISTORY = HISTORY.filter(h => h.regNo !== entry.regNo);
+  }
   HISTORY.unshift(entry);
-  if(HISTORY.length>30) HISTORY=HISTORY.slice(0,30);
+  if(HISTORY.length>50) HISTORY=HISTORY.slice(0,50); // Keep last 50
   try{localStorage.setItem('inj_hist',JSON.stringify(HISTORY));}catch(e){}
   renderHistory();
 }
@@ -444,25 +506,50 @@ function deleteHistory(idx){
 function clearAllHistory(){
   HISTORY=[];
   try{localStorage.removeItem('inj_hist');}catch(e){}
+  historySearch.value = '';
   renderHistory();
 }
-function renderHistory(){
+
+// Live search listener
+historySearch.addEventListener('input', () => renderHistory(historySearch.value));
+
+function renderHistory(filterText = ''){
   if(!HISTORY.length){ histWrap.classList.remove('show'); return; }
   histWrap.classList.add('show');
   histList.innerHTML='';
-  HISTORY.forEach((entry,i)=>{
+  
+  const searchLower = filterText.toLowerCase().trim();
+
+  HISTORY.forEach((entry, originalIdx)=>{
+    // Title is now primarily Registration Number
+    const primaryName = entry.regNo || entry.custName || 'Unknown Registration';
+    const subMeta = entry.custName || entry.date || '';
+    
+    // Search filtering
+    if(searchLower) {
+        const searchString = `${primaryName} ${subMeta} ${entry.mode}`.toLowerCase();
+        if(!searchString.includes(searchLower)) return; // Skip if it doesn't match
+    }
+
     const item=document.createElement('div'); item.className='hist-item';
-    const name=entry.custName||entry.vehMake||entry.regNo||('Entry '+(i+1));
-    const meta=[entry.date||'', entry.regNo||''].filter(Boolean).join(' · ');
     item.innerHTML=`<div class="hi-info">
-      <div class="hi-name">${escHtml(name)}</div>
-      <div class="hi-meta"><span class="hi-mode ${entry.mode}">${entry.mode}</span>${escHtml(meta)}</div>
-    </div><button class="hi-del" data-idx="${i}">&#x2715;</button>`;
-    item.querySelector('.hi-del').addEventListener('click',e=>{e.stopPropagation();deleteHistory(i);});
+      <div class="hi-name">${escHtml(primaryName)}</div>
+      <div class="hi-meta"><span class="hi-mode ${entry.mode}">${entry.mode}</span>${escHtml(subMeta)}</div>
+    </div><button type="button" class="hi-del" data-idx="${originalIdx}">&#x2715;</button>`;
+    
+    item.querySelector('.hi-del').addEventListener('click',e=>{
+        e.stopPropagation();
+        deleteHistory(originalIdx);
+    });
     item.addEventListener('click',()=>fillFromHistory(entry));
     histList.appendChild(item);
   });
+  
+  if(histList.innerHTML === '') {
+      histList.innerHTML = '<div style="text-align:center;font-size:12px;color:#9ca3af;padding:10px;">No matching entries found.</div>';
+  }
 }
+
 function fillFromHistory(entry){
   if(entry.mode) setMode(entry.mode);
   dateFields().forEach(f=>{
@@ -482,6 +569,9 @@ function fillFromHistory(entry){
     if(inp&&entry[f.id]!==undefined){ inp.value=entry[f.id]; inp.classList.remove('pre'); }
   });
   clearStatus();
+  
+  // Optional: Scroll down to the form after clicking
+  formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
