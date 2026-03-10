@@ -40,16 +40,18 @@ body {
 .card-header h1 { font-size: 20px; font-weight: 600; color: #111827; letter-spacing: -0.01em; }
 .card-header p { font-size: 14px; color: #6b7280; margin-top: 4px; }
 
-/* Mode picker (Tabs) */
-.mode-wrap { padding: 20px 32px 0; }
-.mode-btns { display: flex; gap: 8px; background: #f3f4f6; padding: 6px; border-radius: 10px; }
+/* Purane wale Black Mode picker (Tabs) */
+.mode-wrap { margin: 20px 32px 0; display: none; }
+.mode-wrap.show { display: block; }
+.mode-lbl { font-size: 9.5px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #9ca3af; margin-bottom: 7px; }
+.mode-btns { display: flex; gap: 6px; }
 .mode-btn { 
-  flex: 1; height: 40px; border-radius: 8px; border: none; 
-  background: transparent; font-size: 14px; font-weight: 600; color: #6b7280; 
-  cursor: pointer; transition: all 0.2s ease; 
+  flex: 1; height: 35px; border-radius: 7px; border: 1.5px solid #e5e7eb; 
+  background: #f9fafb; font-size: 13px; font-weight: 500; color: #6b7280; 
+  cursor: pointer; transition: all .18s; 
 }
-.mode-btn:hover { color: #111827; }
-.mode-btn.active { background: #ffffff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.mode-btn:hover { border-color: #9ca3af; color: #111827; }
+.mode-btn.active { background: #1a1a1a; border-color: #1a1a1a; color: #fff; }
 
 /* History Section & Search */
 .history-wrap { padding: 24px 32px 32px; display: none; }
@@ -64,7 +66,7 @@ body {
   padding: 0 14px; font-size: 14px; margin-bottom: 16px; outline: none; transition: border-color 0.2s;
   background: #f9fafb;
 }
-.search-input:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.search-input:focus { border-color: #1a1a1a; background: #fff; box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1); }
 
 .hist-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
 .hist-item { 
@@ -89,38 +91,54 @@ body {
 
 .field-col { display: flex; flex-direction: column; gap: 6px; }
 .field-col label { font-size: 13px; font-weight: 500; color: #374151; }
-.field-col input, .field-col select { 
+.field-col input { 
   height: 42px; border: 1px solid #d1d5db; border-radius: 8px; 
   padding: 0 14px; font-size: 14px; color: #111827; background: #fff; 
   transition: border-color 0.2s, box-shadow 0.2s; width: 100%; outline: none;
   font-family: 'Inter', sans-serif;
 }
 .field-col input::placeholder { color: #9ca3af; }
-.field-col input:focus, .field-col select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.field-col input:focus { border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1); }
 .field-col input.pre { color: #6b7280; }
 
-/* Customizing Select appearance */
-.field-col select {
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239CA3AF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px top 50%;
-  background-size: 10px auto;
-  padding-right: 32px;
+/* Custom Animated Select / Dropdown */
+.custom-select-wrap { position: relative; user-select: none; }
+.custom-select-trigger { 
+  height: 42px; border: 1px solid #d1d5db; border-radius: 8px; 
+  padding: 0 14px; background: #fff; display: flex; align-items: center; 
+  justify-content: space-between; cursor: pointer; transition: all 0.2s ease; 
 }
-.field-col select:invalid { color: #9ca3af; }
+.custom-select-trigger:hover { border-color: #9ca3af; }
+.custom-select-trigger.active { border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1); }
+.cs-val { font-size: 14px; color: #111827; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 10px; }
+.cs-val.empty { color: #9ca3af; }
+.cs-arr { font-size: 10px; color: #9ca3af; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.custom-select-trigger.active .cs-arr { transform: rotate(180deg); color:#1a1a1a; }
+
+.custom-select-opts { 
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 500; 
+  background: #fff; border: 1px solid #e5e7eb; border-radius: 8px; 
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1); max-height: 220px; overflow-y: auto; 
+  opacity: 0; transform: translateY(-10px) scaleY(0.95); transform-origin: top; 
+  pointer-events: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+.custom-select-opts.open { opacity: 1; transform: translateY(0) scaleY(1); pointer-events: all; }
+.cs-opt { padding: 10px 14px; font-size: 13px; color: #374151; cursor: pointer; transition: background 0.15s, color 0.15s; border-bottom: 1px solid #f9fafb;}
+.cs-opt:last-child { border-bottom: none; }
+.cs-opt:hover { background: #f3f4f6; color: #1a1a1a; font-weight: 500; }
 
 /* Date picker */
 .date-trigger { 
   height: 42px; display: flex; align-items: center; padding: 0 14px; 
   cursor: pointer; user-select: none; gap: 8px; border: 1px solid #d1d5db; 
-  border-radius: 8px; background: #fff; transition: border-color 0.2s; position: relative;
+  border-radius: 8px; background: #fff; transition: all 0.2s ease; position: relative;
 }
-.date-trigger.active { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.date-trigger:hover { border-color: #9ca3af; }
+.date-trigger.active { border-color: #1a1a1a; box-shadow: 0 0 0 3px rgba(26, 26, 26, 0.1); }
 .dval { font-size: 14px; color: #111827; flex: 1; }
 .dval.empty { color: #9ca3af; }
-.darr { font-size: 10px; color: #9ca3af; transition: transform 0.2s; }
-.date-trigger.active .darr { transform: rotate(180deg); }
+.darr { font-size: 10px; color: #9ca3af; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.date-trigger.active .darr { transform: rotate(180deg); color: #1a1a1a;}
 
 /* Calendar Popup */
 .cal-pop { 
@@ -135,7 +153,7 @@ body {
 .mnth { font-size: 14px; font-weight: 600; color: #111827; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
 .mnth:hover { background: #f3f4f6; }
 .cal-nav button { background: none; border: 1px solid #e5e7eb; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #4b5563; transition: background 0.2s; }
-.cal-nav button:hover { background: #f3f4f6; }
+.cal-nav button:hover { background: #f3f4f6; color: #111827;}
 
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
 .cal-grid.years { grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -143,8 +161,8 @@ body {
 .cd { font-size: 13px; text-align: center; padding: 8px 2px; border-radius: 6px; cursor: pointer; color: #374151; transition: all 0.15s; }
 .cal-grid.years .cd { padding: 12px 4px; font-weight: 500; }
 .cd:hover { background: #f3f4f6; }
-.cd.sel { background: #111827 !important; color: #fff !important; font-weight: 500; }
-.cd.today { font-weight: 700; color: #3b82f6; }
+.cd.sel { background: #1a1a1a !important; color: #fff !important; font-weight: 500; }
+.cd.today { font-weight: 700; color: #1a1a1a; text-decoration: underline;}
 .cd.om { color: #d1d5db; pointer-events: none; }
 
 /* Status & Actions */
@@ -153,12 +171,12 @@ body {
 .status.success { background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; display: block; }
 
 .actions { display: flex; gap: 12px; padding: 24px 32px 32px; border-top: 1px solid #f3f4f6; margin-top: 24px; }
-.btn { flex: 1; height: 48px; border-radius: 8px; border: none; font-size: 15px; font-family: 'Inter', sans-serif; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-.btn-inject { background: #111827; color: #fff; }
-.btn-inject:hover { background: #374151; }
+.btn { flex: 1; height: 48px; border-radius: 8px; border: none; font-size: 15px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+.btn-inject { background: #1a1a1a; color: #fff; }
+.btn-inject:hover { background: #333; }
 .btn-inject:disabled { background: #9ca3af; cursor: not-allowed; }
 .btn-clear { background: #f3f4f6; color: #4b5563; }
-.btn-clear:hover { background: #e5e7eb; }
+.btn-clear:hover { background: #e5e7eb; color: #111827; }
 .no-file-msg { text-align: center; font-size: 14px; color: #6b7280; padding: 40px; font-weight: 500; }
 </style>
 </head>
@@ -169,7 +187,8 @@ body {
     <p>Fill out the form below to automatically generate your clean DOCX report.</p>
   </div>
 
-  <div class="mode-wrap">
+  <div class="mode-wrap" id="modeWrap">
+    <div class="mode-lbl">Select Letter Type</div>
     <div class="mode-btns">
       <button class="mode-btn active" id="modeTyre"    onclick="setMode('tyre')">Tyre Report</button>
       <button class="mode-btn"        id="modeBattery" onclick="setMode('battery')">Battery Report</button>
@@ -214,7 +233,7 @@ const battMakes = ["Exide", "Amaron"];
 const tyrePositions = ["Front Left", "Front Right", "Rear Left", "Rear Right", "Spare Tyre"];
 
 // ─────────────────────────────────────────────────────────────────
-// FIELDS (Including defaults & dropdowns)
+// FIELDS
 // ─────────────────────────────────────────────────────────────────
 const TYRE_FIELDS = [
   { section:"Letter Details", fields:[
@@ -294,6 +313,7 @@ const actionsBar = document.getElementById('actionsBar');
 const btnClear   = document.getElementById('btnClear');
 const btnInject  = document.getElementById('btnInject');
 const statusEl   = document.getElementById('status');
+const modeWrap   = document.getElementById('modeWrap');
 const histWrap   = document.getElementById('histWrap');
 const histList   = document.getElementById('histList');
 const historySearch = document.getElementById('historySearch');
@@ -317,7 +337,8 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!response.ok) throw new Error('File not found');
     templateBuffer = await response.arrayBuffer();
     
-    setMode('tyre'); // Default init
+    modeWrap.classList.add('show');
+    setMode('tyre'); 
     clearStatus();
   } catch (err) {
     showStatus('Error: Could not load head.docx from the server.', 'error');
@@ -347,7 +368,23 @@ function setMode(mode){
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CALENDAR LOGIC (Now with Year Switcher)
+// CLOSE ALL POPUPS SCRIPT
+// ─────────────────────────────────────────────────────────────────
+function closeAllPopups() {
+  // Close Calendars
+  dateFields().forEach(f=>{
+    document.getElementById('cp_'+f.id)?.classList.remove('open');
+    document.getElementById('dt_'+f.id)?.classList.remove('active');
+    if(CAL[f.id]) CAL[f.id].open=false;
+  });
+  // Close Custom Selects
+  document.querySelectorAll('.custom-select-opts.open').forEach(el => el.classList.remove('open'));
+  document.querySelectorAll('.custom-select-trigger.active').forEach(el => el.classList.remove('active'));
+}
+document.addEventListener('click', closeAllPopups);
+
+// ─────────────────────────────────────────────────────────────────
+// CALENDAR LOGIC (With Year Switcher)
 // ─────────────────────────────────────────────────────────────────
 function renderCal(id){
   const st=CAL[id], pop=document.getElementById('cp_'+id);
@@ -355,7 +392,6 @@ function renderCal(id){
   const y=st.year,m=st.month,now=new Date();
 
   if(st.view === 'years') {
-    // Render Years View
     const startYear = y - 7;
     let h=`<div class="cal-nav">
       <button type="button" class="cpb-y" data-id="${id}" data-dir="-15">&#8249;</button>
@@ -369,13 +405,11 @@ function renderCal(id){
     h+='</div>';
     pop.innerHTML=h;
     
-    // Attach year navigation
     pop.querySelectorAll('.cpb-y').forEach(b=>b.addEventListener('click',e=>{
       e.stopPropagation();
       CAL[b.dataset.id].year += parseInt(b.dataset.dir);
       renderCal(b.dataset.id);
     }));
-    // Attach year selection
     pop.querySelectorAll('.cd').forEach(el=>el.addEventListener('click',e=>{
       e.stopPropagation();
       CAL[el.dataset.id].year = parseInt(el.dataset.y);
@@ -384,7 +418,6 @@ function renderCal(id){
     }));
 
   } else {
-    // Render Days View
     const fd=new Date(y,m,1).getDay();
     const dim=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
     
@@ -403,20 +436,17 @@ function renderCal(id){
     h+='</div>';
     pop.innerHTML=h;
 
-    // Attach Month Navigation
     pop.querySelectorAll('.cpb').forEach(b=>b.addEventListener('click',e=>{
       e.stopPropagation();
       const s=CAL[b.dataset.id],dir=parseInt(b.dataset.dir);
       s.month+=dir; if(s.month<0){s.month=11;s.year--;} if(s.month>11){s.month=0;s.year++;}
       renderCal(b.dataset.id);
     }));
-    // Attach switch to Years View
     pop.querySelector('.ts').addEventListener('click',e=>{
       e.stopPropagation();
       CAL[e.target.dataset.id].view = 'years';
       renderCal(e.target.dataset.id);
     });
-    // Attach Date Selection
     pop.querySelectorAll('.cd:not(.om)').forEach(el=>el.addEventListener('click',e=>{
       e.stopPropagation();
       const s=CAL[el.dataset.id];
@@ -424,14 +454,14 @@ function renderCal(id){
       const f=allFields().find(f=>f.id===el.dataset.id);
       const dv=document.getElementById('dv_'+el.dataset.id);
       if(dv){ dv.textContent=f.fmt==='slash'?fmtSlash(s.date):fmtDash(s.date); dv.classList.remove('empty'); }
-      closeCal(el.dataset.id); 
+      closeAllPopups();
       renderCal(el.dataset.id);
     }));
   }
 }
 
 function openCal(id){
-  closeAllCals();
+  closeAllPopups();
   const ref=CAL[id]?.date||new Date();
   if(!CAL[id]) CAL[id]={date:null,open:false,view:'days'};
   CAL[id].year=ref.getFullYear(); CAL[id].month=ref.getMonth(); CAL[id].view='days';
@@ -440,16 +470,9 @@ function openCal(id){
   document.getElementById('dt_'+id)?.classList.add('active');
   CAL[id].open=true;
 }
-function closeCal(id){
-  document.getElementById('cp_'+id)?.classList.remove('open');
-  document.getElementById('dt_'+id)?.classList.remove('active');
-  if(CAL[id]) CAL[id].open=false;
-}
-function closeAllCals(){ dateFields().forEach(f=>closeCal(f.id)); }
-document.addEventListener('click',closeAllCals);
 
 // ─────────────────────────────────────────────────────────────────
-// FORM BUILDER (Inputs & Dropdowns)
+// FORM BUILDER (Custom Animated Dropdowns inside CSS Grid)
 // ─────────────────────────────────────────────────────────────────
 function buildForm(){
   formWrap.innerHTML='';
@@ -478,19 +501,53 @@ function buildForm(){
         grid.appendChild(col);
         requestAnimationFrame(()=>{
           document.getElementById('dt_'+f.id)?.addEventListener('click',e=>{
-            e.stopPropagation(); CAL[f.id]?.open?closeCal(f.id):openCal(f.id);
+            e.stopPropagation(); 
+            const isOpen = document.getElementById('cp_'+f.id).classList.contains('open');
+            if(isOpen) closeAllPopups(); else openCal(f.id);
           });
         });
       } else if(f.type === 'select') {
-        const label=document.createElement('label'); label.htmlFor=f.id; label.textContent=f.label;
-        const select=document.createElement('select'); select.id=f.id;
+        col.innerHTML=`
+          <label>${f.label}</label>
+          <div class="custom-select-wrap">
+            <div class="custom-select-trigger" id="cst_${f.id}">
+              <span class="cs-val empty" id="csv_${f.id}">Select ${f.label}...</span>
+              <span class="cs-arr">&#x25BE;</span>
+            </div>
+            <div class="custom-select-opts" id="cso_${f.id}">
+              ${f.options.map(o => `<div class="cs-opt" data-val="${o}">${o}</div>`).join('')}
+            </div>
+            <input type="hidden" id="${f.id}" value="">
+          </div>`;
+        grid.appendChild(col);
         
-        // Add a default disabled placeholder option
-        let optsHTML = `<option value="" disabled selected>Select ${f.label}...</option>`;
-        optsHTML += f.options.map(o => `<option value="${o}">${o}</option>`).join('');
-        select.innerHTML = optsHTML;
-        
-        col.appendChild(label); col.appendChild(select); grid.appendChild(col);
+        requestAnimationFrame(()=>{
+          const trig = document.getElementById('cst_'+f.id);
+          const opts = document.getElementById('cso_'+f.id);
+          const valEl = document.getElementById('csv_'+f.id);
+          const hidInp = document.getElementById(f.id);
+          
+          trig.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isOpen = opts.classList.contains('open');
+            closeAllPopups();
+            if(!isOpen) {
+              opts.classList.add('open');
+              trig.classList.add('active');
+            }
+          });
+          
+          opts.querySelectorAll('.cs-opt').forEach(opt => {
+            opt.addEventListener('click', (e) => {
+              e.stopPropagation();
+              const val = opt.getAttribute('data-val');
+              valEl.textContent = val;
+              valEl.classList.remove('empty');
+              hidInp.value = val;
+              closeAllPopups();
+            });
+          });
+        });
       } else {
         const label=document.createElement('label'); label.htmlFor=f.id; label.textContent=f.label;
         const input=document.createElement('input'); input.type='text'; input.id=f.id;
@@ -510,16 +567,22 @@ btnClear.addEventListener('click',()=>{
     if(f.type==='date'){
       if(CAL[f.id]) Object.assign(CAL[f.id],{date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth(),view:'days'});
       const dv=document.getElementById('dv_'+f.id);
-      if(dv){dv.textContent='Pick a date';dv.classList.add('empty');} closeCal(f.id);
+      if(dv){dv.textContent='Pick a date';dv.classList.add('empty');} 
     } else if (f.type==='select') {
-      const inp=document.getElementById(f.id);
-      if(inp) inp.selectedIndex = 0; // Reset to placeholder
+      const valEl = document.getElementById('csv_'+f.id);
+      const hidInp = document.getElementById(f.id);
+      if(valEl && hidInp) {
+        valEl.textContent = 'Select ' + f.label + '...';
+        valEl.classList.add('empty');
+        hidInp.value = '';
+      }
     } else {
       const inp=document.getElementById(f.id);
       if(!inp) return;
       if(f.def){inp.value=f.def;inp.classList.add('pre');} else inp.value='';
     }
   });
+  closeAllPopups();
   clearStatus();
 });
 
@@ -666,8 +729,18 @@ function fillFromHistory(entry){
   });
   allFields().filter(f=>f.type==='text' || f.type==='select').forEach(f=>{
     const inp=document.getElementById(f.id);
-    if(inp && entry[f.id]){ inp.value=entry[f.id]; inp.classList.remove('pre'); }
+    if(f.type === 'select') {
+      const valEl = document.getElementById('csv_'+f.id);
+      if(inp && valEl && entry[f.id]) {
+        inp.value = entry[f.id];
+        valEl.textContent = entry[f.id];
+        valEl.classList.remove('empty');
+      }
+    } else {
+      if(inp && entry[f.id]!==undefined){ inp.value=entry[f.id]; inp.classList.remove('pre'); }
+    }
   });
+  closeAllPopups();
   clearStatus();
 }
 
