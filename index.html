@@ -819,20 +819,43 @@
 
     .tools-grid {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 14px;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    @keyframes shine {
+      0%   { transform: translateX(-100%) skewX(-15deg); }
+      100% { transform: translateX(250%) skewX(-15deg); }
     }
 
     .tool-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius-lg);
-      padding: 18px 20px;
+      padding: 16px;
+      aspect-ratio: 1 / 1;
       transition: all var(--tr);
       cursor: pointer;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-card::after {
+      content: '';
+      position: absolute;
+      top: 0; left: 0;
+      width: 40%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.13), transparent);
+      transform: translateX(-100%) skewX(-15deg);
+      pointer-events: none;
+    }
+
+    .tool-card.live::after {
+      animation: shine 3.6s ease-in-out infinite;
     }
 
     .tool-card:hover {
@@ -851,24 +874,27 @@
     }
 
     .tool-icon {
-      width: 36px;
-      height: 36px;
-      border-radius: 10px;
+      width: 32px;
+      height: 32px;
+      border-radius: 9px;
       display: flex;
       align-items: center;
       justify-content: center;
+      flex-shrink: 0;
     }
 
     .tool-name {
-      font-size: 13.5px;
+      font-size: 12.5px;
       font-weight: 600;
       color: var(--text);
+      line-height: 1.3;
     }
 
     .tool-desc {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text2);
-      line-height: 1.5;
+      line-height: 1.45;
+      display: none;
     }
 
     .tag {
@@ -1212,68 +1238,73 @@
         <div class="tools-grid">
           <div class="tool-card live" onclick="switchView('alcazar')">
             <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
             </div>
-            <div class="tool-name">Alcazar Form</div>
-            <div class="tool-desc">Generate warranty claim PPTs with photo auto-fill.</div>
-            <span class="tag tag-live">Active</span>
+            <div>
+              <div class="tool-name">Alcazar Form</div>
+              <span class="tag tag-live" style="margin-top:5px">PPT</span>
+            </div>
           </div>
 
           <div class="tool-card live" onclick="switchView('keycode')">
             <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2" />
-                <path d="M7 11V7a5 5 0 0110 0v4" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="11" width="18" height="11" rx="2"/>
+                <path d="M7 11V7a5 5 0 0110 0v4"/>
               </svg>
             </div>
-            <div class="tool-name">Key Code Form</div>
-            <div class="tool-desc">Exort multiple vehicle Key Code requests to Excel.</div>
-            <span class="tag tag-live">Active</span>
+            <div>
+              <div class="tool-name">Key Code Form</div>
+              <span class="tag tag-live" style="margin-top:5px">XLS</span>
+            </div>
           </div>
 
           <div class="tool-card live" onclick="switchView('letterheads')">
             <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
               </svg>
             </div>
-            <div class="tool-name">Letter Heads</div>
-            <div class="tool-desc">Generate professional letter heads.</div>
-            <span class="tag tag-live">Active</span>
+            <div>
+              <div class="tool-name">Letter Heads</div>
+              <span class="tag tag-live" style="margin-top:5px">DOCX</span>
+            </div>
           </div>
 
           <div class="tool-card live" onclick="switchView('pwareg')">
             <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
                 <polyline points="14 2 14 8 20 8"/>
                 <line x1="8" y1="13" x2="16" y2="13"/>
                 <line x1="8" y1="17" x2="13" y2="17"/>
               </svg>
             </div>
-            <div class="tool-name">PWA Regular</div>
-            <div class="tool-desc">Generate Prior Work Approval Excel reports.</div>
-            <span class="tag tag-live">Active</span>
+            <div>
+              <div class="tool-name">PWA Regular</div>
+              <span class="tag tag-live" style="margin-top:5px">XLSX</span>
+            </div>
           </div>
 
           <div class="tool-card coming">
             <div class="tool-icon" style="background:var(--surface2);color:var(--text3)">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                <polyline points="14 2 14 8 20 8" />
-                <line x1="16" y1="13" x2="8" y2="13" />
-                <line x1="16" y1="17" x2="8" y2="17" />
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
               </svg>
             </div>
-            <div class="tool-name">Job Card Gen</div>
-            <div class="tool-desc">Generate PDF job cards for service.</div>
-            <span class="tag tag-soon">Soon</span>
+            <div>
+              <div class="tool-name">Job Card Gen</div>
+              <span class="tag tag-soon" style="margin-top:5px">Soon</span>
+            </div>
           </div>
         </div>
 
