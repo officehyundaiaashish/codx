@@ -28,7 +28,7 @@ body {
   background: #ffffff; 
   border-radius: 12px; 
   width: 100%; 
-  max-width: 800px; /* Widened for 2-column layout */
+  max-width: 800px; 
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); 
   overflow: hidden;
 }
@@ -40,37 +40,35 @@ body {
 .card-header h1 { font-size: 20px; font-weight: 600; color: #111827; letter-spacing: -0.01em; }
 .card-header p { font-size: 14px; color: #6b7280; margin-top: 4px; }
 
-/* Mode picker */
-.mode-wrap { padding: 20px 32px 0; display: none; }
-.mode-wrap.show { display: block; }
-.mode-lbl { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; margin-bottom: 10px; letter-spacing: 0.05em; }
-.mode-btns { display: flex; gap: 12px; }
+/* Mode picker (Tabs) */
+.mode-wrap { padding: 20px 32px 0; }
+.mode-btns { display: flex; gap: 8px; background: #f3f4f6; padding: 6px; border-radius: 10px; }
 .mode-btn { 
-  flex: 1; height: 44px; border-radius: 8px; border: 1px solid #e5e7eb; 
-  background: #f9fafb; font-size: 14px; font-weight: 500; color: #4b5563; 
+  flex: 1; height: 40px; border-radius: 8px; border: none; 
+  background: transparent; font-size: 14px; font-weight: 600; color: #6b7280; 
   cursor: pointer; transition: all 0.2s ease; 
 }
-.mode-btn:hover { border-color: #d1d5db; background: #f3f4f6; color: #111827; }
-.mode-btn.active { background: #111827; border-color: #111827; color: #ffffff; }
+.mode-btn:hover { color: #111827; }
+.mode-btn.active { background: #ffffff; color: #111827; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
 /* History Section & Search */
-.history-wrap { padding: 24px 32px 0; display: none; border-top: 1px solid #f3f4f6; margin-top: 24px; }
+.history-wrap { padding: 24px 32px 32px; display: none; }
 .history-wrap.show { display: block; }
-.hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.hist-title { font-size: 12px; font-weight: 600; text-transform: uppercase; color: #9ca3af; letter-spacing: 0.05em; }
+.hist-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.hist-title { font-size: 14px; font-weight: 600; color: #111827; }
 .hist-clr { font-size: 13px; color: #9ca3af; cursor: pointer; background: none; border: none; transition: color 0.2s; padding: 0; }
 .hist-clr:hover { color: #ef4444; }
 
 .search-input { 
-  width: 100%; height: 38px; border: 1px solid #e5e7eb; border-radius: 8px; 
-  padding: 0 12px; font-size: 14px; margin-bottom: 12px; outline: none; transition: border-color 0.2s;
+  width: 100%; height: 42px; border: 1px solid #e5e7eb; border-radius: 8px; 
+  padding: 0 14px; font-size: 14px; margin-bottom: 16px; outline: none; transition: border-color 0.2s;
   background: #f9fafb;
 }
 .search-input:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 
-.hist-list { display: flex; flex-direction: column; gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px; }
+.hist-list { display: flex; flex-direction: column; gap: 8px; max-height: 400px; overflow-y: auto; padding-right: 4px; }
 .hist-item { 
-  display: flex; align-items: center; gap: 12px; padding: 12px 16px; 
+  display: flex; align-items: center; gap: 12px; padding: 14px 16px; 
   border: 1px solid #f3f4f6; border-radius: 8px; cursor: pointer; 
   background: #ffffff; transition: all 0.2s; 
 }
@@ -91,16 +89,28 @@ body {
 
 .field-col { display: flex; flex-direction: column; gap: 6px; }
 .field-col label { font-size: 13px; font-weight: 500; color: #374151; }
-.field-col input { 
+.field-col input, .field-col select { 
   height: 42px; border: 1px solid #d1d5db; border-radius: 8px; 
   padding: 0 14px; font-size: 14px; color: #111827; background: #fff; 
   transition: border-color 0.2s, box-shadow 0.2s; width: 100%; outline: none;
+  font-family: 'Inter', sans-serif;
 }
 .field-col input::placeholder { color: #9ca3af; }
-.field-col input:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+.field-col input:focus, .field-col select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
 .field-col input.pre { color: #6b7280; }
 
-/* Date picker simplified */
+/* Customizing Select appearance */
+.field-col select {
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239CA3AF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px top 50%;
+  background-size: 10px auto;
+  padding-right: 32px;
+}
+.field-col select:invalid { color: #9ca3af; }
+
+/* Date picker */
 .date-trigger { 
   height: 42px; display: flex; align-items: center; padding: 0 14px; 
   cursor: pointer; user-select: none; gap: 8px; border: 1px solid #d1d5db; 
@@ -122,12 +132,16 @@ body {
 }
 .cal-pop.open { opacity: 1; transform: translateY(0); pointer-events: all; }
 .cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
-.mnth { font-size: 14px; font-weight: 600; color: #111827; }
+.mnth { font-size: 14px; font-weight: 600; color: #111827; cursor: pointer; padding: 4px 8px; border-radius: 6px; transition: background 0.2s; }
+.mnth:hover { background: #f3f4f6; }
 .cal-nav button { background: none; border: 1px solid #e5e7eb; border-radius: 6px; width: 28px; height: 28px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 16px; color: #4b5563; transition: background 0.2s; }
 .cal-nav button:hover { background: #f3f4f6; }
+
 .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.cal-grid.years { grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .dn { font-size: 10px; font-weight: 600; text-transform: uppercase; color: #9ca3af; text-align: center; padding-bottom: 8px; }
 .cd { font-size: 13px; text-align: center; padding: 8px 2px; border-radius: 6px; cursor: pointer; color: #374151; transition: all 0.15s; }
+.cal-grid.years .cd { padding: 12px 4px; font-weight: 500; }
 .cd:hover { background: #f3f4f6; }
 .cd.sel { background: #111827 !important; color: #fff !important; font-weight: 500; }
 .cd.today { font-weight: 700; color: #3b82f6; }
@@ -155,17 +169,17 @@ body {
     <p>Fill out the form below to automatically generate your clean DOCX report.</p>
   </div>
 
-  <div class="mode-wrap" id="modeWrap">
-    <div class="mode-lbl">Select Letter Type</div>
+  <div class="mode-wrap">
     <div class="mode-btns">
       <button class="mode-btn active" id="modeTyre"    onclick="setMode('tyre')">Tyre Report</button>
       <button class="mode-btn"        id="modeBattery" onclick="setMode('battery')">Battery Report</button>
+      <button class="mode-btn"        id="modeHistory" onclick="setMode('history')">Saved Entries</button>
     </div>
   </div>
 
   <div class="history-wrap" id="histWrap">
     <div class="hist-header">
-      <span class="hist-title">Saved Entries</span>
+      <span class="hist-title">Saved Records</span>
       <button class="hist-clr" onclick="clearAllHistory()">Clear all</button>
     </div>
     <input type="text" id="historySearch" class="search-input" placeholder="Search by Reg. No or Name..." autocomplete="off">
@@ -183,12 +197,29 @@ body {
 
 <script>
 // ─────────────────────────────────────────────────────────────────
-// FIELDS (Including defaults)
+// LISTS & OPTIONS
+// ─────────────────────────────────────────────────────────────────
+const hyundaiModels = [
+  "Hyundai Santro", "Hyundai Santro Xing", "Hyundai Eon", "Hyundai Getz", 
+  "Hyundai i10", "Hyundai Grand i10", "Hyundai Grand i10 Nios", "Hyundai i20", 
+  "Hyundai Elite i20", "Hyundai i20 Active", "Hyundai Accent", "Hyundai Verna", 
+  "Hyundai Elantra", "Hyundai Sonata", "Hyundai Xcent", "Hyundai Aura", 
+  "Hyundai Terracan", "Hyundai Tucson", "Hyundai Santa Fe", "Hyundai Creta", 
+  "Hyundai Venue", "Hyundai Alcazar", "Hyundai Exter", "Hyundai Kona Electric", 
+  "Hyundai Ioniq 5"
+];
+
+const tyreMakes = ["Bridgestone", "Apollo", "Goodyear", "Ceat", "JK Tyre", "MRF", "Kumho"];
+const battMakes = ["Exide", "Amaron"];
+const tyrePositions = ["Front Left", "Front Right", "Rear Left", "Rear Right", "Spare Tyre"];
+
+// ─────────────────────────────────────────────────────────────────
+// FIELDS (Including defaults & dropdowns)
 // ─────────────────────────────────────────────────────────────────
 const TYRE_FIELDS = [
   { section:"Letter Details", fields:[
     { id:"date",       label:"Date",                 type:"date", fmt:"dash" },
-    { id:"recipient",  label:"Recipient (To)",       type:"text"  },
+    { id:"recipient",  label:"Recipient (To)",       type:"select", options: tyreMakes },
     { id:"subject",    label:"Subject",              type:"text", def:"Tyre Buldge Problem While Driving" }
   ]},
   { section:"Dealer & Customer Details", fields:[
@@ -200,15 +231,15 @@ const TYRE_FIELDS = [
   ]},
   { section:"Vehicle Details", fields:[
     { id:"regNo",      label:"Registration No.",     type:"text"  },
-    { id:"vehMake",    label:"Vehicle Make",         type:"text"  },
+    { id:"vehMake",    label:"Vehicle Make",         type:"select", options: hyundaiModels },
     { id:"chassis",    label:"Chassis No.",          type:"text"  },
     { id:"mileage",    label:"Mileage at Complaint", type:"text"  }
   ]},
   { section:"Tyre Details", fields:[
-    { id:"tyreMake",   label:"Tyre Make",            type:"text"  },
+    { id:"tyreMake",   label:"Tyre Make",            type:"select", options: tyreMakes },
     { id:"numItems",   label:"Number of Tyres",      type:"text"  },
     { id:"tyreSpec",   label:"Tyre Specification",   type:"text"  },
-    { id:"tyrePos",    label:"Tyre Position",        type:"text"  },
+    { id:"tyrePos",    label:"Tyre Position",        type:"select", options: tyrePositions },
     { id:"issue",      label:"Issue Reported",       type:"text"  }
   ]},
   { section:"Service Manager", fields:[
@@ -220,7 +251,7 @@ const TYRE_FIELDS = [
 const BATTERY_FIELDS = [
   { section:"Letter Details", fields:[
     { id:"date",       label:"Date",                 type:"date", fmt:"dash" },
-    { id:"recipient",  label:"Recipient (To)",       type:"text"  },
+    { id:"recipient",  label:"Recipient (To)",       type:"select", options: battMakes },
     { id:"subject",    label:"Subject",              type:"text", def:"Vehicle starting problem issue." }
   ]},
   { section:"Dealer & Customer Details", fields:[
@@ -232,12 +263,12 @@ const BATTERY_FIELDS = [
   ]},
   { section:"Vehicle Details", fields:[
     { id:"regNo",      label:"Registration No.",     type:"text"  },
-    { id:"vehMake",    label:"Vehicle Make",         type:"text"  },
+    { id:"vehMake",    label:"Vehicle Make",         type:"select", options: hyundaiModels },
     { id:"chassis",    label:"Chassis No.",          type:"text"  },
     { id:"mileage",    label:"Mileage at Complaint", type:"text"  }
   ]},
   { section:"Battery Details", fields:[
-    { id:"battMake",   label:"Battery Make",         type:"text"  },
+    { id:"battMake",   label:"Battery Make",         type:"select", options: battMakes },
     { id:"battSerial", label:"Battery Serial",       type:"text"  },
     { id:"battSpec",   label:"Battery Specification",type:"text"  },
     { id:"issue",      label:"Issue Reported",       type:"text"  }
@@ -263,7 +294,6 @@ const actionsBar = document.getElementById('actionsBar');
 const btnClear   = document.getElementById('btnClear');
 const btnInject  = document.getElementById('btnInject');
 const statusEl   = document.getElementById('status');
-const modeWrap   = document.getElementById('modeWrap');
 const histWrap   = document.getElementById('histWrap');
 const histList   = document.getElementById('histList');
 const historySearch = document.getElementById('historySearch');
@@ -287,10 +317,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     if (!response.ok) throw new Error('File not found');
     templateBuffer = await response.arrayBuffer();
     
-    modeWrap.classList.add('show');
-    actionsBar.style.display = 'flex';
-    buildForm();
-    renderHistory();
+    setMode('tyre'); // Default init
     clearStatus();
   } catch (err) {
     showStatus('Error: Could not load head.docx from the server.', 'error');
@@ -302,50 +329,112 @@ function setMode(mode){
   currentMode=mode;
   document.getElementById('modeTyre').classList.toggle('active',mode==='tyre');
   document.getElementById('modeBattery').classList.toggle('active',mode==='battery');
-  if(templateBuffer) buildForm();
+  document.getElementById('modeHistory').classList.toggle('active',mode==='history');
+  
+  if(mode === 'history') {
+    formWrap.style.display = 'none';
+    actionsBar.style.display = 'none';
+    histWrap.classList.add('show');
+    renderHistory();
+  } else {
+    histWrap.classList.remove('show');
+    formWrap.style.display = 'block';
+    if(templateBuffer) {
+      actionsBar.style.display = 'flex';
+      buildForm();
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────────
-// CALENDAR LOGIC
+// CALENDAR LOGIC (Now with Year Switcher)
 // ─────────────────────────────────────────────────────────────────
 function renderCal(id){
   const st=CAL[id], pop=document.getElementById('cp_'+id);
   if(!pop||!st) return;
-  const y=st.year,m=st.month,fd=new Date(y,m,1).getDay();
-  const dim=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate(),now=new Date();
-  let h=`<div class="cal-nav"><button type="button" class="cpb" data-id="${id}" data-dir="-1">&#8249;</button>
-    <span class="mnth">${MONTHS[m]} ${y}</span>
-    <button type="button" class="cpb" data-id="${id}" data-dir="1">&#8250;</button></div>
+  const y=st.year,m=st.month,now=new Date();
+
+  if(st.view === 'years') {
+    // Render Years View
+    const startYear = y - 7;
+    let h=`<div class="cal-nav">
+      <button type="button" class="cpb-y" data-id="${id}" data-dir="-15">&#8249;</button>
+      <span class="mnth ys">Select Year</span>
+      <button type="button" class="cpb-y" data-id="${id}" data-dir="15">&#8250;</button>
+    </div>
+    <div class="cal-grid years">`;
+    for(let i=0; i<15; i++){
+      h+=`<div class="cd ${startYear+i === y ? 'sel' : ''}" data-id="${id}" data-y="${startYear+i}">${startYear+i}</div>`;
+    }
+    h+='</div>';
+    pop.innerHTML=h;
+    
+    // Attach year navigation
+    pop.querySelectorAll('.cpb-y').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();
+      CAL[b.dataset.id].year += parseInt(b.dataset.dir);
+      renderCal(b.dataset.id);
+    }));
+    // Attach year selection
+    pop.querySelectorAll('.cd').forEach(el=>el.addEventListener('click',e=>{
+      e.stopPropagation();
+      CAL[el.dataset.id].year = parseInt(el.dataset.y);
+      CAL[el.dataset.id].view = 'days';
+      renderCal(el.dataset.id);
+    }));
+
+  } else {
+    // Render Days View
+    const fd=new Date(y,m,1).getDay();
+    const dim=new Date(y,m+1,0).getDate(),prev=new Date(y,m,0).getDate();
+    
+    let h=`<div class="cal-nav">
+      <button type="button" class="cpb" data-id="${id}" data-dir="-1">&#8249;</button>
+      <span class="mnth ts" data-id="${id}" title="Click to change year">${MONTHS[m]} ${y}</span>
+      <button type="button" class="cpb" data-id="${id}" data-dir="1">&#8250;</button>
+    </div>
     <div class="cal-grid">${['S','M','T','W','T','F','S'].map(x=>`<div class="dn">${x}</div>`).join('')}`;
-  for(let i=0;i<fd;i++) h+=`<div class="cd om">${prev-fd+1+i}</div>`;
-  for(let d=1;d<=dim;d++){
-    const iT=d===now.getDate()&&m===now.getMonth()&&y===now.getFullYear();
-    const iS=st.date&&d===st.date.getDate()&&m===st.date.getMonth()&&y===st.date.getFullYear();
-    h+=`<div class="cd${iT?' today':''}${iS?' sel':''}" data-id="${id}" data-d="${d}">${d}</div>`;
+    for(let i=0;i<fd;i++) h+=`<div class="cd om">${prev-fd+1+i}</div>`;
+    for(let d=1;d<=dim;d++){
+      const iT=d===now.getDate()&&m===now.getMonth()&&y===now.getFullYear();
+      const iS=st.date&&d===st.date.getDate()&&m===st.date.getMonth()&&y===st.date.getFullYear();
+      h+=`<div class="cd${iT?' today':''}${iS?' sel':''}" data-id="${id}" data-d="${d}">${d}</div>`;
+    }
+    h+='</div>';
+    pop.innerHTML=h;
+
+    // Attach Month Navigation
+    pop.querySelectorAll('.cpb').forEach(b=>b.addEventListener('click',e=>{
+      e.stopPropagation();
+      const s=CAL[b.dataset.id],dir=parseInt(b.dataset.dir);
+      s.month+=dir; if(s.month<0){s.month=11;s.year--;} if(s.month>11){s.month=0;s.year++;}
+      renderCal(b.dataset.id);
+    }));
+    // Attach switch to Years View
+    pop.querySelector('.ts').addEventListener('click',e=>{
+      e.stopPropagation();
+      CAL[e.target.dataset.id].view = 'years';
+      renderCal(e.target.dataset.id);
+    });
+    // Attach Date Selection
+    pop.querySelectorAll('.cd:not(.om)').forEach(el=>el.addEventListener('click',e=>{
+      e.stopPropagation();
+      const s=CAL[el.dataset.id];
+      s.date=new Date(s.year,s.month,parseInt(el.dataset.d));
+      const f=allFields().find(f=>f.id===el.dataset.id);
+      const dv=document.getElementById('dv_'+el.dataset.id);
+      if(dv){ dv.textContent=f.fmt==='slash'?fmtSlash(s.date):fmtDash(s.date); dv.classList.remove('empty'); }
+      closeCal(el.dataset.id); 
+      renderCal(el.dataset.id);
+    }));
   }
-  h+='</div>';
-  pop.innerHTML=h;
-  pop.querySelectorAll('.cpb').forEach(b=>b.addEventListener('click',e=>{
-    e.stopPropagation();
-    const s=CAL[b.dataset.id],dir=parseInt(b.dataset.dir);
-    s.month+=dir; if(s.month<0){s.month=11;s.year--;} if(s.month>11){s.month=0;s.year++;}
-    renderCal(b.dataset.id);
-  }));
-  pop.querySelectorAll('.cd:not(.om)').forEach(el=>el.addEventListener('click',e=>{
-    e.stopPropagation();
-    const s=CAL[el.dataset.id];
-    s.date=new Date(s.year,s.month,parseInt(el.dataset.d));
-    const f=allFields().find(f=>f.id===el.dataset.id);
-    const dv=document.getElementById('dv_'+el.dataset.id);
-    if(dv){ dv.textContent=f.fmt==='slash'?fmtSlash(s.date):fmtDash(s.date); dv.classList.remove('empty'); }
-    closeCal(el.dataset.id); renderCal(el.dataset.id);
-  }));
 }
+
 function openCal(id){
   closeAllCals();
   const ref=CAL[id]?.date||new Date();
-  if(!CAL[id]) CAL[id]={date:null,open:false};
-  CAL[id].year=ref.getFullYear(); CAL[id].month=ref.getMonth();
+  if(!CAL[id]) CAL[id]={date:null,open:false,view:'days'};
+  CAL[id].year=ref.getFullYear(); CAL[id].month=ref.getMonth(); CAL[id].view='days';
   renderCal(id);
   document.getElementById('cp_'+id)?.classList.add('open');
   document.getElementById('dt_'+id)?.classList.add('active');
@@ -360,7 +449,7 @@ function closeAllCals(){ dateFields().forEach(f=>closeCal(f.id)); }
 document.addEventListener('click',closeAllCals);
 
 // ─────────────────────────────────────────────────────────────────
-// FORM BUILDER (Using CSS Grid layout)
+// FORM BUILDER (Inputs & Dropdowns)
 // ─────────────────────────────────────────────────────────────────
 function buildForm(){
   formWrap.innerHTML='';
@@ -373,8 +462,10 @@ function buildForm(){
     
     group.fields.forEach(f=>{
       const col = document.createElement('div'); col.className = 'field-col';
+      if (f.id === 'subject') col.style.gridColumn = '1 / -1'; // Full width for subject
+      
       if(f.type==='date'){
-        if(!CAL[f.id]) CAL[f.id]={date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth()};
+        if(!CAL[f.id]) CAL[f.id]={date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth(),view:'days'};
         col.innerHTML=`
           <label>${f.label}</label>
           <div style="position:relative;">
@@ -390,14 +481,21 @@ function buildForm(){
             e.stopPropagation(); CAL[f.id]?.open?closeCal(f.id):openCal(f.id);
           });
         });
+      } else if(f.type === 'select') {
+        const label=document.createElement('label'); label.htmlFor=f.id; label.textContent=f.label;
+        const select=document.createElement('select'); select.id=f.id;
+        
+        // Add a default disabled placeholder option
+        let optsHTML = `<option value="" disabled selected>Select ${f.label}...</option>`;
+        optsHTML += f.options.map(o => `<option value="${o}">${o}</option>`).join('');
+        select.innerHTML = optsHTML;
+        
+        col.appendChild(label); col.appendChild(select); grid.appendChild(col);
       } else {
         const label=document.createElement('label'); label.htmlFor=f.id; label.textContent=f.label;
         const input=document.createElement('input'); input.type='text'; input.id=f.id;
         if(f.def){ input.value=f.def; input.classList.add('pre'); input.addEventListener('focus',()=>input.classList.remove('pre')); }
         else input.placeholder='Enter value\u2026';
-        
-        // Make Subject take up full width (span 2 columns) if needed, but lets keep it uniform for now.
-        if (f.id === 'subject') col.style.gridColumn = '1 / -1'; 
         
         col.appendChild(label); col.appendChild(input); grid.appendChild(col);
       }
@@ -410,9 +508,12 @@ function buildForm(){
 btnClear.addEventListener('click',()=>{
   allFields().forEach(f=>{
     if(f.type==='date'){
-      if(CAL[f.id]) Object.assign(CAL[f.id],{date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth()});
+      if(CAL[f.id]) Object.assign(CAL[f.id],{date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth(),view:'days'});
       const dv=document.getElementById('dv_'+f.id);
       if(dv){dv.textContent='Pick a date';dv.classList.add('empty');} closeCal(f.id);
+    } else if (f.type==='select') {
+      const inp=document.getElementById(f.id);
+      if(inp) inp.selectedIndex = 0; // Reset to placeholder
     } else {
       const inp=document.getElementById(f.id);
       if(!inp) return;
@@ -441,9 +542,10 @@ btnInject.addEventListener('click',async()=>{
       data[f.id] = val; 
       if(val) histEntry[f.id] = val;
     } else {
-      const val = document.getElementById(f.id)?.value?.trim() || '';
+      const el = document.getElementById(f.id);
+      const val = el?.value?.trim() || '';
       data[f.id] = val; 
-      if(val) histEntry[f.id] = val;
+      if(val && val !== '') histEntry[f.id] = val;
     }
   });
 
@@ -489,19 +591,18 @@ btnInject.addEventListener('click',async()=>{
 // HISTORY & SEARCH LOGIC
 // ─────────────────────────────────────────────────────────────────
 function saveHistory(entry){
-  // Check if an entry with this RegNo already exists, if so remove it to push the new one to the top
   if(entry.regNo) {
     HISTORY = HISTORY.filter(h => h.regNo !== entry.regNo);
   }
   HISTORY.unshift(entry);
-  if(HISTORY.length>50) HISTORY=HISTORY.slice(0,50); // Keep last 50
+  if(HISTORY.length>50) HISTORY=HISTORY.slice(0,50);
   try{localStorage.setItem('inj_hist',JSON.stringify(HISTORY));}catch(e){}
-  renderHistory();
+  renderHistory(historySearch.value);
 }
 function deleteHistory(idx){
   HISTORY.splice(idx,1);
   try{localStorage.setItem('inj_hist',JSON.stringify(HISTORY));}catch(e){}
-  renderHistory();
+  renderHistory(historySearch.value);
 }
 function clearAllHistory(){
   HISTORY=[];
@@ -510,25 +611,23 @@ function clearAllHistory(){
   renderHistory();
 }
 
-// Live search listener
 historySearch.addEventListener('input', () => renderHistory(historySearch.value));
 
 function renderHistory(filterText = ''){
-  if(!HISTORY.length){ histWrap.classList.remove('show'); return; }
-  histWrap.classList.add('show');
+  if(!HISTORY.length){ 
+     histList.innerHTML = '<div style="text-align:center;font-size:12px;color:#9ca3af;padding:10px;">No saved entries yet.</div>';
+     return; 
+  }
   histList.innerHTML='';
-  
   const searchLower = filterText.toLowerCase().trim();
 
   HISTORY.forEach((entry, originalIdx)=>{
-    // Title is now primarily Registration Number
     const primaryName = entry.regNo || entry.custName || 'Unknown Registration';
     const subMeta = entry.custName || entry.date || '';
     
-    // Search filtering
     if(searchLower) {
         const searchString = `${primaryName} ${subMeta} ${entry.mode}`.toLowerCase();
-        if(!searchString.includes(searchLower)) return; // Skip if it doesn't match
+        if(!searchString.includes(searchLower)) return;
     }
 
     const item=document.createElement('div'); item.className='hist-item';
@@ -551,7 +650,8 @@ function renderHistory(filterText = ''){
 }
 
 function fillFromHistory(entry){
-  if(entry.mode) setMode(entry.mode);
+  setMode(entry.mode || 'tyre'); // Switch tab first
+  
   dateFields().forEach(f=>{
     const val=entry[f.id];
     if(!val) return;
@@ -560,25 +660,20 @@ function fillFromHistory(entry){
     else { const p=val.split('-'); d=new Date(+p[2],+p[1]-1,+p[0]); }
     if(isNaN(d)) return;
     if(!CAL[f.id]) CAL[f.id]={};
-    Object.assign(CAL[f.id],{date:d,year:d.getFullYear(),month:d.getMonth(),open:false});
+    Object.assign(CAL[f.id],{date:d,year:d.getFullYear(),month:d.getMonth(),open:false,view:'days'});
     const dv=document.getElementById('dv_'+f.id);
     if(dv){ dv.textContent=val; dv.classList.remove('empty'); }
   });
-  allFields().filter(f=>f.type==='text').forEach(f=>{
+  allFields().filter(f=>f.type==='text' || f.type==='select').forEach(f=>{
     const inp=document.getElementById(f.id);
-    if(inp&&entry[f.id]!==undefined){ inp.value=entry[f.id]; inp.classList.remove('pre'); }
+    if(inp && entry[f.id]){ inp.value=entry[f.id]; inp.classList.remove('pre'); }
   });
   clearStatus();
-  
-  // Optional: Scroll down to the form after clicking
-  formWrap.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 function showStatus(m,t){statusEl.textContent=m;statusEl.className='status '+t;}
 function clearStatus(){statusEl.textContent='';statusEl.className='status';}
-
-renderHistory();
 </script>
 </body>
 </html>
