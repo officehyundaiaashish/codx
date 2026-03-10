@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">      
   <title>Alcazar Form</title>      
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">      
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>      
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/pptxgenjs/3.12.0/pptxgen.bundle.js"></script> 
   
   <script src="ppt-template.js"></script>
-     
+      
   <style>      
     :root {      
       --bg: #f4f4f2;      
@@ -782,7 +782,6 @@ Battery OK</textarea></div>
         }
 
         // 5. Inject Images into the template
-        // Find existing images inside the template to overwrite
         const mediaFiles = Object.keys(zip.files).filter(f => f.startsWith("ppt/media/image"));
         
         // Sort them numerically so image1, image2, etc., match your form slots
@@ -800,8 +799,12 @@ Battery OK</textarea></div>
           }
         }
 
-        // 6. Generate and Download
-        const blob = await zip.generateAsync({ type: "blob" });
+        // 6. Generate and Download - FIXED MIME TYPE HERE
+        const blob = await zip.generateAsync({ 
+          type: "blob",
+          mimeType: "application/vnd.openxmlformats-officedocument.presentationml.presentation" // Forces it to be a PPTX
+        });
+        
         const fname = `Alcazar_${vin}_${Date.now()}.pptx`;
         
         const link = document.createElement("a");
@@ -823,4 +826,4 @@ Battery OK</textarea></div>
     }      
   </script>      
 </body>      
-</html> 
+</html>
