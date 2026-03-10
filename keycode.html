@@ -39,6 +39,21 @@
       --shadow: 0 1px 4px rgba(0,0,0,.3), 0 4px 16px rgba(0,0,0,.2);
       --shadow-lg: 0 4px 28px rgba(0,0,0,.45);
     }
+    /* ── History Panel ── */
+    .hist-panel { display:none; }
+    .hist-panel.show { display:block; }
+    .hist-search { width:100%; height:40px; border:1px solid var(--border); border-radius:8px; padding:0 14px; font-size:14px; margin-bottom:14px; outline:none; background:var(--surface2); color:var(--text); font-family:var(--font); }
+    .hist-search:focus { border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-s); }
+    .hist-list { display:flex; flex-direction:column; gap:8px; max-height:400px; overflow-y:auto; }
+    .hist-item { display:flex; align-items:center; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:8px; cursor:pointer; background:var(--surface); transition:all 0.18s; }
+    .hist-item:hover, .hist-item:focus { border-color:var(--accent); background:var(--surface2); outline:none; }
+    .hi-info { flex:1; min-width:0; }
+    .hi-name { font-size:14px; font-weight:600; color:var(--text); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .hi-meta { font-size:12px; color:var(--text2); margin-top:3px; }
+    .hi-del { background:none; border:none; color:var(--border); cursor:pointer; transition:color 0.18s; display:flex; align-items:center; padding:4px; border-radius:4px; outline:none; }
+    .hi-del:hover, .hi-del:focus { color:#d64545; }
+    .hist-empty { text-align:center; font-size:13px; color:var(--text3); padding:24px; }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     html { font-size: 14px; font-family: 'Inter', sans-serif; }
     body {
@@ -419,11 +434,22 @@
     <div id="kc-rows"></div>
   </div>
 
+  <!-- History Panel -->
+  <div class="card hist-panel" id="kc-histPanel">
+    <div class="card-title" style="margin-bottom:14px;">
+      <span style="display:flex;align-items:center;gap:7px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saved Entries</span>
+      <button class="btn btn-g" style="padding:4px 10px;font-size:12px;" onclick="kcClearAllHistory()">Clear All</button>
+    </div>
+    <input type="text" class="hist-search" id="kc-histSearch" placeholder="Search by VIN or Dealer Code..." autocomplete="off">
+    <div class="hist-list" id="kc-histList"></div>
+  </div>
+
   <div style="border-top:1px solid var(--border);margin-top:24px;padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
     <span style="font-size:11.5px;color:var(--text3);" id="kc-save-status"></span>
   </div>
   <div class="btn-row" style="padding-bottom:32px;">
     <button class="btn btn-g" style="flex:1;" onclick="clearKcSaved()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Clear Saved</button>
+    <button class="btn btn-g" style="flex:1;" id="kc-histBtn" onclick="kcToggleHistory()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saved Entries</button>
     <button class="btn btn-p" id="kc-exportBtn" style="flex:2;" onclick="exportKeyCode()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Export to Excel</button>
   </div>
 
@@ -452,7 +478,7 @@
         document.documentElement.setAttribute('data-theme', e.data.theme);
       }
       if (e.data && e.data.type === 'backup-request') {
-        const keys = ['od_keycode_v1'];
+        const keys = ['od_keycode_v1', 'od_kc_hist_v1'];
         const payload = {};
         keys.forEach(k => {
           try { const v = localStorage.getItem(k); if (v) payload[k] = v; } catch(e) {}
@@ -469,6 +495,9 @@
           kcRenderRows();
           const el = document.getElementById('kc-save-status');
           if (el) el.textContent = 'Restored';
+          // Reload history
+          try { KC_HISTORY = JSON.parse(localStorage.getItem(KC_HIST_KEY) || '[]'); } catch(e) {}
+          kcRenderHistory();
         }
       }
     });
@@ -476,6 +505,128 @@
 
     const KC_SHARED_IDS = ["kc-date", "kc-dcode", "kc-dname", "kc-rname", "kc-rcontact", "kc-tpsm"];
     const KC_SAVE_KEY = "od_keycode_v1";
+
+    // ── Saved Entries History ──
+    const KC_HIST_KEY = "od_kc_hist_v1";
+    let KC_HISTORY = [];
+    try { KC_HISTORY = JSON.parse(localStorage.getItem(KC_HIST_KEY) || '[]'); } catch(e) {}
+
+    function kcSaveHistory() {
+      kcReadRows();
+      const shared = {};
+      KC_SHARED_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.value.trim()) shared[id] = el.value.trim();
+      });
+      const validRows = kcRows.filter(r => r.vin && r.vin.trim());
+      if (!validRows.length && !shared['kc-dcode']) return;
+      const entry = { shared, rows: validRows.map(r => ({...r})) };
+      // Replace entry with same dealer code
+      const dcode = shared['kc-dcode'] || '';
+      if (dcode) KC_HISTORY = KC_HISTORY.filter(h => (h.shared?.['kc-dcode'] || '') !== dcode);
+      KC_HISTORY.unshift(entry);
+      if (KC_HISTORY.length > 50) KC_HISTORY = KC_HISTORY.slice(0, 50);
+      try { localStorage.setItem(KC_HIST_KEY, JSON.stringify(KC_HISTORY)); } catch(e) {}
+      kcRenderHistory();
+    }
+
+    function kcRenderHistory(filter = '') {
+      const list = document.getElementById('kc-histList');
+      if (!list) return;
+      if (!KC_HISTORY.length) { list.innerHTML = '<div class="hist-empty">No saved entries yet.</div>'; return; }
+      list.innerHTML = '';
+      const q = filter.toLowerCase().trim();
+      let shown = 0;
+      KC_HISTORY.forEach((entry, idx) => {
+        const dcode = entry.shared?.['kc-dcode'] || '';
+        const dname = entry.shared?.['kc-dname'] || '';
+        const vins = (entry.rows || []).map(r => r.vin).filter(Boolean).join(', ');
+        if (q && !`${dcode} ${dname} ${vins}`.toLowerCase().includes(q)) return;
+        shown++;
+        const item = document.createElement('div');
+        item.className = 'hist-item'; item.tabIndex = 0;
+        item.innerHTML = `<div class="hi-info">
+          <div class="hi-name">${_kcEsc(dcode || dname || 'Unknown')}</div>
+          <div class="hi-meta">${_kcEsc(dname)}${vins ? ' · ' + _kcEsc(vins.substring(0,40)) : ''}</div>
+        </div>
+        <button class="hi-del" data-idx="${idx}" title="Delete" tabindex="0"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg></button>`;
+        const delBtn = item.querySelector('.hi-del');
+        const delAct = async e => {
+          e.stopPropagation();
+          if (!(await kcConfirm('Delete this entry?', 'Delete'))) return;
+          KC_HISTORY.splice(idx, 1);
+          try { localStorage.setItem(KC_HIST_KEY, JSON.stringify(KC_HISTORY)); } catch(e) {}
+          kcRenderHistory(document.getElementById('kc-histSearch')?.value || '');
+        };
+        delBtn.addEventListener('click', delAct);
+        delBtn.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();delAct(e);} });
+        const loadAct = () => kcLoadFromHistory(entry);
+        item.addEventListener('click', e => { if(!e.target.closest('.hi-del')) loadAct(); });
+        item.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();loadAct();} });
+        list.appendChild(item);
+      });
+      if (!shown) list.innerHTML = '<div class="hist-empty">No matching entries found.</div>';
+    }
+
+    function kcLoadFromHistory(entry) {
+      // Restore shared fields
+      if (entry.shared) {
+        KC_SHARED_IDS.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && entry.shared[id] !== undefined) {
+            el.value = entry.shared[id];
+            // Sync calendar for date field
+            if (id === 'kc-date' && entry.shared[id]) {
+              const parts = entry.shared[id].split('-');
+              if (parts.length === 3) {
+                const d = new Date(+parts[2], +parts[1]-1, +parts[0]);
+                if (!isNaN(d)) {
+                  if (!_KC_CAL[id]) _KC_CAL[id] = {};
+                  Object.assign(_KC_CAL[id], {date:d, year:d.getFullYear(), month:d.getMonth(), view:'days'});
+                  const dv = document.getElementById('dv_'+id);
+                  if (dv) { dv.textContent = entry.shared[id]; dv.classList.remove('empty'); }
+                }
+              }
+            }
+          }
+        });
+      }
+      // Restore rows
+      if (entry.rows && entry.rows.length) {
+        kcRows = entry.rows.map(r => ({...r}));
+        kcRenderRows();
+      }
+      kcToggleHistory();
+      kcScheduleSave();
+      toast('Entry loaded', 'ok');
+    }
+
+    async function kcClearAllHistory() {
+      if (!(await kcConfirm('Clear all saved entries?', 'Yes, Clear All'))) return;
+      KC_HISTORY = [];
+      try { localStorage.removeItem(KC_HIST_KEY); } catch(e) {}
+      kcRenderHistory();
+    }
+
+    function kcToggleHistory() {
+      const panel = document.getElementById('kc-histPanel');
+      const btn = document.getElementById('kc-histBtn');
+      const isOpen = panel.classList.contains('show');
+      panel.classList.toggle('show', !isOpen);
+      btn.style.background = !isOpen ? 'var(--accent)' : '';
+      btn.style.color = !isOpen ? 'var(--accent-s)' : '';
+      if (!isOpen) {
+        kcRenderHistory(document.getElementById('kc-histSearch')?.value || '');
+        document.getElementById('kc-histSearch')?.focus();
+      }
+    }
+    function _kcEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const srch = document.getElementById('kc-histSearch');
+      if (srch) srch.addEventListener('input', () => kcRenderHistory(srch.value));
+    });
+    // ── End Saved Entries History ──
     let kcRows = [];
 
     function kcRowHTML(i, row = {}) {
@@ -600,6 +751,13 @@
       left: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>`,
       right: `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>`
     };
+    // Keyboard helper: fire action on Enter or Space (just like a click)
+    function _kcHandleKey(el, action) {
+      el.addEventListener('keydown', e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); action(e); }
+      });
+    }
+
     function _kcCloseAllCals() {
       document.querySelectorAll('.cal-pop.open').forEach(p => p.classList.remove('open'));
       document.querySelectorAll('.date-trigger.active').forEach(t => t.classList.remove('active'));
@@ -613,8 +771,16 @@
         let h = `<div class="cal-nav"><button type="button" data-cid="${id}" data-dir="-15">${_kcIcons.left}</button><span class="mnth">Select Year</span><button type="button" data-cid="${id}" data-dir="15">${_kcIcons.right}</button></div><div class="cal-grid years">`;
         for (let i = 0; i < 15; i++) h += `<div class="cd${sy+i===y?' sel':''}" data-cid="${id}" data-y="${sy+i}" tabindex="0">${sy+i}</div>`;
         h += '</div>'; pop.innerHTML = h;
-        pop.querySelectorAll('button[data-cid]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); _KC_CAL[b.dataset.cid].year += parseInt(b.dataset.dir); _kcRenderCal(b.dataset.cid); }));
-        pop.querySelectorAll('.cd[data-y]').forEach(el => el.addEventListener('click', e => { e.stopPropagation(); _KC_CAL[el.dataset.cid].year = parseInt(el.dataset.y); _KC_CAL[el.dataset.cid].view = 'days'; _kcRenderCal(el.dataset.cid); }));
+        pop.querySelectorAll('button[data-cid]').forEach(b => {
+          const act = e => { e.stopPropagation(); _KC_CAL[b.dataset.cid].year += parseInt(b.dataset.dir); _kcRenderCal(b.dataset.cid); };
+          b.addEventListener('click', act);
+          _kcHandleKey(b, act);
+        });
+        pop.querySelectorAll('.cd[data-y]').forEach(el => {
+          const act = e => { e.stopPropagation(); _KC_CAL[el.dataset.cid].year = parseInt(el.dataset.y); _KC_CAL[el.dataset.cid].view = 'days'; _kcRenderCal(el.dataset.cid); };
+          el.addEventListener('click', act);
+          _kcHandleKey(el, act);
+        });
       } else {
         const fd = new Date(y, m, 1).getDay(), dim = new Date(y, m+1, 0).getDate(), prev = new Date(y, m, 0).getDate();
         let h = `<div class="cal-nav"><button type="button" data-cid="${id}" data-dir="-1">${_kcIcons.left}</button><span class="mnth ts" data-cid="${id}" tabindex="0">${_KC_MONTHS[m]} ${y}</span><button type="button" data-cid="${id}" data-dir="1">${_kcIcons.right}</button></div><div class="cal-grid">${['S','M','T','W','T','F','S'].map(x=>`<div class="dn">${x}</div>`).join('')}`;
@@ -625,18 +791,31 @@
           h += `<div class="cd${iT?' today':''}${iS?' sel':''}" data-cid="${id}" data-d="${d}" tabindex="0">${d}</div>`;
         }
         h += '</div>'; pop.innerHTML = h;
-        pop.querySelectorAll('button[data-cid]').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); const s=_KC_CAL[b.dataset.cid],dir=parseInt(b.dataset.dir); s.month+=dir; if(s.month<0){s.month=11;s.year--;}if(s.month>11){s.month=0;s.year++;} _kcRenderCal(b.dataset.cid); }));
-        const ts = pop.querySelector('.ts'); if(ts) ts.addEventListener('click', e => { e.stopPropagation(); _KC_CAL[ts.dataset.cid].view='years'; _kcRenderCal(ts.dataset.cid); });
-        pop.querySelectorAll('.cd:not(.om)').forEach(el => el.addEventListener('click', e => {
-          e.stopPropagation();
-          const s = _KC_CAL[el.dataset.cid]; s.date = new Date(s.year, s.month, parseInt(el.dataset.d));
-          const dv = document.getElementById('dv_'+el.dataset.cid);
-          const hid = document.getElementById(el.dataset.cid);
-          const val = _kcFmt(s.date);
-          if (dv) { dv.textContent = val; dv.classList.remove('empty'); }
-          if (hid) { hid.value = val; hid.dispatchEvent(new Event('change')); }
-          _kcCloseAllCals(); _kcRenderCal(el.dataset.cid);
-        }));
+        pop.querySelectorAll('button[data-cid]').forEach(b => {
+          const act = e => { e.stopPropagation(); const s=_KC_CAL[b.dataset.cid],dir=parseInt(b.dataset.dir); s.month+=dir; if(s.month<0){s.month=11;s.year--;}if(s.month>11){s.month=0;s.year++;} _kcRenderCal(b.dataset.cid); };
+          b.addEventListener('click', act);
+          _kcHandleKey(b, act);
+        });
+        const ts = pop.querySelector('.ts');
+        if(ts) {
+          const tsAct = e => { e.stopPropagation(); _KC_CAL[ts.dataset.cid].view='years'; _kcRenderCal(ts.dataset.cid); };
+          ts.addEventListener('click', tsAct);
+          _kcHandleKey(ts, tsAct);
+        }
+        pop.querySelectorAll('.cd:not(.om)').forEach(el => {
+          const act = e => {
+            e.stopPropagation();
+            const s = _KC_CAL[el.dataset.cid]; s.date = new Date(s.year, s.month, parseInt(el.dataset.d));
+            const dv = document.getElementById('dv_'+el.dataset.cid);
+            const hid = document.getElementById(el.dataset.cid);
+            const val = _kcFmt(s.date);
+            if (dv) { dv.textContent = val; dv.classList.remove('empty'); }
+            if (hid) { hid.value = val; hid.dispatchEvent(new Event('change')); }
+            _kcCloseAllCals(); _kcRenderCal(el.dataset.cid);
+          };
+          el.addEventListener('click', act);
+          _kcHandleKey(el, act);
+        });
         let wt; pop.addEventListener('wheel', e => { e.preventDefault(); if(wt) return; wt=setTimeout(()=>{wt=null;},150); const s=_KC_CAL[id]; s.month+=e.deltaY>0?1:-1; if(s.month>11){s.month=0;s.year++;}else if(s.month<0){s.month=11;s.year--;} _kcRenderCal(id); }, {passive:false});
       }
     }
@@ -659,7 +838,11 @@
     function _kcInitCal(id) {
       _KC_CAL[id] = {date:null,view:'days',year:new Date().getFullYear(),month:new Date().getMonth()};
       const dt = document.getElementById('dt_'+id);
-      if (dt) dt.addEventListener('click', e => { e.stopPropagation(); document.getElementById('cp_'+id)?.classList.contains('open') ? _kcCloseAllCals() : _kcOpenCal(id); });
+      if (dt) {
+        const dtAct = e => { e.stopPropagation(); document.getElementById('cp_'+id)?.classList.contains('open') ? _kcCloseAllCals() : _kcOpenCal(id); };
+        dt.addEventListener('click', dtAct);
+        _kcHandleKey(dt, dtAct);
+      }
     }
     document.addEventListener('click', _kcCloseAllCals);
     window.addEventListener('scroll', _kcCloseAllCals, true);
@@ -784,6 +967,7 @@
         a.remove();
         URL.revokeObjectURL(url);
         toast(`Excel downloaded — ${validRows.length} vehicle(s)`, 'ok');
+        kcSaveHistory();
       } catch (err) {
         toast('Export error: ' + err.message, 'err');
         console.error(err);
