@@ -447,7 +447,7 @@ function buildForm(){
   });
   vGrid.appendChild(makeInput('KMS','Mileage (Kms)','Enter mileage…'));
   vGrid.appendChild(makeInput('ENG_TM','Engine / TM Type','e.g. 1.5 Turbo GDi…'));
-  vGrid.appendChild(makeInput('ROM_ID','ROM ID (ECU / TCU)','Enter ROM ID…',''));
+  vGrid.appendChild(makeInput('ROM_ID','ROM ID (ECU / TCU)','Enter ROM ID…','NA'));
   vGrid.appendChild(makeInput('DTC','DTC','','NA'));
   vGrid.appendChild(makeInput('DLR_CD','Dealer Code','','N3235'));
   vGrid.appendChild(makeInput('DLR_NM','Dealer Name','','KHANNA AUTOMART PVT LTD'));
@@ -593,7 +593,7 @@ document.getElementById('btnClear').addEventListener('click',async()=>{
     document.getElementById('ps_'+id)?.classList.remove('filled');
   });
   // Restore pre-filled defaults
-  const defaults={DLR_CD:'N3235',DLR_NM:'KHANNA AUTOMART PVT LTD',DTC:'NA'};
+  const defaults={DLR_CD:'N3235',DLR_NM:'KHANNA AUTOMART PVT LTD',DTC:'NA',ROM_ID:'NA'};
   Object.entries(defaults).forEach(([id,val])=>{const el=document.getElementById(id);if(el){el.value=val;el.classList.add('pre');}});
   clearStatus();
 });
@@ -674,6 +674,8 @@ btnInject.addEventListener('click',async()=>{
     for(const sf of slideFiles){
       let xml=await zip.files[sf].async('string');
       if(xml.includes('{{'))xml=replaceFn(xml);
+      // Replace noAutofit with spAutoFit so text boxes expand to fit injected content
+      xml=xml.replace(/<a:noAutofit\/>/g,'<a:spAutoFit/>');
       zip.file(sf,xml);
     }
 
