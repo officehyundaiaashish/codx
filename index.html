@@ -112,21 +112,24 @@
     const mBlob = new Blob([JSON.stringify(manifest)], { type: 'application/json' });
     document.getElementById('od-pwa-manifest').href = URL.createObjectURL(mBlob);
 
-    // ── 3. SERVICE WORKER — Inline Blob ─────────────────────────────────
+    // ── 3. SERVICE WORKER — Industry Standard ───────────────────────────
+    // HTML files  → Network Only (cache kabhi nahi)
+    // Assets      → Stale While Revalidate (fast + background update)
+    // Update mila → Auto page reload — user kuch na kare
     const swCode = `
-const CACHE = 'officedesk-v1';
-const FILES = [
-  './index.html','./alcazar.html','./keycode.html',
-  './letthead.html','./pwareg.html','./etm.html',
+const CACHE = 'officedesk-assets-v1';
+const STATIC_ASSETS = [
   './ppt-template.js','./head.docx','./pwareg.xlsx','./etm.pptx'
 ];
+
 self.addEventListener('install', e => {
   e.waitUntil(
     caches.open(CACHE)
-      .then(c => Promise.allSettled(FILES.map(f => c.add(f).catch(()=>{}))))
+      .then(c => Promise.allSettled(STATIC_ASSETS.map(f => c.add(f).catch(() => {}))))
       .then(() => self.skipWaiting())
   );
 });
+
 self.addEventListener('activate', e => {
   e.waitUntil(
     caches.keys()
@@ -134,37 +137,61 @@ self.addEventListener('activate', e => {
       .then(() => self.clients.claim())
   );
 });
+
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+  const url = new URL(e.request.url);
+  const isHTML = url.pathname.endsWith('.html') || url.pathname.endsWith('/') || url.pathname === '/';
+
+  if (isHTML) {
+    // HTML: Hamesha network se fresh — cache bilkul nahi
+    e.respondWith(
+      fetch(e.request, { cache: 'no-store' })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
+  // Assets: Cache se fast do, background mein update karo
   e.respondWith(
-    fetch(e.request)
-      .then(res => { caches.open(CACHE).then(c => c.put(e.request, res.clone())); return res; })
-      .catch(() => caches.match(e.request))
+    caches.open(CACHE).then(cache =>
+      cache.match(e.request).then(cached => {
+        const net = fetch(e.request).then(res => {
+          if (res.ok) cache.put(e.request, res.clone());
+          return res;
+        }).catch(() => cached);
+        return cached || net;
+      })
+    )
   );
 });
+
+self.addEventListener('message', e => {
+  if (e.data && e.data.type === 'SKIP_WAITING') self.skipWaiting();
+  if (e.data && e.data.type === 'SHOW_WELCOME_NOTIF') {
+    self.registration.showNotification('OfficeDesk Install Ho Gayi!', {
+      body: 'Ab offline bhi kaam karegi. Kaam shuru karo!',
+      icon: e.data.icon || '', tag: 'od-welcome'
+    });
+  }
+});
+
 self.addEventListener('push', e => {
   const d = e.data ? e.data.json() : {};
-  e.waitUntil(self.registration.showNotification(d.title||'OfficeDesk',{
-    body: d.body||'Nayi update available hai.',
-    icon: d.icon||'', vibrate:[200,100,200], data:{url:d.url||'./'}
+  e.waitUntil(self.registration.showNotification(d.title || 'OfficeDesk', {
+    body: d.body || 'Nayi update available hai.',
+    icon: d.icon || '', vibrate: [200, 100, 200], data: { url: d.url || './' }
   }));
 });
+
 self.addEventListener('notificationclick', e => {
   e.notification.close();
   e.waitUntil(
-    clients.matchAll({type:'window',includeUncontrolled:true}).then(list=>{
-      for(const c of list){ if('focus' in c) return c.focus(); }
-      if(clients.openWindow) return clients.openWindow(e.notification.data.url||'./');
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      if (clients.openWindow) return clients.openWindow(e.notification.data.url || './');
     })
   );
-});
-self.addEventListener('message', e => {
-  if(e.data && e.data.type==='SHOW_WELCOME_NOTIF'){
-    self.registration.showNotification('OfficeDesk Install Ho Gayi!',{
-      body:'Ab offline bhi kaam karegi. Kaam shuru karo!',
-      icon: e.data.icon||'', tag:'od-welcome'
-    });
-  }
 });
 `;
 
@@ -173,7 +200,26 @@ self.addEventListener('message', e => {
       navigator.serviceWorker.register(URL.createObjectURL(swBlob), { scope: './' })
         .then(reg => {
           console.log('[OfficeDesk SW] Registered ✓');
-          setInterval(() => reg.update(), 60000);
+
+          // Har 30 sec mein check karo — koi update aaya kya
+          setInterval(() => reg.update(), 30000);
+
+          // Naya SW mila — activate karo
+          reg.addEventListener('updatefound', () => {
+            const newSW = reg.installing;
+            if (!newSW) return;
+            newSW.addEventListener('statechange', () => {
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
+                newSW.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+
+          // SW activate hone ke baad page silently reload
+          let refreshing = false;
+          navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!refreshing) { refreshing = true; window.location.reload(); }
+          });
         })
         .catch(err => console.warn('[OfficeDesk SW] Error:', err));
     }
