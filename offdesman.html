@@ -14,7 +14,7 @@
   <link rel="apple-touch-icon"
     href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzAwMkM1RiIvPjxyZWN0IHg9IjQiIHk9IjciIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTExIDIxaDEwTTE2IDIxdjQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
   <!-- PWA Manifest — must be a real file, not blob: URL -->
-  <link rel="manifest" href="./manifest.json">
+  <link rel="manifest" href="/manifest.json">
   <!-- Adaptive theme-color: single tag updated by JS when theme toggles -->
   <meta name="theme-color" id="theme-color-meta" content="#f4f4f2">
   <!-- Apple PWA -->
@@ -26,8 +26,9 @@
     // ── Register Service Worker (required for Android install prompt) ──
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js', { scope: './' })
-          .catch(err => console.warn('SW registration failed:', err));
+        navigator.serviceWorker.register('/sw.js')
+          .then(reg => console.log('SW registered, scope:', reg.scope))
+          .catch(err => console.warn('SW failed:', err));
       });
     }
   </script>
