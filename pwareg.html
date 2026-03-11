@@ -35,6 +35,20 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .card-header h1{font-size:17px;font-weight:600;color:var(--text-main);}
 .card-header p{font-size:12px;color:var(--text-muted);margin-top:3px;}
 
+.stepper-wrap{padding:16px 20px;border-bottom:1px solid var(--border-light);display:none;}
+.stepper-wrap.show{display:block;}
+.stepper{display:flex;align-items:center;justify-content:space-between;position:relative;}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;}
+.step-num{width:32px;height:32px;border-radius:50%;border:2px solid var(--border-input);background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-muted);transition:all .3s;margin-bottom:6px;}
+.step.active .step-num{background:var(--accent-bg);border-color:var(--accent-bg);color:var(--accent-text);}
+.step.completed .step-num{background:var(--accent-bg);border-color:var(--accent-bg);color:var(--accent-text);}
+.step-label{font-size:10.5px;font-weight:500;color:var(--text-muted);text-align:center;transition:color .3s;}
+.step.active .step-label{color:var(--accent-bg);font-weight:600;}
+.step.completed .step-label{color:var(--text-main);}
+.step-line{position:absolute;top:16px;left:50%;right:-50%;height:2px;background:var(--border-input);z-index:1;transition:background .3s;}
+.step:last-child .step-line{display:none;}
+.step.completed .step-line{background:var(--accent-bg);}
+
 .mode-wrap{margin:14px 20px 0;display:none;}
 .mode-wrap.show{display:block;}
 .mode-lbl{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
@@ -180,10 +194,12 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 @media(max-width:640px){
   body{padding:10px 8px 70px;}
   .grid-wrap{grid-template-columns:1fr;gap:8px;}
-  .card-header,.mode-wrap,.form-section,.actions,.history-wrap{padding-left:14px;padding-right:14px;}
+  .card-header,.mode-wrap,.form-section,.actions,.history-wrap,.stepper-wrap{padding-left:14px;padding-right:14px;}
   .actions{flex-wrap:wrap;flex-direction:row;}
 
   .photo-grid{grid-template-columns:repeat(3,1fr);}
+  .step-label{font-size:9px;}
+  .step-num{width:28px;height:28px;font-size:12px;}
 }
 </style>
 </head>
@@ -205,16 +221,41 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
     <p>Prior Work Approval — fill form then generate Excel report.</p>
   </div>
 
+  <div class="stepper-wrap" id="stepperWrap">
+    <div class="stepper">
+      <div class="step active" id="step1">
+        <div class="step-line"></div>
+        <div class="step-num">1</div>
+        <div class="step-label">Vehicle Info</div>
+      </div>
+      <div class="step" id="step2">
+        <div class="step-line"></div>
+        <div class="step-num">2</div>
+        <div class="step-label">Dates & Details</div>
+      </div>
+      <div class="step" id="step3">
+        <div class="step-line"></div>
+        <div class="step-num">3</div>
+        <div class="step-label">Parts & Labor</div>
+      </div>
+      <div class="step" id="step4">
+        <div class="step-line"></div>
+        <div class="step-num">4</div>
+        <div class="step-label">Photos</div>
+      </div>
+      <div class="step" id="step5">
+        <div class="step-num">5</div>
+        <div class="step-label">Complete</div>
+      </div>
+    </div>
+  </div>
+
   <div class="mode-wrap" id="modeWrap">
     <div class="mode-lbl">Navigation</div>
     <div class="mode-btns">
       <button class="mode-btn active" id="modeForm" onclick="setMode('form')" tabindex="0">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
         Fill Form
-      </button>
-      <button class="mode-btn" id="modeSaveEntry" onclick="pwaSaveEntry()" tabindex="0">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-        Save Entry
       </button>
       <button class="mode-btn" id="modeHistory" onclick="setMode('history')" tabindex="0">
         <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
@@ -305,16 +346,18 @@ window.addEventListener('DOMContentLoaded',async()=>{
 
 function setMode(mode){
   currentMode=mode;
+  const stepperWrap=document.getElementById('stepperWrap');
   document.getElementById('modeForm').classList.toggle('active',mode==='form');
   document.getElementById('modeHistory').classList.toggle('active',mode==='history');
-  document.getElementById('modeSaveEntry')?.classList.remove('active');
-  if(mode==='history'){formWrap.style.display='none';actionsBar.style.display='none';histWrap.classList.add('show');renderHistory();}
-  else{histWrap.classList.remove('show');formWrap.style.display='block';if(templateBuffer){actionsBar.style.display='flex';buildForm();}}
-}
-
-function pwaSaveEntry(){
-  if(typeof saveHistory==='function'&&typeof collectData==='function'){
-    try{const d=collectData();saveHistory(d);const s=document.getElementById('status');if(s){s.textContent='Entry saved';s.className='status';setTimeout(()=>{s.textContent='';s.className='status';},2500);}}catch(e){}
+  if(mode==='history'){
+    formWrap.style.display='none';actionsBar.style.display='none';histWrap.classList.add('show');
+    stepperWrap.classList.remove('show');
+    renderHistory();
+  }
+  else{
+    histWrap.classList.remove('show');formWrap.style.display='block';
+    stepperWrap.classList.add('show');
+    if(templateBuffer){actionsBar.style.display='flex';buildForm();}
   }
 }
 
@@ -888,6 +931,71 @@ function fillFromHistory(entry){
 function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 function showStatus(m,t){statusEl.textContent=m;statusEl.className='status '+t;}
 function clearStatus(){statusEl.textContent='';statusEl.className='status';}
+
+// ─────── STEPPER PROGRESS UPDATE ───────
+function updateStepperProgress(){
+  const step1Fields=['vin','regNo','dealerCode','ownerName'];
+  const step2Fields=['productionDate','deliveryDate','reportDate','repairDate','fuelType','ew','mailYN'];
+  const step3Fields=['mileage'];
+  const step4Fields=['vinPhoto','meterPhoto'];
+  
+  // Check completion percentage for each step
+  const checkFields=(fields)=>{
+    let filled=0;
+    fields.forEach(id=>{
+      const el=document.getElementById(id);
+      if(el){
+        if(el.type==='hidden'){
+          if(el.value&&el.value.trim())filled++;
+        }else if(el.value&&el.value.trim()&&!el.classList.contains('pre'))filled++;
+      }
+    });
+    return fields.length>0?filled/fields.length:0;
+  };
+  
+  const step1Complete=checkFields(step1Fields)>=0.5;
+  const step2Complete=checkFields(step2Fields)>=0.5;
+  const step3Complete=checkFields(step3Fields)>=0.3;
+  const step4Complete=checkFields(step4Fields)>=0.3;
+  
+  // Update stepper UI
+  ['step1','step2','step3','step4','step5'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){
+      el.classList.remove('active','completed');
+    }
+  });
+  
+  if(!step1Complete){
+    document.getElementById('step1')?.classList.add('active');
+  }else if(!step2Complete){
+    document.getElementById('step1')?.classList.add('completed');
+    document.getElementById('step2')?.classList.add('active');
+  }else if(!step3Complete){
+    document.getElementById('step1')?.classList.add('completed');
+    document.getElementById('step2')?.classList.add('completed');
+    document.getElementById('step3')?.classList.add('active');
+  }else if(!step4Complete){
+    document.getElementById('step1')?.classList.add('completed');
+    document.getElementById('step2')?.classList.add('completed');
+    document.getElementById('step3')?.classList.add('completed');
+    document.getElementById('step4')?.classList.add('active');
+  }else{
+    document.getElementById('step1')?.classList.add('completed');
+    document.getElementById('step2')?.classList.add('completed');
+    document.getElementById('step3')?.classList.add('completed');
+    document.getElementById('step4')?.classList.add('completed');
+    document.getElementById('step5')?.classList.add('active');
+  }
+}
+
+// Call updateStepper when form fields change
+if(typeof document.getElementById('formWrap')!=='undefined'){
+  document.addEventListener('input',updateStepperProgress);
+  document.addEventListener('change',updateStepperProgress);
+  // Update on initial load
+  setTimeout(updateStepperProgress,500);
+}
 
 // ─────── THEME + BACKUP ───────
 window.addEventListener('message',event=>{
