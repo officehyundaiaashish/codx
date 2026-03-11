@@ -630,23 +630,20 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
     }
 
     // ── Inject photos into Photographs sheet ──
-    // The xlsx Photographs sheet has merged cells with labels like "VIN PHOTO\n{vinPhoto}"
-    // We embed each photo as an image in xl/media/ and wire up a drawing XML for sheet4
     const photoSlotMap=[
-      {key:'vinPhoto',   col:0, row:4},  // A4:E10
-      {key:'meterPhoto', col:6, row:4},  // G4:K10
-      {key:'part1Photo', col:12,row:4},  // M4:Q10
-      {key:'part2Photo', col:18,row:4},  // S4:W10
-      {key:'part3Photo', col:24,row:4},  // Y4:AC10
-      {key:'part4Photo', col:12,row:12}, // M12:Q18
-      {key:'part5Photo', col:18,row:12}, // S12:W18
-      {key:'part6Photo', col:24,row:12}, // Y12:AC18
-      {key:'part7Photo', col:12,row:20}, // M20:Q26
-      {key:'part8Photo', col:18,row:20}, // S20:W26
-      {key:'part9Photo', col:24,row:20}, // Y20:AC26
+      {key:'vinPhoto',   col:0, row:4},
+      {key:'meterPhoto', col:6, row:4},
+      {key:'part1Photo', col:12,row:4},
+      {key:'part2Photo', col:18,row:4},
+      {key:'part3Photo', col:24,row:4},
+      {key:'part4Photo', col:12,row:12},
+      {key:'part5Photo', col:18,row:12},
+      {key:'part6Photo', col:24,row:12},
+      {key:'part7Photo', col:12,row:20},
+      {key:'part8Photo', col:18,row:20},
+      {key:'part9Photo', col:24,row:20},
     ];
 
-    // Helper: dataURL → Uint8Array of raw bytes
     function dataUrlToBytes(dataUrl){
       const b64=dataUrl.split(',')[1];
       const bin=atob(b64);
@@ -664,16 +661,6 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
       return 'jpg';
     }
 
-    // Build EMU dimensions for each photo cell block (approx 5 cols × 7 rows at xlsx default sizes)
-    // Each col ~960000 EMU (≈1 inch), each row ~571500 EMU — tuned to the zoomed-out sheet
-    const colEmu = 9144000;  // 5 cols merged
-    const rowEmu = 4000320;  // 7 rows merged
-
-    // Col index → EMU offset from left (each col=10 default width ≈ 914400 EMU each)
-    const colOffsets=[0,6,12,18,24].map(c=>c*914400);
-    // Row index → EMU offset from top (row height 39.95pt ≈ 533400 EMU each, row1=15.75pt)
-    const rowOffsets={4:571500,12:571500+(7*533400)+533400,20:571500+(7*533400)+533400+(7*533400)+533400+533400};
-
     const photoEntries=[];
     for(const {key,col,row} of photoSlotMap){
       const photo=PHOTOS[key];
@@ -684,72 +671,83 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
       const idx=photoEntries.length+1;
       const mediaName=`image${idx}.${ext}`;
       zip.file(`xl/media/${mediaName}`,bytes);
-      // col position: A=0,G=6,M=12,S=18,Y=24
-      const colIdx=col; // 0-based col index of first col in merge
-      const rowIdx=row-1; // 0-based
-      photoEntries.push({idx,mediaName,mime,colIdx,rowIdx});
+      photoEntries.push({idx,mediaName,mime,colIdx:col,rowIdx:row-1});
     }
 
     if(photoEntries.length>0){
       // Build drawing XML
-      let drawingXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">\n`;
+      const NS_XDR='http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing';
+      const NS_A='http://schemas.openxmlformats.org/drawingml/2006/main';
+      const NS_R='http://schemas.openxmlformats.org/officeDocument/2006/relationships';
+      let drawingXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="${NS_XDR}" xmlns:a="${NS_A}" xmlns:r="${NS_R}">`;
       const drawingRels=[];
+
       photoEntries.forEach(({idx,mediaName,mime,colIdx,rowIdx},i)=>{
         const rId=`rId${i+1}`;
-        // Each photo occupies a 5-col × 7-row merged area
-        const toCol=colIdx+5, toRow=rowIdx+7;
-        drawingXml+=`<xdr:twoCellAnchor editAs="oneCell"><xdr:from><xdr:col>${colIdx}</xdr:col><xdr:colOff>91440</xdr:colOff><xdr:row>${rowIdx}</xdr:row><xdr:rowOff>91440</xdr:rowOff></xdr:from><xdr:to><xdr:col>${toCol}</xdr:col><xdr:colOff>-91440</xdr:colOff><xdr:row>${toRow}</xdr:row><xdr:rowOff>-91440</xdr:rowOff></xdr:to><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="${100+i}" name="Photo${idx}"/><xdr:cNvPicPr><a:picLocks noChangeAspect="0"/></xdr:cNvPicPr></xdr:nvPicPr><xdr:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:xfrm><a:off x="0" y="0"/><a:ext cx="0" cy="0"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:twoCellAnchor>\n`;
+        const toCol=colIdx+5;
+        const toRow=rowIdx+7;
+        // colOff/rowOff=0 so image fully fills the merged cell area
+        drawingXml+=
+          `<xdr:twoCellAnchor editAs="twoCell">`+
+          `<xdr:from><xdr:col>${colIdx}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${rowIdx}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:from>`+
+          `<xdr:to><xdr:col>${toCol}</xdr:col><xdr:colOff>0</xdr:colOff><xdr:row>${toRow}</xdr:row><xdr:rowOff>0</xdr:rowOff></xdr:to>`+
+          `<xdr:pic>`+
+            `<xdr:nvPicPr>`+
+              `<xdr:cNvPr id="${i+2}" name="Photo${idx}"/>`+
+              `<xdr:cNvPicPr><a:picLocks noChangeAspect="1"/></xdr:cNvPicPr>`+
+            `</xdr:nvPicPr>`+
+            `<xdr:blipFill>`+
+              `<a:blip r:embed="${rId}"/>`+
+              `<a:stretch><a:fillRect/></a:stretch>`+
+            `</xdr:blipFill>`+
+            `<xdr:spPr>`+
+              `<a:xfrm><a:off x="0" y="0"/><a:ext cx="914400" cy="685800"/></a:xfrm>`+
+              `<a:prstGeom prst="rect"><a:avLst/></a:prstGeom>`+
+            `</xdr:spPr>`+
+          `</xdr:pic>`+
+          `<xdr:clientData/>`+
+          `</xdr:twoCellAnchor>`;
         drawingRels.push({rId,target:`../media/${mediaName}`,mime});
       });
       drawingXml+=`</xdr:wsDr>`;
 
-      // Build drawing rels XML
-      let drawingRelsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">\n`;
-      drawingRels.forEach(({rId,target,mime})=>{
-        drawingRelsXml+=`<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${target}"/>\n`;
+      // Drawing rels
+      let drawingRelsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">`;
+      drawingRels.forEach(({rId,target})=>{
+        drawingRelsXml+=`<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="${target}"/>`;
       });
       drawingRelsXml+=`</Relationships>`;
 
       zip.file('xl/drawings/drawing1.xml', drawingXml);
       zip.file('xl/drawings/_rels/drawing1.xml.rels', drawingRelsXml);
 
-      // Patch sheet4.xml to reference the drawing
+      // Patch sheet4.xml — it already has xmlns:r so DO NOT add it again, just add <drawing> tag
       const sh4Path=Object.keys(zip.files).find(p=>p.match(/xl\/worksheets\/sheet4\.xml$/i));
       if(sh4Path){
         let sh4=await zip.files[sh4Path].async('string');
         if(!sh4.includes('<drawing ')){
+          // Insert <drawing> just before </worksheet>
           sh4=sh4.replace('</worksheet>','<drawing r:id="rId_drawing1"/></worksheet>');
-          sh4=sh4.replace('<worksheet ','<worksheet xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" ');
-          // Make sure xmlns:r is not duplicated
-          sh4=sh4.replace(/xmlns:r="[^"]*"\s+xmlns:r="[^"]*"/,'xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"');
           zip.file(sh4Path,sh4);
         }
-        // Add sheet4 rels for the drawing
-        const sh4RelsPath='xl/worksheets/_rels/sheet4.xml.rels';
-        let sh4Rels;
-        try{ sh4Rels=await zip.files[sh4RelsPath]?.async('string'); }catch(e){}
-        if(!sh4Rels){
-          sh4Rels=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId_drawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`;
-        } else {
-          sh4Rels=sh4Rels.replace('</Relationships>','<Relationship Id="rId_drawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>');
-        }
-        zip.file(sh4RelsPath, sh4Rels);
+        // Sheet4 rels — always write fresh (template has none)
+        const sh4RelsXml=`<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId_drawing1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/drawing" Target="../drawings/drawing1.xml"/></Relationships>`;
+        zip.file('xl/worksheets/_rels/sheet4.xml.rels', sh4RelsXml);
       }
 
-      // Patch [Content_Types].xml to register drawing and media types
+      // Patch [Content_Types].xml
       const ctPath='[Content_Types].xml';
       let ct=await zip.files[ctPath].async('string');
       if(!ct.includes('drawing1.xml')){
         ct=ct.replace('</Types>','<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/></Types>');
       }
-      // Add image content types if missing
       const mimesSeen=new Set();
       drawingRels.forEach(({mime})=>{
         if(mimesSeen.has(mime)) return; mimesSeen.add(mime);
         const ext=extFromMime(mime);
-        const ctStr=`Extension="${ext}" ContentType="${mime}"`;
+        const ctStr=`Extension="${ext}"`;
         if(!ct.includes(ctStr)){
-          ct=ct.replace('</Types>',`<Default ${ctStr}/></Types>`);
+          ct=ct.replace('</Types>',`<Default Extension="${ext}" ContentType="${mime}"/></Types>`);
         }
       });
       zip.file(ctPath, ct);
