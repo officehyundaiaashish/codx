@@ -1795,23 +1795,44 @@ self.addEventListener('message', e => {
       <!-- ALCAZAR FORM -->
       <!-- ALCAZAR FORM -->
       <div class="view view-letterheads-container" id="view-alcazar">
-        <iframe id="alcazar-iframe" src="./alcazar.html?v=20250610" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="alcazar-iframe" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <!-- KEY CODE FORM -->
       <div class="view view-letterheads-container" id="view-keycode">
-        <iframe id="keycode-iframe" src="./keycode.html?v=20250610" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="keycode-iframe" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <div class="view view-letterheads-container" id="view-letterheads">
-        <iframe id="letterheads-iframe" src="./letthead.html?v=20250610" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="letterheads-iframe" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <!-- PWA REGULAR FORM -->
       <div class="view view-letterheads-container" id="view-pwareg">
-        <iframe id="pwareg-iframe" src="./pwareg.html?v=20250610" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="pwareg-iframe" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <!-- ETM FORM -->
       <div class="view view-letterheads-container" id="view-etm">
-        <iframe id="etm-iframe" src="./etm.html?v=20250610" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="etm-iframe" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
+
+      <script>
+        // ── NO-CACHE IFRAME LOADER ──────────────────────────────────────────
+        // Har baar fresh timestamp se file load hogi — cache bilkul bypass hoga
+        // Developer kuch bhi update kare, user ko turant naya version milega
+        (function () {
+          const ts = Date.now(); // Unique timestamp — har page load pe alag
+          const iframes = [
+            { id: 'alcazar-iframe',     src: './alcazar.html'  },
+            { id: 'keycode-iframe',     src: './keycode.html'  },
+            { id: 'letterheads-iframe', src: './letthead.html' },
+            { id: 'pwareg-iframe',      src: './pwareg.html'   },
+            { id: 'etm-iframe',         src: './etm.html'      }
+          ];
+          iframes.forEach(function (item) {
+            const el = document.getElementById(item.id);
+            if (el) el.src = item.src + '?nc=' + ts;
+          });
+        })();
+        // ── END NO-CACHE IFRAME LOADER ──────────────────────────────────────
+      </script>
     </main>
   </div>
   <div id="loader">
