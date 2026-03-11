@@ -13,10 +13,26 @@
     href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzAwMkM1RiIvPjxyZWN0IHg9IjQiIHk9IjciIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTExIDIxaDEwTTE2IDIxdjQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
   <link rel="apple-touch-icon"
     href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzAwMkM1RiIvPjxyZWN0IHg9IjQiIHk9IjciIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTExIDIxaDEwTTE2IDIxdjQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
-  <meta name="theme-color" content="#002C5F">
+  <meta name="theme-color" content="#ffffff" id="od-theme-color">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" id="od-apple-status">
   <meta name="apple-mobile-web-app-title" content="OfficeDesk">
+  <script>
+    // Instant status bar fix — render se pehle theme apply karo
+    (function(){
+      const t = localStorage.getItem('od-theme') || 'light';
+      const tc = document.getElementById('od-theme-color');
+      const as = document.getElementById('od-apple-status');
+      if(t === 'dark'){
+        tc.content = '#111110';
+        as.content = 'black-translucent';
+        document.documentElement.setAttribute('data-theme','dark');
+      } else {
+        tc.content = '#ffffff';
+        as.content = 'default';
+      }
+    })();
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
   <!-- ════════════════════════════════════════════════════════════════
@@ -1579,7 +1595,12 @@ self.addEventListener('message', e => {
       document.documentElement.setAttribute("data-theme", t); 
       localStorage.setItem("od-theme", t); 
       document.getElementById("ico-moon").style.display = t === "dark" ? "none" : ""; 
-      document.getElementById("ico-sun").style.display = t === "dark" ? "" : "none"; 
+      document.getElementById("ico-sun").style.display = t === "dark" ? "" : "none";
+      // ── Status bar / theme-color update ──
+      const tc = document.getElementById('od-theme-color');
+      const as = document.getElementById('od-apple-status');
+      if(tc) tc.content = t === 'dark' ? '#111110' : '#ffffff';
+      if(as) as.content = t === 'dark' ? 'black-translucent' : 'default';
       ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe', 'pwareg-iframe'].forEach(id => {
         const iframe = document.getElementById(id);
         if (iframe && iframe.contentWindow) {
