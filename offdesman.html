@@ -1,1580 +1,265 @@
-
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
-
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>OfficeDesk — Utility Suite</title>
-  <link
-    href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600&family=DM+Mono:wght@400;500&display=swap"
-    rel="stylesheet">
-  <link rel="icon" type="image/svg+xml"
-    href="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAzMiAzMiI+PHJlY3Qgd2lkdGg9IjMyIiBoZWlnaHQ9IjMyIiByeD0iNyIgZmlsbD0iIzAwMkM1RiIvPjxyZWN0IHg9IjQiIHk9IjciIHdpZHRoPSIyNCIgaGVpZ2h0PSIxNCIgcng9IjIiIGZpbGw9Im5vbmUiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIi8+PHBhdGggZD0iTTExIDIxaDEwTTE2IDIxdjQiIHN0cm9rZT0iI2ZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiLz48L3N2Zz4=">
-  <!-- PWA: real file paths required — data: URIs do NOT work for apple-touch-icon or manifest icons -->
-  <link rel="apple-touch-icon" href="./icon-192.png">
-  <!-- PWA Manifest — this tag is REQUIRED for the install prompt to fire -->
-  <link rel="manifest" href="./manifest.json">
-  <!-- Adaptive theme-color: updated by JS when theme toggles -->
-  <meta name="theme-color" id="theme-color-meta" content="#002C5F">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
-  <meta name="apple-mobile-web-app-title" content="OfficeDesk">
-  <script>
-    // Service Worker registration — required for Android PWA install prompt
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js')
-          .then(reg => console.log('SW registered, scope:', reg.scope))
-          .catch(err => console.warn('SW registration failed:', err));
-      });
-    }
-  </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-  <style>
-    :root {
-      --bg: #f4f4f2;
-      --surface: #ffffff;
-      --surface2: #f0f0ee;
-      --border: #e3e3df;
-      --text: #181816;
-      --text2: #6a6a67;
-      --text3: #9a9a97;
-      --accent: #002C5F;
-      --accent-h: #001F47;
-      --accent-s: #e8edf5;
-      --radius: 10px;
-      --radius-lg: 16px;
-      --shadow: 0 1px 3px rgba(0, 0, 0, .06), 0 4px 12px rgba(0, 0, 0, .04);
-      --shadow-lg: 0 4px 24px rgba(0, 0, 0, .09);
-      --font: "DM Sans", sans-serif;
-      --mono: "DM Mono", monospace;
-      --sw: 224px;
-      --hh: 56px;
-      --tr: 180ms ease;
-    }
-
-    [data-theme=dark] {
-      --bg: #111110;
-      --surface: #1c1c1a;
-      --surface2: #232321;
-      --border: #2d2d2b;
-      --text: #f0f0ee;
-      --text2: #888885;
-      --text3: #525250;
-      --accent: #4D8FD6;
-      --accent-h: #3A7BC8;
-      --accent-s: #001A3A;
-      --shadow: 0 1px 4px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .2);
-      --shadow-lg: 0 4px 28px rgba(0, 0, 0, .45);
-    }
-
-    *,
-    *::before,
-    *::after {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      font-size: 14px;
-    }
-
-    body {
-      font-family: var(--font);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: background var(--tr), color var(--tr);
-    }
-
-    .hdr {
-      height: var(--hh);
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      padding: 0 20px;
-      gap: 12px;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      transition: background var(--tr), border-color var(--tr);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 15px;
-      font-weight: 600;
-      letter-spacing: -.3px;
-      color: var(--text);
-      text-decoration: none;
-      flex-shrink: 0;
-    }
-
-    .logo-icon {
-      width: 28px;
-      height: 28px;
-      background: var(--accent);
-      border-radius: 7px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .hdr-sep {
-      width: 1px;
-      height: 20px;
-      background: var(--border);
-      margin: 0 4px;
-    }
-
-    .breadcrumb {
-      font-size: 13px;
-      color: var(--text2);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .breadcrumb b {
-      color: var(--text);
-      font-weight: 500;
-    }
-
-    .hdr-right {
-      margin-left: auto;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .tbtn {
-      width: 34px;
-      height: 34px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--surface2);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text2);
-      transition: all var(--tr);
-    }
-
-    .tbtn:hover {
-      color: var(--text);
-      border-color: var(--accent);
-    }
-
-    .layout {
-      display: flex;
-      flex: 1;
-      overflow: hidden;
-      height: calc(100vh - var(--hh));
-    }
-
-    .sidebar {
-      width: var(--sw);
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      display: flex;
-      flex-direction: column;
-      padding: 12px 0;
-      flex-shrink: 0;
-      overflow-y: auto;
-      transition: background var(--tr), border-color var(--tr);
-    }
-
-    .sb-sec {
-      padding: 0 10px;
-      margin-bottom: 2px;
-    }
-
-    .sb-lbl {
-      font-size: 11px;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: .6px;
-      color: var(--text3);
-      padding: 0 6px;
-      margin-bottom: 4px;
-      margin-top: 10px;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 9px;
-      padding: 7px 10px;
-      border-radius: 8px;
-      cursor: pointer;
-      color: var(--text2);
-      font-size: 13.5px;
-      font-weight: 400;
-      transition: all var(--tr);
-      user-select: none;
-      border: none;
-      background: none;
-      width: 100%;
-      text-align: left;
-    }
-
-    .nav-item svg {
-      flex-shrink: 0;
-      opacity: .7;
-    }
-
-    .nav-item:hover {
-      background: var(--surface2);
-      color: var(--text);
-    }
-
-    .nav-item:hover svg {
-      opacity: 1;
-    }
-
-    .nav-item.active {
-      background: var(--accent-s);
-      color: var(--accent);
-      font-weight: 500;
-    }
-
-    .nav-item.active svg {
-      opacity: 1;
-    }
-
-    .nav-badge {
-      margin-left: auto;
-      background: var(--accent);
-      color: #fff;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 1px 6px;
-      border-radius: 20px;
-    }
-
-    .nav-tag {
-      margin-left: auto;
-      font-size: 10px;
-      color: var(--text3);
-      font-weight: 500;
-    }
-
-    .sb-div {
-      height: 1px;
-      background: var(--border);
-      margin: 6px 10px 8px;
-    }
-
-    .sb-ver {
-      padding: 8px 16px;
-      margin-top: auto;
-      font-size: 11px;
-      color: var(--text3);
-    }
-
-    .main {
-      flex: 1;
-      overflow-y: auto;
-      padding: 28px 32px;
-    }
-
-    .view {
-      display: none;
-    }
-
-    .view.active {
-      display: block;
-      animation: fadeUp 200ms ease;
-    }
-
-    .view-letterheads-container.active {
-      display: flex;
-      flex-direction: column;
-      height: 100%;
-    }
-
-    @keyframes fadeUp {
-      from {
-        opacity: 0;
-        transform: translateY(6px)
-      }
-
-      to {
-        opacity: 1;
-        transform: translateY(0)
-      }
-    }
-
-    .ph {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      margin-bottom: 24px;
-    }
-
-    .ph-title {
-      font-size: 20px;
-      font-weight: 600;
-      letter-spacing: -.4px;
-    }
-
-    .ph-sub {
-      font-size: 13px;
-      color: var(--text2);
-      margin-top: 3px;
-    }
-
-    .card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px 24px;
-      transition: background var(--tr), border-color var(--tr);
-    }
-
-    .card+.card {
-      margin-top: 16px;
-    }
-
-    .card-title {
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 16px;
-      display: flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .card-title svg {
-      color: var(--accent);
-    }
-
-    .fg {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 12px 16px;
-    }
-
-    .fg.c3 {
-      grid-template-columns: 1fr 1fr 1fr;
-    }
-
-    .s2 {
-      grid-column: span 2;
-    }
-
-    .s3 {
-      grid-column: span 3;
-    }
-
-    .field {
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-    }
-
-    .field label {
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text2);
-    }
-
-    .field label .req {
-      color: var(--accent);
-      margin-left: 2px;
-    }
-
-    input[type=text],
-    input[type=number],
-    input[type=date],
-    input[type=tel],
-    select,
-    textarea {
-      font-family: var(--font);
-      font-size: 13.5px;
-      color: var(--text);
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 8px 11px;
-      outline: none;
-      transition: all var(--tr);
-      width: 100%;
-    }
-
-    input:focus,
-    select:focus,
-    textarea:focus {
-      border-color: var(--accent);
-      background: var(--surface);
-      box-shadow: 0 0 0 3px var(--accent-s);
-    }
-
-    input::placeholder,
-    textarea::placeholder {
-      color: var(--text3);
-    }
-
-    textarea {
-      resize: vertical;
-      min-height: 80px;
-      line-height: 1.6;
-    }
-
-    select {
-      cursor: pointer;
-      appearance: none;
-      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239a9a97' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 28px;
-    }
-
-    .pg {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-    }
-
-    .pslot {
-      border: 1.5px dashed var(--border);
-      border-radius: var(--radius);
-      aspect-ratio: 4/3;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      cursor: pointer;
-      transition: all var(--tr);
-      position: relative;
-      overflow: hidden;
-      background: var(--bg);
-    }
-
-    .pslot:hover {
-      border-color: var(--accent);
-      background: var(--accent-s);
-    }
-
-    .pslot.filled {
-      border-style: solid;
-      border-color: var(--accent);
-    }
-
-    .pslot img {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 8px;
-    }
-
-    .pslot .ov {
-      position: absolute;
-      inset: 0;
-      background: rgba(0, 0, 0, .4);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity var(--tr);
-      border-radius: 8px;
-    }
-
-    .pslot:hover .ov {
-      opacity: 1;
-    }
-
-    .slot-lbl {
-      font-size: 11px;
-      font-weight: 500;
-      color: var(--text2);
-      text-align: center;
-      line-height: 1.3;
-      padding: 0 8px;
-      z-index: 1;
-    }
-
-    .slot-ico {
-      color: var(--text3);
-      z-index: 1;
-    }
-
-    .pslot.filled .slot-lbl,
-    .pslot.filled .slot-ico {
-      display: none;
-    }
-
-    .slot-rm {
-      position: absolute;
-      top: 6px;
-      right: 6px;
-      width: 22px;
-      height: 22px;
-      background: #e05252;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      opacity: 0;
-      transition: opacity var(--tr);
-      z-index: 10;
-    }
-
-    .pslot.filled:hover .slot-rm {
-      opacity: 1;
-    }
-
-    input[type=file] {
-      display: none;
-    }
-
-    .btn-row {
-      display: flex;
-      gap: 10px;
-      align-items: center;
-      flex-wrap: wrap;
-      margin-top: 20px;
-    }
-
-    .btn {
-      font-family: var(--font);
-      font-size: 13.5px;
-      font-weight: 500;
-      padding: 9px 18px;
-      border-radius: var(--radius);
-      border: none;
-      cursor: pointer;
-      transition: all var(--tr);
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-    }
-
-    .btn-p {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    .btn-p:hover {
-      background: var(--accent-h);
-      transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(0, 44, 95, .25);
-    }
-
-    .btn-p:active {
-      transform: translateY(0);
-    }
-
-    .btn-g {
-      background: var(--surface2);
-      color: var(--text2);
-      border: 1px solid var(--border);
-    }
-
-    .btn-g:hover {
-      background: var(--surface);
-      color: var(--text);
-      border-color: var(--text3);
-    }
-
-    .btn:disabled {
-      opacity: .4;
-      cursor: not-allowed;
-      transform: none !important;
-      box-shadow: none !important;
-    }
-
-    .stepper {
-      display: flex;
-      align-items: center;
-      margin-bottom: 24px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px 20px;
-    }
-
-    .step {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      flex: 1;
-      position: relative;
-    }
-
-    .step:not(:last-child)::after {
-      content: '';
-      position: absolute;
-      left: 130px;
-      right: 0;
-      top: 50%;
-      height: 1px;
-      background: var(--border);
-      transform: translateY(-50%);
-    }
-
-    .step.done:not(:last-child)::after {
-      background: var(--accent);
-    }
-
-    .step-n {
-      width: 28px;
-      height: 28px;
-      border-radius: 50%;
-      background: var(--surface2);
-      border: 1.5px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text2);
-      flex-shrink: 0;
-      transition: all var(--tr);
-    }
-
-    .step.active .step-n,
-    .step.done .step-n {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-
-    .step-t {
-      font-size: 12.5px;
-      font-weight: 500;
-      color: var(--text);
-    }
-
-    .step.inactive .step-t {
-      color: var(--text3);
-    }
-
-    .step-s {
-      font-size: 11px;
-      color: var(--text3);
-      margin-top: 1px;
-    }
-
-    .divhr {
-      height: 1px;
-      background: var(--border);
-      margin: 20px 0;
-    }
-
-    #toast {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      padding: 11px 18px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 500;
-      box-shadow: var(--shadow-lg);
-      transform: translateY(80px);
-      opacity: 0;
-      transition: all 280ms ease;
-      z-index: 999;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      max-width: 340px;
-    }
-
-    #toast.show {
-      transform: translateY(0);
-      opacity: 1;
-    }
-
-    #toast.ok {
-      background: var(--accent);
-      color: #fff;
-    }
-
-    #toast.err {
-      background: #e05252;
-      color: #fff;
-    }
-
-    #toast.info {
-      background: var(--text);
-      color: var(--bg);
-    }
-
-    #loader {
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, .25);
-      backdrop-filter: blur(2px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 500;
-    }
-
-    #loader.show {
-      display: flex;
-    }
-
-    .ld-card {
-      background: var(--surface);
-      border-radius: 16px;
-      padding: 28px 36px;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 14px;
-      box-shadow: var(--shadow-lg);
-    }
-
-    .spin {
-      width: 32px;
-      height: 32px;
-      border: 3px solid var(--border);
-      border-top-color: var(--accent);
-      border-radius: 50%;
-      animation: sp 650ms linear infinite;
-    }
-
-    @keyframes sp {
-      to {
-        transform: rotate(360deg)
-      }
-    }
-
-    .ld-card p {
-      font-size: 13.5px;
-      color: var(--text2);
-      font-weight: 500;
-    }
-
-    .welcome {
-      background: linear-gradient(130deg, var(--accent-s) 0%, var(--surface) 55%);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 24px 28px;
-      margin-bottom: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-    }
-
-    .wt h2 {
-      font-size: 18px;
-      font-weight: 600;
-      margin-bottom: 4px;
-      letter-spacing: -.3px;
-    }
-
-    .wt p {
-      font-size: 13px;
-      color: var(--text2);
-      max-width: 480px;
-      line-height: 1.6;
-    }
-
-    .wi {
-      width: 50px;
-      height: 50px;
-      background: var(--accent);
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .stats {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-
-    .sc {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px 18px;
-    }
-
-    .sv {
-      font-size: 22px;
-      font-weight: 600;
-      letter-spacing: -.4px;
-    }
-
-    .sl {
-      font-size: 12px;
-      color: var(--text2);
-      margin-top: 3px;
-    }
-
-    .sd {
-      font-size: 11.5px;
-      color: var(--accent);
-      font-weight: 500;
-      margin-top: 6px;
-    }
-
-    .tools-grid {
-      display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 12px;
-    }
-
-    @keyframes shine {
-      0%   { transform: translateX(-100%) skewX(-15deg); }
-      100% { transform: translateX(250%) skewX(-15deg); }
-    }
-
-    .tool-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 16px;
-      aspect-ratio: 1 / 1;
-      transition: all var(--tr);
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .tool-card::after {
-      content: '';
-      position: absolute;
-      top: 0; left: 0;
-      width: 40%;
-      height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.13), transparent);
-      transform: translateX(-100%) skewX(-15deg);
-      pointer-events: none;
-    }
-
-    .tool-card.live::after {
-      animation: shine 3.6s ease-in-out infinite;
-    }
-
-    .tool-card:hover {
-      border-color: var(--accent);
-      box-shadow: var(--shadow);
-    }
-
-    .tool-card.live {
-      border-color: var(--accent);
-      background: var(--accent-s);
-    }
-
-    .tool-card.coming {
-      opacity: .65;
-      cursor: default;
-    }
-
-    .tool-icon {
-      width: 32px;
-      height: 32px;
-      border-radius: 9px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-
-    .tool-name {
-      font-size: 12.5px;
-      font-weight: 600;
-      color: var(--text);
-      line-height: 1.3;
-    }
-
-    .tool-desc {
-      font-size: 11px;
-      color: var(--text2);
-      line-height: 1.45;
-      display: none;
-    }
-
-    .tag {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 3px 8px;
-      border-radius: 20px;
-      width: fit-content;
-    }
-
-    .tag-live {
-      background: var(--accent-s);
-      color: var(--accent);
-    }
-
-    .tag-soon {
-      background: var(--surface2);
-      color: var(--text3);
-    }
-
-    .chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      font-size: 11px;
-      font-weight: 500;
-      padding: 3px 8px;
-      border-radius: 20px;
-      background: var(--accent-s);
-      color: var(--accent);
-    }
-
-    ::-webkit-scrollbar {
-      width: 5px;
-      height: 5px;
-    }
-
-    ::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    ::-webkit-scrollbar-thumb {
-      background: var(--border);
-      border-radius: 3px;
-    }
-
-    /* BOTTOM NAV */
-    .bnav {
-      display: none;
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 60px;
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      z-index: 200;
-      align-items: stretch;
-      transition: background var(--tr), border-color var(--tr);
-    }
-
-    .bnav-item {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 3px;
-      border: none;
-      background: none;
-      cursor: pointer;
-      color: var(--text3);
-      font-family: var(--font);
-      font-size: 10px;
-      font-weight: 500;
-      transition: color var(--tr);
-      padding: 8px 4px;
-    }
-
-    .bnav-item svg {
-      transition: color var(--tr);
-    }
-
-    .bnav-item.active {
-      color: var(--accent);
-    }
-
-    .bnav-item:active {
-      opacity: .7;
-    }
-
-    @media(max-width:900px) {
-      .fg.c3 {
-        grid-template-columns: 1fr 1fr;
-      }
-
-      .pg {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-
-    @media(max-width:640px) {
-      .sidebar {
-        display: none;
-      }
-
-      .bnav {
-        display: flex;
-      }
-
-      .main {
-        padding: 16px 14px 80px;
-      }
-
-      .fg,
-      .fg.c3 {
-        grid-template-columns: 1fr;
-      }
-
-      .fg .s2,
-      .fg .s3 {
-        grid-column: 1;
-      }
-
-      .stepper {
-        display: none;
-      }
-
-      .hdr-sep,
-      .breadcrumb {
-        display: none;
-      }
-
-      .ph {
-        flex-direction: column;
-        gap: 8px;
-        margin-bottom: 16px;
-      }
-
-      .ph .chip {
-        align-self: flex-start;
-      }
-
-      .welcome {
-        flex-direction: column;
-        padding: 18px;
-      }
-
-      .pg {
-        grid-template-columns: repeat(2, 1fr);
-      }
-
-      .btn-row {
-        flex-direction: column;
-        align-items: stretch;
-      }
-
-      .btn-row .btn {
-        justify-content: center;
-      }
-
-      .card {
-        padding: 16px;
-      }
-
-      .layout {
-        height: calc(100vh - var(--hh) - 60px);
-      }
-    }
-
-    .vrow {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 14px 16px;
-      margin-bottom: 10px;
-      position: relative;
-    }
-
-    .vrow-num {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      margin-bottom: 10px;
-      letter-spacing: .3px;
-    }
-
-    .vrow-rm {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: none;
-      border: 1px solid var(--border);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text3);
-      transition: all var(--tr);
-    }
-
-    .vrow-rm:hover {
-      background: #e05252;
-      border-color: #e05252;
-      color: #fff;
-    }
-    /* ── Backup / Restore Card ── */
-    .backup-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 20px 24px;
-      margin-top: 20px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 16px;
-      transition: background var(--tr), border-color var(--tr);
-    }
-    .backup-info h3 { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
-    .backup-info p  { font-size: 12.5px; color: var(--text2); }
-    .backup-btns { display: flex; gap: 8px; flex-wrap: wrap; }
-
-  </style>
+  <title>OfficeDesk PWA Init</title>
 </head>
-
 <body>
-  <header class="hdr">
-    <a class="logo" href="#">
-      <div class="logo-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fff"
-          stroke-width="2.2">
-          <rect x="2" y="3" width="20" height="14" rx="2" />
-          <path d="M8 21h8M12 17v4" />
-        </svg></div>
-      OfficeDesk
-    </a>
-    <div class="hdr-sep"></div>
-    <div class="breadcrumb"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-        stroke-width="2">
-        <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z" />
-        <polyline points="9 22 9 12 15 12 15 22" />
-      </svg><b id="bc">Dashboard</b></div>
-    <div class="hdr-right">
-      <button class="tbtn" id="themeBtn" title="Toggle theme">
-        <svg id="ico-moon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-          stroke-width="2">
-          <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
-        </svg>
-        <svg id="ico-sun" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-          style="display:none">
-          <circle cx="12" cy="12" r="5" />
-          <line x1="12" y1="1" x2="12" y2="3" />
-          <line x1="12" y1="21" x2="12" y2="23" />
-          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
-          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
-          <line x1="1" y1="12" x2="3" y2="12" />
-          <line x1="21" y1="12" x2="23" y2="12" />
-          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
-          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
-        </svg>
-      </button>
-    </div>
-  </header>
-  <div class="layout">
-    <aside class="sidebar">
-      <div class="sb-sec">
-        <div class="sb-lbl">Main</div>
-        <button class="nav-item active" data-view="dashboard">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" />
-            <rect x="14" y="3" width="7" height="7" />
-            <rect x="14" y="14" width="7" height="7" />
-            <rect x="3" y="14" width="7" height="7" />
-          </svg>Dashboard
-        </button>
-      </div>
-      <div class="sb-div"></div>
-      <div class="sb-sec">
-        <div class="sb-lbl">Warranty Tools</div>
-        <button class="nav-item" data-view="alcazar">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-            <polyline points="14 2 14 8 20 8" />
-            <line x1="16" y1="13" x2="8" y2="13" />
-            <line x1="16" y1="17" x2="8" y2="17" />
-          </svg>Alcazar Form
-          <span class="nav-badge">PPT</span>
-        </button>
-        <button class="nav-item" data-view="keycode">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="11" width="18" height="11" rx="2" />
-            <path d="M7 11V7a5 5 0 0110 0v4" />
-          </svg>Key Code Form
-          <span class="nav-badge">XLS</span>
-        </button>
-        <button class="nav-item" data-view="letterheads">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-          </svg>Letter Heads
-          <span class="nav-badge">DOCX</span>
-        </button>
-        <button class="nav-item" data-view="pwareg">
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-            <polyline points="14 2 14 8 20 8"/>
-            <line x1="8" y1="13" x2="16" y2="13"/>
-            <line x1="8" y1="17" x2="13" y2="17"/>
-          </svg>PWA Regular
-          <span class="nav-badge">XLSX</span>
-        </button>
-      </div>
-      <div class="sb-ver">OfficeDesk v1.0 &nbsp;·&nbsp; Khanna Automart</div>
-    </aside>
-    <main class="main">
-      <!-- DASHBOARD -->
-      <div class="view active" id="view-dashboard">
-        <div class="welcome">
-          <div class="wt">
-            <h2>OfficeDesk — Dealership Utility Suite</h2>
-            <p>Browser-based tools for the Khanna Automart team. Generate warranty PPTs, invoices, service reports and
-              more — no install, no login, works offline. New tools added regularly.</p>
-          </div>
-          <div class="wi"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
-              <rect x="2" y="3" width="20" height="14" rx="2" />
-              <path d="M8 21h8M12 17v4" />
-            </svg></div>
-        </div>
+<script>
+(function () {
 
-        <div class="ph">
-          <div class="ph-title">Warranty Tools</div>
-        </div>
+  // ═══════════════════════════════════════════════
+  // 1. ALL ICONS — Inline Base64 SVG (all PWA sizes)
+  // ═══════════════════════════════════════════════
+  function makeIconSVG(size) {
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${size} ${size}">
+      <rect width="${size}" height="${size}" rx="${Math.round(size*0.22)}" fill="#002C5F"/>
+      <rect x="${size*0.12}" y="${size*0.22}" width="${size*0.76}" height="${size*0.44}" rx="${size*0.06}" fill="none" stroke="#ffffff" stroke-width="${size*0.06}"/>
+      <path d="M${size*0.34} ${size*0.66} h${size*0.32} M${size*0.5} ${size*0.66} v${size*0.13}" stroke="#ffffff" stroke-width="${size*0.06}" stroke-linecap="round"/>
+    </svg>`;
+    return 'data:image/svg+xml;base64,' + btoa(svg);
+  }
 
-        <div class="tools-grid">
-          <div class="tool-card live" onclick="switchView('alcazar')">
-            <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-            </div>
-            <div>
-              <div class="tool-name">Alcazar Form</div>
-              <span class="tag tag-live" style="margin-top:5px">PPT</span>
-            </div>
-          </div>
+  const ICON_SIZES = [72, 96, 128, 144, 152, 192, 384, 512];
+  const icons = ICON_SIZES.map(size => ({
+    src: makeIconSVG(size),
+    sizes: `${size}x${size}`,
+    type: 'image/svg+xml',
+    purpose: 'any maskable'
+  }));
 
-          <div class="tool-card live" onclick="switchView('keycode')">
-            <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="11" width="18" height="11" rx="2"/>
-                <path d="M7 11V7a5 5 0 0110 0v4"/>
-              </svg>
-            </div>
-            <div>
-              <div class="tool-name">Key Code Form</div>
-              <span class="tag tag-live" style="margin-top:5px">XLS</span>
-            </div>
-          </div>
+  // ═══════════════════════════════════════════════
+  // 2. WEB APP MANIFEST — Injected via Blob URL
+  // ═══════════════════════════════════════════════
+  const manifest = {
+    name: 'OfficeDesk — Utility Suite',
+    short_name: 'OfficeDesk',
+    description: 'Dealership utility suite for Khanna Automart — PPT, invoices, service reports.',
+    start_url: './index.html',
+    scope: './',
+    display: 'standalone',
+    orientation: 'portrait-primary',
+    theme_color: '#002C5F',
+    background_color: '#002C5F',
+    categories: ['productivity', 'business'],
+    icons: icons
+  };
 
-          <div class="tool-card live" onclick="switchView('letterheads')">
-            <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-              </svg>
-            </div>
-            <div>
-              <div class="tool-name">Letter Heads</div>
-              <span class="tag tag-live" style="margin-top:5px">DOCX</span>
-            </div>
-          </div>
+  const manifestBlob = new Blob([JSON.stringify(manifest)], { type: 'application/manifest+json' });
+  const manifestURL = URL.createObjectURL(manifestBlob);
 
-          <div class="tool-card live" onclick="switchView('pwareg')">
-            <div class="tool-icon" style="background:var(--accent-s);color:var(--accent)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="8" y1="13" x2="16" y2="13"/>
-                <line x1="8" y1="17" x2="13" y2="17"/>
-              </svg>
-            </div>
-            <div>
-              <div class="tool-name">PWA Regular</div>
-              <span class="tag tag-live" style="margin-top:5px">XLSX</span>
-            </div>
-          </div>
+  // Inject manifest link into parent window (index.html)
+  try {
+    const parentDoc = window.parent.document;
+    // Remove any existing manifest link
+    const existing = parentDoc.querySelector('link[rel="manifest"]');
+    if (existing) existing.remove();
+    const link = parentDoc.createElement('link');
+    link.rel = 'manifest';
+    link.href = manifestURL;
+    parentDoc.head.appendChild(link);
 
-          <div class="tool-card coming">
-            <div class="tool-icon" style="background:var(--surface2);color:var(--text3)">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-              </svg>
-            </div>
-            <div>
-              <div class="tool-name">Job Card Gen</div>
-              <span class="tag tag-soon" style="margin-top:5px">Soon</span>
-            </div>
-          </div>
-        </div>
+    // Also inject apple-touch-icon for iOS
+    const appleIcon = parentDoc.createElement('link');
+    appleIcon.rel = 'apple-touch-icon';
+    appleIcon.href = makeIconSVG(192);
+    parentDoc.head.appendChild(appleIcon);
 
-        <div class="backup-card">
-          <div class="backup-info">
-            <h3>Backup &amp; Restore</h3>
-            <p>Save all form data from every tool to a single file. Restore anytime.</p>
-          </div>
-          <div class="backup-btns">
-            <button class="btn btn-g" onclick="backupAll()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              Backup All
-            </button>
-            <button class="btn btn-g" onclick="document.getElementById('restore-input').click()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-              Restore All
-            </button>
-            <input type="file" id="restore-input" accept=".json" style="display:none" onchange="restoreAll(event)">
-          </div>
-        </div>
-      </div>
-      <!-- ALCAZAR FORM -->
-      <!-- ALCAZAR FORM -->
-      <div class="view view-letterheads-container" id="view-alcazar">
-        <iframe id="alcazar-iframe" src="./alcazar.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
-      </div>
-      <!-- KEY CODE FORM -->
-      <div class="view view-letterheads-container" id="view-keycode">
-        <iframe id="keycode-iframe" src="./keycode.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
-      </div>
-      <div class="view view-letterheads-container" id="view-letterheads">
-        <iframe id="letterheads-iframe" src="./letthead.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
-      </div>
-      <!-- PWA REGULAR FORM -->
-      <div class="view view-letterheads-container" id="view-pwareg">
-        <iframe id="pwareg-iframe" src="./pwareg.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
-      </div>
-    </main>
-  </div>
-  <div id="loader">
-    <div class="ld-card">
-      <div class="spin"></div>
-      <p>Generating PPT in browser…</p>
-    </div>
-  </div>
-  <div id="toast"></div>
-  <div id="finputs"></div>
-  <script>
-    // Navigation and view switching
-    document.addEventListener("DOMContentLoaded", () => {
-      document.querySelectorAll(".nav-item[data-view],.bnav-item[data-view]").forEach(b => b.addEventListener("click", () => switchView(b.dataset.view)));
-      document.getElementById("themeBtn").addEventListener("click", toggleTheme);
-      const theme = localStorage.getItem("od-theme") || "light";
-      applyTheme(theme);
-      
-      // Pre-sync theme to all iframes immediately
-      ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe', 'pwareg-iframe'].forEach(id => {
-        const iframe = document.getElementById(id);
-        if (iframe) {
-          const sendTheme = () => {
-            if (iframe.contentWindow) {
-              iframe.contentWindow.postMessage({ type: 'theme', theme: document.documentElement.getAttribute('data-theme') || 'light' }, '*');
-            }
-          };
-          iframe.addEventListener('load', sendTheme);
-          sendTheme();
+    // iOS meta tags
+    const metaCapable = parentDoc.createElement('meta');
+    metaCapable.name = 'apple-mobile-web-app-capable';
+    metaCapable.content = 'yes';
+    parentDoc.head.appendChild(metaCapable);
+
+    const metaStatus = parentDoc.createElement('meta');
+    metaStatus.name = 'apple-mobile-web-app-status-bar-style';
+    metaStatus.content = 'black-translucent';
+    parentDoc.head.appendChild(metaStatus);
+
+    const metaTitle = parentDoc.createElement('meta');
+    metaTitle.name = 'apple-mobile-web-app-title';
+    metaTitle.content = 'OfficeDesk';
+    parentDoc.head.appendChild(metaTitle);
+
+  } catch(e) {
+    // Same-origin only — if cross-origin, manifest must be in index.html directly
+    console.warn('[offdesman] Could not inject manifest into parent:', e);
+  }
+
+  // ═══════════════════════════════════════════════
+  // 3. SERVICE WORKER — Inline Blob Registration
+  // ═══════════════════════════════════════════════
+  const SW_VERSION = 'officedesk-v1';
+  const CACHE_FILES = [
+    './index.html',
+    './alcazar.html',
+    './keycode.html',
+    './letthead.html',
+    './pwareg.html',
+    './ppt-template.js',
+    './offdesman.html'
+  ];
+
+  const swCode = `
+const CACHE = '${SW_VERSION}';
+const CACHE_FILES = ${JSON.stringify(CACHE_FILES)};
+
+self.addEventListener('install', e => {
+  e.waitUntil(
+    caches.open(CACHE).then(cache => {
+      return Promise.allSettled(
+        CACHE_FILES.map(url => cache.add(url).catch(() => {}))
+      );
+    }).then(() => self.skipWaiting())
+  );
+});
+
+self.addEventListener('activate', e => {
+  e.waitUntil(
+    caches.keys().then(keys =>
+      Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k)))
+    ).then(() => self.clients.claim())
+  );
+});
+
+self.addEventListener('fetch', e => {
+  if (e.request.method !== 'GET') return;
+  e.respondWith(
+    caches.match(e.request).then(cached => {
+      if (cached) return cached;
+      return fetch(e.request).then(res => {
+        if (res && res.status === 200 && res.type === 'basic') {
+          const clone = res.clone();
+          caches.open(CACHE).then(cache => cache.put(e.request, clone));
         }
+        return res;
+      }).catch(() => caches.match('./index.html'));
+    })
+  );
+});
+
+self.addEventListener('push', e => {
+  const data = e.data ? e.data.json() : { title: 'OfficeDesk', body: 'You have a new update!' };
+  e.waitUntil(
+    self.registration.showNotification(data.title || 'OfficeDesk', {
+      body: data.body || 'Check the latest updates.',
+      icon: data.icon || '',
+      badge: data.badge || '',
+      vibrate: [200, 100, 200],
+      data: { url: data.url || './' }
+    })
+  );
+});
+
+self.addEventListener('notificationclick', e => {
+  e.notification.close();
+  e.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then(list => {
+      for (const client of list) {
+        if ('focus' in client) return client.focus();
+      }
+      if (clients.openWindow) return clients.openWindow(e.notification.data.url || './');
+    })
+  );
+});
+`;
+
+  // Register SW from parent window context (index.html's scope)
+  const registerSW = (win) => {
+    if (!('serviceWorker' in win.navigator)) {
+      console.warn('[offdesman] Service Worker not supported');
+      return;
+    }
+    const swBlob = new Blob([swCode], { type: 'application/javascript' });
+    const swURL = URL.createObjectURL(swBlob);
+
+    win.navigator.serviceWorker.register(swURL, { scope: './' })
+      .then(reg => {
+        console.log('[offdesman] SW registered:', reg.scope);
+        // Check for updates every 60 seconds
+        setInterval(() => reg.update(), 60000);
+      })
+      .catch(err => {
+        console.warn('[offdesman] SW registration failed (Blob SW requires same-origin). Trying fallback.', err);
+        // Fallback: post message to parent to handle SW registration
+        window.parent.postMessage({ type: 'od-sw-fallback', swCode }, '*');
       });
+  };
+
+  try {
+    registerSW(window.parent);
+  } catch(e) {
+    registerSW(window);
+  }
+
+  // ═══════════════════════════════════════════════
+  // 4. NOTIFICATION PERMISSION — Ask immediately
+  // ═══════════════════════════════════════════════
+  const requestNotification = () => {
+    if (!('Notification' in window.parent)) return;
+    if (window.parent.Notification.permission === 'default') {
+      // Small delay so page loads first
+      setTimeout(() => {
+        window.parent.Notification.requestPermission().then(perm => {
+          console.log('[offdesman] Notification permission:', perm);
+          if (perm === 'granted') {
+            new window.parent.Notification('OfficeDesk is ready!', {
+              body: 'Works offline. Add to Home Screen for app experience.',
+              icon: makeIconSVG(192)
+            });
+          }
+        });
+      }, 1500);
+    }
+  };
+
+  try {
+    requestNotification();
+  } catch(e) {
+    if ('Notification' in window && Notification.permission === 'default') {
+      setTimeout(() => Notification.requestPermission(), 1500);
+    }
+  }
+
+  // ═══════════════════════════════════════════════
+  // 5. ADD TO HOME SCREEN — Auto-trigger A2HS prompt
+  // ═══════════════════════════════════════════════
+  const setupA2HS = (win) => {
+    let deferredPrompt = null;
+
+    win.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      console.log('[offdesman] A2HS prompt captured');
+
+      // Auto-show after 2 seconds
+      setTimeout(() => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          deferredPrompt.userChoice.then(choice => {
+            console.log('[offdesman] A2HS user choice:', choice.outcome);
+            deferredPrompt = null;
+          });
+        }
+      }, 2000);
     });
 
-    function switchView(v) {
-      document.querySelectorAll(".view").forEach(el => el.classList.remove("active"));
-      document.querySelectorAll(".nav-item,.bnav-item").forEach(el => el.classList.remove("active"));
-      const view = document.getElementById("view-" + v);
-      if (view) view.classList.add("active");
-      document.querySelectorAll(`.nav-item[data-view="${v}"],.bnav-item[data-view="${v}"]`).forEach(el => el.classList.add("active"));
-      const labels = { dashboard: "Dashboard", alcazar: "Alcazar Form", keycode: "Key Code Form", letterheads: "Letter Heads", pwareg: "PWA Regular" }; 
-      document.title = "OfficeDesk — " + (labels[v] || "Utility Suite");
-    }
+    win.addEventListener('appinstalled', () => {
+      console.log('[offdesman] App installed successfully!');
+      deferredPrompt = null;
+    });
+  };
 
-    function toggleTheme() {
-      const current = document.documentElement.getAttribute("data-theme") || "light";
-      applyTheme(current === "light" ? "dark" : "light");
-    }
+  try {
+    setupA2HS(window.parent);
+  } catch(e) {
+    setupA2HS(window);
+  }
 
-    function applyTheme(t) { 
-      document.documentElement.setAttribute("data-theme", t); 
-      localStorage.setItem("od-theme", t); 
-      document.getElementById("ico-moon").style.display = t === "dark" ? "none" : ""; 
-      document.getElementById("ico-sun").style.display = t === "dark" ? "" : "none";
-      // Update theme-color meta so Android status bar matches app background
-      const themeColors = { light: '#f4f4f2', dark: '#111110' };
-      document.getElementById('theme-color-meta').setAttribute('content', themeColors[t] || '#f4f4f2');
-      ['letterheads-iframe', 'alcazar-iframe', 'keycode-iframe', 'pwareg-iframe'].forEach(id => {
-        const iframe = document.getElementById(id);
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'theme', theme: t }, '*');
-        }
-      });
-    }
+  console.log('[offdesman] PWA init complete ✓');
 
-    let tt; 
-    function toast(msg, type) { 
-      const icons = { 
-        ok: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>', 
-        err: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>', 
-        info: '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>' 
-      }; 
-      const el = document.getElementById("toast"); 
-      el.className = "show " + (type || "info"); 
-      el.innerHTML = (icons[type] || icons.info) + msg; 
-      clearTimeout(tt); 
-      tt = setTimeout(() => { el.className = ""; }, 3500); 
-    }
-
-    // ── Backup / Restore All ──
-    const IFRAME_IDS = ['alcazar-iframe', 'keycode-iframe', 'letterheads-iframe', 'pwareg-iframe'];
-    const TOOL_NAMES = { 'alcazar-iframe': 'alcazar', 'keycode-iframe': 'keycode', 'letterheads-iframe': 'letterheads', 'pwareg-iframe': 'pwareg' };
-
-    function backupAll() {
-      const collected = {};
-      let pending = IFRAME_IDS.length;
-
-      const timeout = setTimeout(() => {
-        // If some iframes didn't respond, still save what we have
-        finishBackup(collected);
-      }, 3000);
-
-      const handler = (e) => {
-        if (e.data && e.data.type === 'backup-response') {
-          collected[e.data.tool] = e.data.data;
-          pending--;
-          if (pending <= 0) {
-            clearTimeout(timeout);
-            window.removeEventListener('message', handler);
-            finishBackup(collected);
-          }
-        }
-      };
-      window.addEventListener('message', handler);
-
-      // Request data from each iframe
-      IFRAME_IDS.forEach(id => {
-        const iframe = document.getElementById(id);
-        if (iframe && iframe.contentWindow) {
-          iframe.contentWindow.postMessage({ type: 'backup-request' }, '*');
-        } else {
-          pending--;
-        }
-      });
-
-      if (pending <= 0) {
-        clearTimeout(timeout);
-        window.removeEventListener('message', handler);
-        finishBackup(collected);
-      }
-    }
-
-    function finishBackup(data) {
-      const payload = {
-        version: 1,
-        timestamp: new Date().toISOString(),
-        data
-      };
-      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      const d = new Date();
-      const stamp = d.getFullYear() + ('0'+(d.getMonth()+1)).slice(-2) + ('0'+d.getDate()).slice(-2);
-      a.download = `officedesk_backup_${stamp}.json`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(url);
-      toast('Backup downloaded', 'ok');
-    }
-
-    function restoreAll(event) {
-      const file = event.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        try {
-          const payload = JSON.parse(e.target.result);
-          if (!payload.version || !payload.data) {
-            toast('Invalid backup file', 'err');
-            return;
-          }
-          const { data } = payload;
-          IFRAME_IDS.forEach(id => {
-            const tool = TOOL_NAMES[id];
-            const iframe = document.getElementById(id);
-            if (iframe && iframe.contentWindow && data[tool]) {
-              iframe.contentWindow.postMessage({ type: 'restore-data', tool, data: data[tool] }, '*');
-            }
-          });
-          toast('Data restored to all tools', 'ok');
-        } catch (err) {
-          toast('Error reading backup file', 'err');
-        }
-        event.target.value = '';
-      };
-      reader.readAsText(file);
-    }
-    // ── End Backup / Restore ──
-
-    function showLoader(s) { 
-      document.getElementById("loader").className = s ? "show" : ""; 
-    }
-  </script>
-  <nav class="bnav">
-    <button class="bnav-item active" data-view="dashboard">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="3" width="7" height="7" />
-        <rect x="14" y="3" width="7" height="7" />
-        <rect x="14" y="14" width="7" height="7" />
-        <rect x="3" y="14" width="7" height="7" />
-      </svg>
-      Home
-    </button>
-    <button class="bnav-item" data-view="alcazar">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-        <polyline points="14 2 14 8 20 8" />
-        <line x1="16" y1="13" x2="8" y2="13" />
-        <line x1="16" y1="17" x2="8" y2="17" />
-      </svg>
-      Alcazar
-    </button>
-    <button class="bnav-item" data-view="keycode">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <rect x="3" y="11" width="18" height="11" rx="2" />
-        <path d="M7 11V7a5 5 0 0110 0v4" />
-      </svg>
-      Key Code
-    </button>
-    <button class="bnav-item" data-view="letterheads">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-      </svg>
-      Letter Heads
-    </button>
-    <button class="bnav-item" data-view="pwareg">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
-        <polyline points="14 2 14 8 20 8"/>
-        <line x1="8" y1="13" x2="16" y2="13"/>
-        <line x1="8" y1="17" x2="13" y2="17"/>
-      </svg>
-      PWA Regular
-    </button>
-  </nav>
-
-<script src="./ppt-template.js"></script>
+})();
+</script>
 </body>
-
 </html>
