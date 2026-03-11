@@ -35,17 +35,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .card-header h1{font-size:17px;font-weight:600;color:var(--text-main);}
 .card-header p{font-size:12px;color:var(--text-muted);margin-top:3px;}
 
-.stepper-wrap{padding:16px 20px;border-bottom:1px solid var(--border-light);display:none;}
-.stepper-wrap.show{display:block;}
+.stepper-container{padding:16px 20px;border-bottom:1px solid var(--border-light);background:var(--bg-card);}
 .stepper{display:flex;align-items:center;justify-content:space-between;position:relative;}
-.step{flex:1;display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;}
-.step-num{width:32px;height:32px;border-radius:50%;border:2px solid var(--border-input);background:var(--bg-card);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;color:var(--text-muted);transition:all .3s;margin-bottom:6px;}
-.step.active .step-num{background:var(--accent-bg);border-color:var(--accent-bg);color:var(--accent-text);}
-.step.completed .step-num{background:var(--accent-bg);border-color:var(--accent-bg);color:var(--accent-text);}
-.step-label{font-size:10.5px;font-weight:500;color:var(--text-muted);text-align:center;transition:color .3s;}
-.step.active .step-label{color:var(--accent-bg);font-weight:600;}
-.step.completed .step-label{color:var(--text-main);}
-.step-line{position:absolute;top:16px;left:50%;right:-50%;height:2px;background:var(--border-input);z-index:1;transition:background .3s;}
+.step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:2;}
+.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:2px solid var(--border-input);background:var(--bg-input);color:var(--text-muted);transition:all .3s;}
+.step.active .step-circle{border-color:var(--accent-bg);background:var(--accent-bg);color:var(--accent-text);}
+.step.completed .step-circle{border-color:var(--accent-bg);background:var(--accent-bg);color:var(--accent-text);}
+.step-label{font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center;font-weight:500;}
+.step.active .step-label,.step.completed .step-label{color:var(--text-main);font-weight:600;}
+.step-line{position:absolute;top:16px;left:50%;right:0;height:2px;background:var(--border-input);z-index:1;transition:all .3s;}
 .step:last-child .step-line{display:none;}
 .step.completed .step-line{background:var(--accent-bg);}
 
@@ -194,12 +192,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 @media(max-width:640px){
   body{padding:10px 8px 70px;}
   .grid-wrap{grid-template-columns:1fr;gap:8px;}
-  .card-header,.mode-wrap,.form-section,.actions,.history-wrap,.stepper-wrap{padding-left:14px;padding-right:14px;}
+  .card-header,.mode-wrap,.form-section,.actions,.history-wrap{padding-left:14px;padding-right:14px;}
   .actions{flex-wrap:wrap;flex-direction:row;}
 
   .photo-grid{grid-template-columns:repeat(3,1fr);}
-  .step-label{font-size:9px;}
-  .step-num{width:28px;height:28px;font-size:12px;}
 }
 </style>
 </head>
@@ -221,31 +217,27 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
     <p>Prior Work Approval — fill form then generate Excel report.</p>
   </div>
 
-  <div class="stepper-wrap" id="stepperWrap">
+  <!-- STEPPER PROGRESS -->
+  <div class="stepper-container" id="stepperContainer" style="display:none;">
     <div class="stepper">
-      <div class="step active" id="step1">
+      <div class="step completed" data-step="1">
+        <div class="step-circle">1</div>
+        <div class="step-label">Vehicle</div>
         <div class="step-line"></div>
-        <div class="step-num">1</div>
-        <div class="step-label">Vehicle Info</div>
       </div>
-      <div class="step" id="step2">
+      <div class="step" data-step="2">
+        <div class="step-circle">2</div>
+        <div class="step-label">Parts</div>
         <div class="step-line"></div>
-        <div class="step-num">2</div>
-        <div class="step-label">Dates & Details</div>
       </div>
-      <div class="step" id="step3">
+      <div class="step" data-step="3">
+        <div class="step-circle">3</div>
+        <div class="step-label">Labour</div>
         <div class="step-line"></div>
-        <div class="step-num">3</div>
-        <div class="step-label">Parts & Labor</div>
       </div>
-      <div class="step" id="step4">
-        <div class="step-line"></div>
-        <div class="step-num">4</div>
+      <div class="step" data-step="4">
+        <div class="step-circle">4</div>
         <div class="step-label">Photos</div>
-      </div>
-      <div class="step" id="step5">
-        <div class="step-num">5</div>
-        <div class="step-label">Complete</div>
       </div>
     </div>
   </div>
@@ -346,18 +338,24 @@ window.addEventListener('DOMContentLoaded',async()=>{
 
 function setMode(mode){
   currentMode=mode;
-  const stepperWrap=document.getElementById('stepperWrap');
+  const stepperContainer=document.getElementById('stepperContainer');
   document.getElementById('modeForm').classList.toggle('active',mode==='form');
   document.getElementById('modeHistory').classList.toggle('active',mode==='history');
   if(mode==='history'){
-    formWrap.style.display='none';actionsBar.style.display='none';histWrap.classList.add('show');
-    stepperWrap.classList.remove('show');
+    formWrap.style.display='none';
+    actionsBar.style.display='none';
+    histWrap.classList.add('show');
+    if(stepperContainer)stepperContainer.style.display='none';
     renderHistory();
-  }
-  else{
-    histWrap.classList.remove('show');formWrap.style.display='block';
-    stepperWrap.classList.add('show');
-    if(templateBuffer){actionsBar.style.display='flex';buildForm();}
+  }else{
+    histWrap.classList.remove('show');
+    formWrap.style.display='block';
+    if(stepperContainer)stepperContainer.style.display='block';
+    if(templateBuffer){
+      actionsBar.style.display='flex';
+      buildForm();
+      setTimeout(updateStepper,100);
+    }
   }
 }
 
@@ -626,6 +624,48 @@ function buildPhotographsSection(){
     });
   });
   sec.appendChild(grid);formWrap.appendChild(sec);
+}
+
+// ─────── STEPPER LOGIC ───────
+function updateStepper(){
+  const stepperContainer=document.getElementById('stepperContainer');
+  if(!stepperContainer||currentMode!=='form')return;
+  
+  const sections=Array.from(document.querySelectorAll('.form-section'));
+  if(sections.length<4)return;
+  
+  // Map sections to steps: 0-2=Vehicle(1), 3-6=Parts(2), 7-12=Labour(3), 13=Photos(4)
+  const sectionMap=[
+    {end:2,step:1},   // Dealer & Vehicle, Part Info, Problem Nature
+    {end:6,step:2},   // Narrative, Contacts, Service History
+    {end:12,step:3},  // Estimate (Parts & Labour)
+    {end:13,step:4}   // Photographs
+  ];
+  
+  const viewportMiddle=window.innerHeight/2;
+  let activeStep=1;
+  
+  sections.forEach((section,idx)=>{
+    const rect=section.getBoundingClientRect();
+    if(rect.top<viewportMiddle&&rect.bottom>0){
+      // Determine which step this section belongs to
+      for(const map of sectionMap){
+        if(idx<=map.end){
+          activeStep=map.step;
+          break;
+        }
+      }
+    }
+  });
+  
+  // Update step classes
+  const steps=stepperContainer.querySelectorAll('.step');
+  steps.forEach((step,idx)=>{
+    const stepNum=idx+1;
+    step.classList.remove('active','completed');
+    if(stepNum<activeStep)step.classList.add('completed');
+    else if(stepNum===activeStep)step.classList.add('active');
+  });
 }
 
 
@@ -932,70 +972,13 @@ function escHtml(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').
 function showStatus(m,t){statusEl.textContent=m;statusEl.className='status '+t;}
 function clearStatus(){statusEl.textContent='';statusEl.className='status';}
 
-// ─────── STEPPER PROGRESS UPDATE ───────
-function updateStepperProgress(){
-  const step1Fields=['vin','regNo','dealerCode','ownerName'];
-  const step2Fields=['productionDate','deliveryDate','reportDate','repairDate','fuelType','ew','mailYN'];
-  const step3Fields=['mileage'];
-  const step4Fields=['vinPhoto','meterPhoto'];
-  
-  // Check completion percentage for each step
-  const checkFields=(fields)=>{
-    let filled=0;
-    fields.forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){
-        if(el.type==='hidden'){
-          if(el.value&&el.value.trim())filled++;
-        }else if(el.value&&el.value.trim()&&!el.classList.contains('pre'))filled++;
-      }
-    });
-    return fields.length>0?filled/fields.length:0;
-  };
-  
-  const step1Complete=checkFields(step1Fields)>=0.5;
-  const step2Complete=checkFields(step2Fields)>=0.5;
-  const step3Complete=checkFields(step3Fields)>=0.3;
-  const step4Complete=checkFields(step4Fields)>=0.3;
-  
-  // Update stepper UI
-  ['step1','step2','step3','step4','step5'].forEach(id=>{
-    const el=document.getElementById(id);
-    if(el){
-      el.classList.remove('active','completed');
-    }
-  });
-  
-  if(!step1Complete){
-    document.getElementById('step1')?.classList.add('active');
-  }else if(!step2Complete){
-    document.getElementById('step1')?.classList.add('completed');
-    document.getElementById('step2')?.classList.add('active');
-  }else if(!step3Complete){
-    document.getElementById('step1')?.classList.add('completed');
-    document.getElementById('step2')?.classList.add('completed');
-    document.getElementById('step3')?.classList.add('active');
-  }else if(!step4Complete){
-    document.getElementById('step1')?.classList.add('completed');
-    document.getElementById('step2')?.classList.add('completed');
-    document.getElementById('step3')?.classList.add('completed');
-    document.getElementById('step4')?.classList.add('active');
-  }else{
-    document.getElementById('step1')?.classList.add('completed');
-    document.getElementById('step2')?.classList.add('completed');
-    document.getElementById('step3')?.classList.add('completed');
-    document.getElementById('step4')?.classList.add('completed');
-    document.getElementById('step5')?.classList.add('active');
-  }
-}
-
-// Call updateStepper when form fields change
-if(typeof document.getElementById('formWrap')!=='undefined'){
-  document.addEventListener('input',updateStepperProgress);
-  document.addEventListener('change',updateStepperProgress);
-  // Update on initial load
-  setTimeout(updateStepperProgress,500);
-}
+// ─────── STEPPER SCROLL HANDLER ───────
+let stepperScrollTimeout;
+window.addEventListener('scroll',()=>{
+  if(currentMode!=='form')return;
+  clearTimeout(stepperScrollTimeout);
+  stepperScrollTimeout=setTimeout(updateStepper,50);
+},{passive:true});
 
 // ─────── THEME + BACKUP ───────
 window.addEventListener('message',event=>{
