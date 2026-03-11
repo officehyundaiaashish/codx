@@ -630,8 +630,12 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
       let shXml=await zip.files[sp].async('string');
       if(shXml.includes('{')){
         shXml=replacePlaceholders(shXml);
-        zip.file(sp,shXml);
       }
+      // Remove customHeight on text sheets (not sheet4=photos) so Excel auto-fits row height
+      if(!sp.match(/sheet4\.xml$/i)){
+        shXml=shXml.replace(/\s+ht="[^"]*"/g,'').replace(/\s+customHeight="[^"]*"/g,'');
+      }
+      zip.file(sp,shXml);
     }
 
     // ── Inject photos into Photographs sheet ──
