@@ -35,17 +35,15 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .card-header h1{font-size:17px;font-weight:600;color:var(--text-main);}
 .card-header p{font-size:12px;color:var(--text-muted);margin-top:3px;}
 
-.stepper-container{padding:16px 20px;border-bottom:1px solid var(--border-light);background:var(--bg-card);}
-.stepper{display:flex;align-items:center;justify-content:space-between;position:relative;}
-.step{display:flex;flex-direction:column;align-items:center;flex:1;position:relative;z-index:2;}
-.step-circle{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600;border:2px solid var(--border-input);background:var(--bg-input);color:var(--text-muted);transition:all .3s;}
-.step.active .step-circle{border-color:var(--accent-bg);background:var(--accent-bg);color:var(--accent-text);}
-.step.completed .step-circle{border-color:var(--accent-bg);background:var(--accent-bg);color:var(--accent-text);}
-.step-label{font-size:10px;color:var(--text-muted);margin-top:6px;text-align:center;font-weight:500;}
-.step.active .step-label,.step.completed .step-label{color:var(--text-main);font-weight:600;}
-.step-line{position:absolute;top:16px;left:50%;right:0;height:2px;background:var(--border-input);z-index:1;transition:all .3s;}
-.step:last-child .step-line{display:none;}
-.step.completed .step-line{background:var(--accent-bg);}
+.stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 20px 0;}
+.step{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;transition:all .18s;}
+.step.done{background:rgba(0,44,95,.06);border-color:var(--accent-bg);}
+[data-theme=dark] .step.done{background:rgba(77,143,214,.1);}
+.step.active{border-color:var(--accent-bg);}
+.step-n{width:24px;height:24px;border-radius:50%;background:var(--bg-hover);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
+.step.done .step-n{background:var(--accent-bg);color:var(--accent-text);}
+.step-t{font-size:12px;font-weight:600;color:var(--text-main);}
+.step-s{font-size:10.5px;color:var(--text-muted);}
 
 .mode-wrap{margin:14px 20px 0;display:none;}
 .mode-wrap.show{display:block;}
@@ -194,7 +192,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
   .grid-wrap{grid-template-columns:1fr;gap:8px;}
   .card-header,.mode-wrap,.form-section,.actions,.history-wrap{padding-left:14px;padding-right:14px;}
   .actions{flex-wrap:wrap;flex-direction:row;}
-
+  .stepper{grid-template-columns:1fr 1fr;padding-left:14px;padding-right:14px;}
   .photo-grid{grid-template-columns:repeat(3,1fr);}
 }
 </style>
@@ -218,27 +216,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
   </div>
 
   <!-- STEPPER PROGRESS -->
-  <div class="stepper-container" id="stepperContainer" style="display:none;">
-    <div class="stepper">
-      <div class="step completed" data-step="1">
-        <div class="step-circle">1</div>
-        <div class="step-label">Vehicle</div>
-        <div class="step-line"></div>
-      </div>
-      <div class="step" data-step="2">
-        <div class="step-circle">2</div>
-        <div class="step-label">Parts</div>
-        <div class="step-line"></div>
-      </div>
-      <div class="step" data-step="3">
-        <div class="step-circle">3</div>
-        <div class="step-label">Labour</div>
-        <div class="step-line"></div>
-      </div>
-      <div class="step" data-step="4">
-        <div class="step-circle">4</div>
-        <div class="step-label">Photos</div>
-      </div>
+  <div class="stepper" id="stepperContainer" style="display:none;">
+    <div class="step active" id="pwa-st1">
+      <div class="step-n" id="pwa-sn1">1</div>
+      <div><div class="step-t">Vehicle</div><div class="step-s">VIN, model</div></div>
+    </div>
+    <div class="step" id="pwa-st2">
+      <div class="step-n" id="pwa-sn2">2</div>
+      <div><div class="step-t">Parts</div><div class="step-s">Part details</div></div>
+    </div>
+    <div class="step" id="pwa-st3">
+      <div class="step-n" id="pwa-sn3">3</div>
+      <div><div class="step-t">Labour</div><div class="step-s">Labour items</div></div>
+    </div>
+    <div class="step" id="pwa-st4">
+      <div class="step-n" id="pwa-sn4">4</div>
+      <div><div class="step-t">Photos</div><div class="step-s">Generate PPT</div></div>
     </div>
   </div>
 
@@ -636,10 +629,10 @@ function updateStepper(){
   
   // Map sections to steps: 0-2=Vehicle(1), 3-6=Parts(2), 7-12=Labour(3), 13=Photos(4)
   const sectionMap=[
-    {end:2,step:1},   // Dealer & Vehicle, Part Info, Problem Nature
-    {end:6,step:2},   // Narrative, Contacts, Service History
-    {end:12,step:3},  // Estimate (Parts & Labour)
-    {end:13,step:4}   // Photographs
+    {end:2,step:1},
+    {end:6,step:2},
+    {end:12,step:3},
+    {end:13,step:4}
   ];
   
   const viewportMiddle=window.innerHeight/2;
@@ -648,24 +641,20 @@ function updateStepper(){
   sections.forEach((section,idx)=>{
     const rect=section.getBoundingClientRect();
     if(rect.top<viewportMiddle&&rect.bottom>0){
-      // Determine which step this section belongs to
       for(const map of sectionMap){
-        if(idx<=map.end){
-          activeStep=map.step;
-          break;
-        }
+        if(idx<=map.end){ activeStep=map.step; break; }
       }
     }
   });
   
-  // Update step classes
-  const steps=stepperContainer.querySelectorAll('.step');
-  steps.forEach((step,idx)=>{
-    const stepNum=idx+1;
-    step.classList.remove('active','completed');
-    if(stepNum<activeStep)step.classList.add('completed');
-    else if(stepNum===activeStep)step.classList.add('active');
-  });
+  // Update step classes — ETM style (done / active)
+  for(let i=1;i<=4;i++){
+    const st=document.getElementById('pwa-st'+i);
+    const sn=document.getElementById('pwa-sn'+i);
+    if(!st||!sn)continue;
+    st.className='step '+(i<activeStep?'done':i===activeStep?'active':'');
+    sn.innerHTML=i<activeStep?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':i;
+  }
 }
 
 
