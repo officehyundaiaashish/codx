@@ -1,12 +1,25 @@
-// OfficeDesk Service Worker v2
-const CACHE = 'officedesk-v2';
+// OfficeDesk Service Worker v3
+const CACHE = 'officedesk-v3';
+
+// All files that must be cached for offline use
+const PRECACHE_URLS = [
+  './offdesman.html',
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './ppt-template.js',
+  './alcazar.html',
+  './keycode.html',
+  './letthead.html',
+  './pwareg.html'
+];
 
 self.addEventListener('install', e => {
   self.skipWaiting();
   e.waitUntil(
     caches.open(CACHE).then(c =>
-      c.addAll(['./offdesman.html', './manifest.json', './icon-192.png', './icon-512.png'])
-       .catch(() => {})
+      // Use individual adds so one missing file doesn't break the whole cache
+      Promise.allSettled(PRECACHE_URLS.map(url => c.add(url).catch(() => {})))
     )
   );
 });
