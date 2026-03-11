@@ -1795,23 +1795,35 @@ self.addEventListener('message', e => {
       <!-- ALCAZAR FORM -->
       <!-- ALCAZAR FORM -->
       <div class="view view-letterheads-container" id="view-alcazar">
-        <iframe id="alcazar-iframe" src="./alcazar.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="alcazar-iframe" src="" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <!-- KEY CODE FORM -->
       <div class="view view-letterheads-container" id="view-keycode">
-        <iframe id="keycode-iframe" src="./keycode.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="keycode-iframe" src="" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <div class="view view-letterheads-container" id="view-letterheads">
-        <iframe id="letterheads-iframe" src="./letthead.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="letterheads-iframe" src="" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <!-- PWA REGULAR FORM -->
       <div class="view view-letterheads-container" id="view-pwareg">
-        <iframe id="pwareg-iframe" src="./pwareg.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="pwareg-iframe" src="" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
       <!-- ETM FORM -->
       <div class="view view-letterheads-container" id="view-etm">
-        <iframe id="etm-iframe" src="./etm.html" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
+        <iframe id="etm-iframe" src="" style="width:100%;flex:1;border:none;" loading="eager"></iframe>
       </div>
+      <script>
+        // Har page load par ek naya timestamp banao
+        // Isse browser samjhega ki yeh "naya" URL hai aur cache bypass karke GitHub se fresh file lega
+        (function() {
+          const v = Date.now();
+          document.getElementById('alcazar-iframe').src     = './alcazar.html?v=' + v;
+          document.getElementById('keycode-iframe').src     = './keycode.html?v=' + v;
+          document.getElementById('letterheads-iframe').src = './letthead.html?v=' + v;
+          document.getElementById('pwareg-iframe').src      = './pwareg.html?v=' + v;
+          document.getElementById('etm-iframe').src         = './etm.html?v=' + v;
+        })();
+      </script>
     </main>
   </div>
   <div id="loader">
