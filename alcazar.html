@@ -294,24 +294,48 @@
       background: var(--border);      
       margin: 20px 0;      
     }      
+    /* ── Modern Scrollbar ── */
+    *{scrollbar-width:thin;scrollbar-color:var(--border) transparent;}
+    *::-webkit-scrollbar{width:5px;height:5px;}
+    *::-webkit-scrollbar-track{background:transparent;}
+    *::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px;transition:opacity .3s;}
+    *::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+
+    /* ── Mode Buttons (Fill Form / Save Entry / Saved Entries) ── */
+    /* History wrap ETM style */
+    .alc-history-wrap{display:none;padding:16px 0 8px;}
+    .alc-history-wrap.show{display:block;}
+    .mode-wrap{margin:0 0 16px;display:block;}
+    .mode-lbl{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text2);margin-bottom:6px;}
+    .mode-btns{display:flex;gap:6px;}
+    .mode-btn{flex:1;height:36px;border-radius:7px;border:1.5px solid var(--border);background:var(--surface2);font-size:13px;font-weight:500;color:var(--text2);cursor:pointer;transition:all .18s;outline:none;display:flex;align-items:center;justify-content:center;gap:6px;font-family:var(--font);}
+    .mode-btn:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s);}
+    .mode-btn:hover{border-color:var(--text2);color:var(--text);}
+    .mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+
+    /* ── Action Button Row ── */
     .btn-row {      
       display: flex;      
       gap: 8px;      
       flex-wrap: wrap;      
     }      
     .btn {      
-      padding: 10px 16px;      
+      flex:1;
+      height:42px;      
       border: none;      
       border-radius: 8px;      
-      font-size: 13px;      
-      font-weight: 500;      
+      font-size: 14px;      
+      font-weight: 600;      
       cursor: pointer;      
       transition: all var(--tr);      
       display: inline-flex;      
       align-items: center;      
+      justify-content:center;
       gap: 7px;      
-      font-family: var(--font);      
-    }      
+      font-family: var(--font);
+      outline:none;
+    }
+    .btn:focus{box-shadow:0 0 0 3px var(--accent-s);}
     .btn-p {      
       background: var(--accent);      
       color: white;      
@@ -326,7 +350,12 @@
     }      
     .btn-g:hover {      
       background: var(--border);      
-    }      
+    }
+    /* Red tint for all clear buttons */
+    .btn-danger{background:rgba(239,68,68,.08);color:#dc2626;border:1px solid rgba(239,68,68,.2);}
+    .btn-danger:hover{background:rgba(239,68,68,.15);border-color:rgba(239,68,68,.35);}
+    [data-theme=dark] .btn-danger{background:rgba(248,113,113,.08);color:#f87171;border:1px solid rgba(248,113,113,.2);}
+    [data-theme=dark] .btn-danger:hover{background:rgba(248,113,113,.15);}      
     #loader {      
       position: fixed;      
       inset: 0;      
@@ -409,8 +438,9 @@
       .field.s2, .field.s3 { grid-column: span 1; }      
       .pg { grid-template-columns: repeat(2, 1fr); }      
       .stepper { grid-template-columns: repeat(2, 1fr); }      
-      .btn-row { flex-direction: column-reverse; }      
-      .btn-row .btn { width: 100%; justify-content: center; }      
+      .btn-row { flex-direction: column-reverse; }
+      .mode-btns{flex-wrap:wrap;}
+      .mode-btn{flex:1 1 calc(50% - 3px);}
     }      
 
   /* ── Custom Calendar Picker ── */
@@ -541,8 +571,23 @@
         <div class="step-s">Up to 6 images</div>      
       </div>      
     </div>      
+  </div>
+
+  <div class="mode-wrap">
+    <div class="mode-btns">
+      <button class="mode-btn active" id="alc-modeForm" onclick="alcSetMode('form')" tabindex="0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+        Fill Form
+      </button>
+      <button class="mode-btn" id="alc-modeHistory" onclick="alcSetMode('history')" tabindex="0">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        Saved Entries
+      </button>
+    </div>
   </div>      
       
+  <!-- Form Content (hidden when history is shown) -->
+  <div id="alc-formContent">
   <div class="card">      
     <div class="card-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="1" y="3" width="15" height="13" rx="1"/><polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg>Vehicle Information</div>      
     <div class="fg c3">      
@@ -605,11 +650,13 @@
     <div class="pg" id="pgrid"></div>      
   </div>      
       
-  <!-- History Panel -->
-  <div class="card hist-panel" id="alc-histPanel">
-    <div class="card-title" style="margin-bottom:14px;">
-      <span style="display:flex;align-items:center;gap:7px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saved Entries</span>
-      <button class="btn btn-g" style="padding:4px 10px;font-size:12px;" onclick="alcClearAllHistory()">Clear All</button>
+  </div> <!-- /alc-formContent -->
+
+  <!-- History Panel (ETM style - replaces form view) -->
+  <div class="alc-history-wrap" id="alc-histPanel">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <span style="font-size:13px;font-weight:600;display:flex;align-items:center;gap:7px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saved Entries</span>
+      <button class="btn btn-danger" style="height:32px;padding:0 12px;font-size:12px;" onclick="alcClearAllHistory()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Clear All</button>
     </div>
     <input type="text" class="hist-search" id="alc-histSearch" placeholder="Search by VIN or Model..." autocomplete="off">
     <div class="hist-list" id="alc-histList"></div>
@@ -618,11 +665,13 @@
   <div style="border-top:1px solid var(--border);margin-top:24px;padding:20px 0 8px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;">
     <span style="font-size:11.5px;color:var(--text3);" id="save-status"></span>
   </div>
+  <!-- Validation message -->
+  <div id="alc-valMsg" style="display:none;background:rgba(214,69,69,0.08);border:1px solid rgba(214,69,69,0.25);color:#d64545;border-radius:7px;padding:10px 14px;font-size:13px;font-weight:500;margin-bottom:10px;align-items:center;gap:8px;">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+    <span id="alc-valText"></span>
+  </div>
   <div class="btn-row" style="padding-bottom:32px;">
-    <button class="btn btn-g" style="flex:1;" onclick="resetForm()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>Reset</button>
-    <button class="btn btn-g" style="flex:1;" onclick="clearPhotos()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/></svg>Clear Photos</button>
-    <button class="btn btn-g" style="flex:1;" onclick="clearSavedData()"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Clear Saved</button>
-    <button class="btn btn-g" style="flex:1;" id="alc-histBtn" onclick="alcToggleHistory()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>Saved Entries</button>
+    <button class="btn btn-danger" style="flex:1;" onclick="clearSavedData()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg>Clear Form</button>
     <button class="btn btn-p" id="applyBtn" style="flex:2;" onclick="applyForm()"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>Apply &amp; Download PPT</button>
   </div>
       
@@ -1081,18 +1130,28 @@
       alcRenderHistory();
     }
 
-    function alcToggleHistory() {
-      const panel = document.getElementById('alc-histPanel');
-      const btn = document.getElementById('alc-histBtn');
-      const isOpen = panel.classList.contains('show');
-      panel.classList.toggle('show', !isOpen);
-      btn.style.background = !isOpen ? 'var(--accent)' : '';
-      btn.style.color = !isOpen ? 'var(--accent-s)' : '';
-      if (!isOpen) {
+    function alcSetMode(mode) {
+      const histWrap = document.getElementById('alc-histPanel');
+      const formContent = document.getElementById('alc-formContent');
+      const isHistory = mode === 'history';
+      // ETM style: hide form, show history (or vice versa)
+      if (formContent) formContent.style.display = isHistory ? 'none' : '';
+      histWrap.classList.toggle('show', isHistory);
+      document.getElementById('alc-modeForm')?.classList.toggle('active', mode === 'form');
+      document.getElementById('alc-modeHistory')?.classList.toggle('active', isHistory);
+      if (isHistory) {
         alcRenderHistory(document.getElementById('alc-histSearch')?.value || '');
-        document.getElementById('alc-histSearch')?.focus();
+        setTimeout(() => document.getElementById('alc-histSearch')?.focus(), 50);
       }
     }
+    function alcSaveEntry() {
+      alcSaveHistory();
+      const btn = document.getElementById('alc-modeSave');
+      if(btn){ btn.classList.add('active'); setTimeout(()=>btn.classList.remove('active'),900); }
+      toast('Entry saved', 'ok');
+    }
+    // keep old toggle for any remaining refs
+    function alcToggleHistory() { alcSetMode(document.getElementById('alc-histPanel').classList.contains('show') ? 'form' : 'history'); }
     function _alcEsc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -1189,11 +1248,25 @@
     }      
       
     async function applyForm() {      
-      const model = v("f-model"), vin = v("f-vin");      
-      if (!model || !vin) {      
-        toast("Model and VIN are required", "err");      
-        return;      
-      }      
+      const model = v("f-model"), vin = v("f-vin");
+      const mEl = document.getElementById('f-model');
+      const vEl = document.getElementById('f-vin');
+      const valMsg = document.getElementById('alc-valMsg');
+      const valTxt = document.getElementById('alc-valText');
+      let hasErr = false;
+      if (!model) { mEl.style.borderColor='#ef4444'; mEl.style.boxShadow='0 0 0 3px rgba(239,68,68,.15)'; hasErr=true; }
+      else { mEl.style.borderColor=''; mEl.style.boxShadow=''; }
+      if (!vin) { vEl.style.borderColor='#ef4444'; vEl.style.boxShadow='0 0 0 3px rgba(239,68,68,.15)'; hasErr=true; }
+      else { vEl.style.borderColor=''; vEl.style.boxShadow=''; }
+      if (hasErr) {
+        const missing = [];
+        if (!model) missing.push('Model');
+        if (!vin) missing.push('VIN');
+        if (valTxt) valTxt.textContent = 'Please fill required fields: ' + missing.join(', ');
+        if (valMsg) { valMsg.style.display='flex'; valMsg.scrollIntoView({behavior:'smooth',block:'nearest'}); }
+        return;
+      }
+      if (valMsg) valMsg.style.display='none';
       const btn = document.getElementById("applyBtn");      
       btn.disabled = true;      
       showLoader(true);      
