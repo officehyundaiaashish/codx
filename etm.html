@@ -194,6 +194,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .pj:active{transform:scale(.95);}
 .pj:focus{box-shadow:0 0 0 3px var(--focus-ring),0 4px 14px rgba(0,0,0,.2);}
 .pj.vis{opacity:1;pointer-events:all;transform:translateY(0);}
+#pjBot{opacity:1;pointer-events:all;transform:translateY(0);}
 
 /* ── Date field with manual input ── */
 .date-wrap{display:flex;gap:5px;align-items:flex-start;}
@@ -982,11 +983,10 @@ window.addEventListener('message',event=>{
   function showJumpers(){
     const sh=document.documentElement.scrollHeight,wh=window.innerHeight;
     const scrollable=sh>wh+20;
-    if(!scrollable){pjTop.classList.remove('vis');pjBot.classList.remove('vis');return;}
+    if(!scrollable){pjTop.classList.remove('vis');return;}
     const st=window.scrollY;
-    const nearTop=st<60,nearBot=st>=sh-wh-60;
+    const nearTop=st<60;
     pjTop.classList.toggle('vis',!nearTop);
-    pjBot.classList.toggle('vis',!nearBot); // always show unless at very bottom
   }
   function scheduleHide(){
     if(hideTimer)clearTimeout(hideTimer);
