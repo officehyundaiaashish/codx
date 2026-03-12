@@ -65,17 +65,17 @@
 *::-webkit-scrollbar-thumb:hover{background:var(--border-input);}
 
 /* ── Stepper ── */
-.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:20px 12px 0;box-sizing:border-box;width:calc(100% - 24px);}
+.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;padding:14px 20px;box-sizing:border-box;}
 .step{display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;transition:all .18s;min-width:0;overflow:hidden;}
 .step.done{background:rgba(0,44,95,.06);border-color:var(--accent-bg);}
 [data-theme=dark] .step.done{background:rgba(77,143,214,.1);}
 .step.active{border-color:var(--accent-bg);}
 .step-n{width:22px;height:22px;border-radius:50%;background:var(--bg-hover);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;flex-shrink:0;}
-.step.done .step-n{background:var(--accent-bg);color:var(--accent-text);}
+.step.done .step-n,.step.active .step-n{background:var(--accent-bg);color:var(--accent-text);}
 .step-t{font-size:11px;font-weight:600;color:var(--text-main);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .step-s{font-size:9.5px;color:var(--text-muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 @media(max-width:640px){
-  .stepper{margin:16px 10px 0;gap:4px;width:calc(100% - 20px);}
+  .stepper{padding:10px 14px;gap:4px;}
   .step{padding:7px 7px;gap:5px;}
   .step-n{width:20px;height:20px;font-size:9px;}
   .step-t{font-size:10px;}
@@ -101,9 +101,19 @@ body {
   width: 100%; 
   max-width: 800px; 
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03); 
-  overflow: hidden;
   border: 1px solid var(--border-light);
 }
+/* ── Sticky Stepper ── */
+.stepper-wrap{position:sticky;top:0;z-index:900;background:var(--bg-card);border-bottom:1px solid var(--border-light);}
+/* ── Page Jumpers ── */
+.page-jumper{position:fixed;right:16px;z-index:9000;display:flex;flex-direction:column;gap:8px;}
+.page-jumper{bottom:80px;}
+.pj-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.2);transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;background:var(--accent-bg);color:var(--accent-text);}
+.pj-btn:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+.pj-btn:active{transform:scale(.95);}
+.pj-btn:focus{box-shadow:0 0 0 3px var(--focus-ring),0 4px 14px rgba(0,0,0,.2);}
+.pj-btn.hidden{opacity:0;pointer-events:none;transform:translateY(12px);}
+@media(max-width:640px){.pj-btn{width:38px;height:38px;}.page-jumper{right:10px;bottom:70px;}}
 
 .card-header { 
   padding: 24px 32px 20px; 
@@ -306,6 +316,7 @@ body {
   </div>
 
   <!-- Stepper -->
+  <div class="stepper-wrap" id="stepperWrap" style="display:none;">
   <div class="stepper" id="lh-stepper">
     <div class="step active" id="lh-st1">
       <div class="step-n" id="lh-sn1">1</div>
@@ -319,6 +330,7 @@ body {
       <div class="step-n" id="lh-sn3">3</div>
       <div><div class="step-t">Ready</div><div class="step-s">Generate DOCX</div></div>
     </div>
+  </div>
   </div>
 
   <div class="mode-wrap" id="modeWrap">
@@ -365,6 +377,16 @@ body {
       Clear Form
     </button>
   </div>
+</div>
+
+<!-- Page Jumpers -->
+<div class="page-jumper" id="pageJumper">
+  <button class="pj-btn hidden" id="pjTop" title="Back to top" tabindex="0">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+  </button>
+  <button class="pj-btn hidden" id="pjBottom" title="Go to bottom" tabindex="0">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+  </button>
 </div>
 
 <script>
@@ -553,19 +575,21 @@ function setMode(mode){
   document.getElementById('modeBattery').classList.toggle('active',mode==='battery');
   document.getElementById('modeHistory').classList.toggle('active',mode==='history');
   document.getElementById('modeSaveEntry')?.classList.remove('active');
-  
+  const sw=document.getElementById('stepperWrap');
   if(mode === 'history') {
     formWrap.style.display = 'none';
     actionsBar.style.display = 'none';
     histWrap.classList.add('show');
+    if(sw)sw.style.display='none';
     renderHistory();
   } else {
     histWrap.classList.remove('show');
     formWrap.style.display = 'block';
     if(templateBuffer) {
       actionsBar.style.display = 'flex';
-      document.getElementById('lh-stepper').classList.add('show');
+      if(sw)sw.style.display='block';
       buildForm();
+      setTimeout(updateStepper,100);
     }
   }
 }
@@ -576,15 +600,74 @@ function lhSaveEntry(){
   }
 }
 
+// ─── SMART PROGRESS ───
+function updateStepper(){
+  if(currentMode==='history')return;
+  // Step 1 done: mode chosen (always true when form visible) + recipient selected
+  const recipient=document.getElementById('recipient');
+  const s1done=!!(recipient&&recipient.value.trim());
+  // Step 2 done: custName + regNo filled
+  const custName=document.getElementById('custName');
+  const regNo=document.getElementById('regNo');
+  const s2done=!!(custName&&custName.value.trim()&&regNo&&regNo.value.trim());
+  // Step 3 done: s1+s2 + date filled
+  const dateVal=CAL['date']?.date||(()=>{const di=document.getElementById('di_date');return di&&di.value.trim()?di.value:null;})();
+  const s3done=s1done&&s2done&&!!dateVal;
+  const doneMap=[s1done,s2done,s3done];
+  // Scroll-based active
+  const sections=Array.from(document.querySelectorAll('.form-section'));
+  const vpm=window.innerHeight/2;
+  let activeStep=1;
+  sections.forEach((sec,idx)=>{
+    const r=sec.getBoundingClientRect();
+    if(r.top<vpm&&r.bottom>0) activeStep=Math.min(idx+1,3);
+  });
+  for(let i=1;i<=3;i++){
+    const st=document.getElementById('lh-st'+i),sn=document.getElementById('lh-sn'+i);
+    if(!st||!sn)continue;
+    if(doneMap[i-1]){
+      st.className='step done';
+      sn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    }else{
+      st.className='step'+(i===activeStep?' active':'');
+      sn.textContent=i;
+    }
+  }
+}
+
+// ─── PAGE JUMPERS ───
+(()=>{
+  const pjTop=document.getElementById('pjTop');
+  const pjBot=document.getElementById('pjBottom');
+  if(!pjTop||!pjBot)return;
+  const showJumpers=()=>{
+    const scrollY=window.scrollY||window.pageYOffset;
+    const maxScroll=document.documentElement.scrollHeight-window.innerHeight;
+    pjTop.classList.toggle('hidden',scrollY<120);
+    pjBot.classList.toggle('hidden',scrollY>=maxScroll-60);
+  };
+  window.addEventListener('scroll',showJumpers,{passive:true});
+  pjTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  pjBot.addEventListener('click',()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'}));
+  handleKeyClick(pjTop,()=>window.scrollTo({top:0,behavior:'smooth'}));
+  handleKeyClick(pjBot,()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'}));
+  showJumpers();
+})();
+
+// Scroll-based stepper active
+let stepperScrollTimeout;
+window.addEventListener('scroll',()=>{
+  if(currentMode==='history')return;
+  clearTimeout(stepperScrollTimeout);
+  stepperScrollTimeout=setTimeout(updateStepper,50);
+},{passive:true});
+
 // ─────────────────────────────────────────────────────────────────
 // CLOSE ALL POPUPS SCRIPT
 // ─────────────────────────────────────────────────────────────────
 function closeAllPopups() {
-  dateFields().forEach(f=>{
-    document.getElementById('cp_'+f.id)?.classList.remove('open');
-    document.getElementById('dt_'+f.id)?.classList.remove('active');
-    if(CAL[f.id]) CAL[f.id].open=false;
-  });
+  document.querySelectorAll('.cal-pop.open').forEach(el=>el.classList.remove('open'));
+  document.querySelectorAll('.date-trigger.active').forEach(el=>el.classList.remove('active'));
   document.querySelectorAll('.custom-select-opts.open').forEach(el => el.classList.remove('open'));
   document.querySelectorAll('.custom-select-trigger.active').forEach(el => el.classList.remove('active'));
 }
@@ -656,9 +739,12 @@ function renderCal(id){
     pop.querySelectorAll('.cd:not(.om)').forEach(el=>{
       const action = e => { 
         e.stopPropagation(); const s=CAL[el.dataset.id]; s.date=new Date(s.year,s.month,parseInt(el.dataset.d)); 
-        const f=allFields().find(f=>f.id===el.dataset.id); const dv=document.getElementById('dv_'+el.dataset.id);
+        const f=allFields().find(f=>f.id===el.dataset.id);
+        const diEl=document.getElementById('di_'+el.dataset.id);
+        if(diEl){ diEl.value=f.fmt==='slash'?fmtSlash(s.date):fmtDash(s.date); }
+        const dv=document.getElementById('dv_'+el.dataset.id);
         if(dv){ dv.textContent=f.fmt==='slash'?fmtSlash(s.date):fmtDash(s.date); dv.classList.remove('empty'); }
-        closeAllPopups(); renderCal(el.dataset.id);
+        closeAllPopups(); renderCal(el.dataset.id); updateStepper();
       };
       el.addEventListener('click', action);
       handleKeyClick(el, action);
@@ -695,50 +781,51 @@ function buildForm(){
       
       if(f.type==='date'){
         if(!CAL[f.id]) CAL[f.id]={date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth(),view:'days'};
-        
-        const calPop = document.createElement('div');
-        calPop.className = 'cal-pop';
-        calPop.id = 'cp_'+f.id;
-        
-        // MOUSE WHEEL SCROLL LOGIC
-        let wheelTimeout;
-        calPop.addEventListener('wheel', (e) => {
-            e.preventDefault();
-            if (wheelTimeout) return;
-            wheelTimeout = setTimeout(() => { wheelTimeout = null; }, 150);
-            
-            const st = CAL[f.id];
-            if (st.view === 'years') {
-                st.year += e.deltaY > 0 ? 15 : -15;
-            } else {
-                st.month += e.deltaY > 0 ? 1 : -1;
-                if(st.month > 11) { st.month = 0; st.year++; }
-                else if(st.month < 0) { st.month = 11; st.year--; }
-            }
-            renderCal(f.id);
-        }, { passive: false });
 
         col.innerHTML=`
           <label>${f.label}</label>
           <div style="position:relative;">
-            <div class="date-trigger" id="dt_${f.id}" tabindex="0">
-              <span class="dval empty" id="dv_${f.id}">Pick a date</span>
-              <span class="date-icon">${icons.calendar}</span>
+            <div class="date-trigger" id="dt_${f.id}" tabindex="0" style="cursor:text;">
+              <input type="text" id="di_${f.id}" placeholder="DD-MM-YYYY or pick →" style="flex:1;border:none;background:transparent;font-size:14px;color:var(--text-main);outline:none;font-family:'Inter',sans-serif;width:100%;cursor:text;" tabindex="-1">
+              <span class="date-icon" id="dico_${f.id}" style="cursor:pointer;flex-shrink:0;">${icons.calendar}</span>
             </div>
+            <div class="cal-pop" id="cp_${f.id}"></div>
           </div>`;
-          
-        col.querySelector('div').appendChild(calPop);
+
+        // Mouse wheel on cal-pop
+        const calPop=col.querySelector('.cal-pop');
+        let wheelTimeout;
+        calPop.addEventListener('wheel',(e)=>{
+          e.preventDefault();
+          if(wheelTimeout)return;
+          wheelTimeout=setTimeout(()=>{wheelTimeout=null;},150);
+          const st=CAL[f.id];
+          if(st.view==='years'){st.year+=e.deltaY>0?15:-15;}
+          else{st.month+=e.deltaY>0?1:-1;if(st.month>11){st.month=0;st.year++;}else if(st.month<0){st.month=11;st.year--;}}
+          renderCal(f.id);
+        },{passive:false});
+
         grid.appendChild(col);
-        
+
         requestAnimationFrame(()=>{
-          const dt = document.getElementById('dt_'+f.id);
-          const dtAction = e => {
-            e.stopPropagation(); 
-            const isOpen = document.getElementById('cp_'+f.id).classList.contains('open');
-            if(isOpen) closeAllPopups(); else openCal(f.id);
-          };
-          dt?.addEventListener('click', dtAction);
-          handleKeyClick(dt, dtAction);
+          const dt=document.getElementById('dt_'+f.id);
+          const di=document.getElementById('di_'+f.id);
+          const ico=document.getElementById('dico_'+f.id);
+          // Manual typing
+          di.addEventListener('input',()=>{
+            const v=di.value.trim();
+            if(/^\d{2}-\d{2}-\d{4}$/.test(v)){
+              const p=v.split('-');const d=new Date(+p[2],+p[1]-1,+p[0]);
+              if(!isNaN(d)){if(!CAL[f.id])CAL[f.id]={};Object.assign(CAL[f.id],{date:d,year:d.getFullYear(),month:d.getMonth(),open:false,view:'days'});}
+            }
+            updateStepper();
+          });
+          di.addEventListener('focus',()=>{dt.style.borderColor='var(--border-focus)';dt.style.boxShadow='0 0 0 3px var(--focus-ring)';});
+          di.addEventListener('blur',()=>{dt.style.borderColor='';dt.style.boxShadow='';});
+          // Calendar icon opens picker
+          ico.addEventListener('click',e=>{e.stopPropagation();const isOpen=document.getElementById('cp_'+f.id)?.classList.contains('open');if(isOpen)closeAllPopups();else openCal(f.id);});
+          // Click on trigger bar (not icon) focuses text input
+          dt.addEventListener('click',e=>{if(e.target!==ico&&!ico.contains(e.target))di.focus();});
         });
       } else if(f.type === 'select') {
         col.innerHTML=`
@@ -798,6 +885,11 @@ function buildForm(){
     sec.appendChild(grid);
     formWrap.appendChild(sec);
   });
+  // Hook inputs to updateStepper
+  requestAnimationFrame(()=>{
+    formWrap.addEventListener('input',updateStepper);
+    formWrap.querySelectorAll('.cs-opt').forEach(opt=>opt.addEventListener('click',()=>setTimeout(updateStepper,50)));
+  });
 }
 
 btnClear.addEventListener('click', async () => {
@@ -806,6 +898,8 @@ btnClear.addEventListener('click', async () => {
   allFields().forEach(f=>{
     if(f.type==='date'){
       if(CAL[f.id]) Object.assign(CAL[f.id],{date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth(),view:'days'});
+      const di=document.getElementById('di_'+f.id);
+      if(di) di.value='';
       const dv=document.getElementById('dv_'+f.id);
       if(dv){dv.textContent='Pick a date';dv.classList.add('empty');} 
     } else if (f.type==='select') {
@@ -824,6 +918,7 @@ btnClear.addEventListener('click', async () => {
   });
   closeAllPopups();
   clearStatus();
+  updateStepper();
 });
 
 // ─────────────────────────────────────────────────────────────────
@@ -841,7 +936,9 @@ btnInject.addEventListener('click',async()=>{
   allFields().forEach(f => {
     if(f.type === 'date') {
       const st = CAL[f.id];
-      const val = (st && st.date) ? (f.fmt === 'slash' ? fmtSlash(st.date) : fmtDash(st.date)) : '';
+      let val = (st && st.date) ? (f.fmt === 'slash' ? fmtSlash(st.date) : fmtDash(st.date)) : '';
+      // Fallback: read manually typed value
+      if(!val){ const di=document.getElementById('di_'+f.id); if(di&&di.value.trim()) val=di.value.trim(); }
       data[f.id] = val; 
       if(val) histEntry[f.id] = val;
     } else {
@@ -964,6 +1061,7 @@ function renderHistory(filterText = ''){
 function fillFromHistory(entry){
   setMode(entry.mode || 'tyre');
   
+  setTimeout(()=>{
   dateFields().forEach(f=>{
     const val=entry[f.id];
     if(!val) return;
@@ -973,6 +1071,8 @@ function fillFromHistory(entry){
     if(isNaN(d)) return;
     if(!CAL[f.id]) CAL[f.id]={};
     Object.assign(CAL[f.id],{date:d,year:d.getFullYear(),month:d.getMonth(),open:false,view:'days'});
+    const di=document.getElementById('di_'+f.id);
+    if(di){ di.value=val; }
     const dv=document.getElementById('dv_'+f.id);
     if(dv){ dv.textContent=val; dv.classList.remove('empty'); }
   });
@@ -991,6 +1091,8 @@ function fillFromHistory(entry){
   });
   closeAllPopups();
   clearStatus();
+  updateStepper();
+  },100);
 }
 
 function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
