@@ -76,7 +76,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .hi-info{flex:1;min-width:0;}
 .hi-name{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .hi-meta{font-size:11px;color:var(--text-muted);margin-top:2px;}
-.hi-del{background:none;border:none;color:var(--border-input);cursor:pointer;transition:color .2s;display:flex;align-items:center;outline:none;}
+.hi-del{background:none;border:none;color:var(--border-input);cursor:pointer;transition:color .2s;display:flex;align-items:center;padding:4px;outline:none;border-radius:4px;}
 .hi-del:hover,.hi-del:focus{color:var(--danger-color);}
 
 .form-section{padding:14px 20px 0;}
@@ -187,12 +187,27 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .modal-btn-ok{background:var(--danger-color);color:#fff;}
 .modal-btn-ok:hover,.modal-btn-ok:focus{opacity:.9;box-shadow:0 0 0 3px rgba(239,68,68,.2);}
 
+/* ── Page Jumpers ── */
+.pj{position:fixed;right:16px;width:36px;height:36px;border-radius:50%;background:var(--accent-bg);color:var(--accent-text);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(0,0,0,.2);opacity:0;pointer-events:none;transition:opacity .25s ease;z-index:900;}
+.pj.vis{opacity:1;pointer-events:all;}
+.pj:hover{opacity:.85;}
+#pjTop{bottom:66px;}
+#pjBot{bottom:20px;}
+
+/* ── Date field with manual input ── */
+.date-wrap{display:flex;gap:5px;align-items:flex-start;}
+.date-wrap .date-trigger{flex:1;}
+.date-manual{flex:1;height:36px;border:1px solid var(--border-input);border-radius:7px;padding:0 10px;font-size:13px;color:var(--text-main);background:var(--bg-input);outline:none;font-family:'Inter',sans-serif;transition:all .2s;}
+.date-manual:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--focus-ring);}
+.date-manual::placeholder{color:var(--text-placeholder);}
+
 @media(max-width:640px){
   body{padding:10px 8px 70px;}
   .grid-wrap{grid-template-columns:1fr;gap:8px;}
   .card-header,.mode-wrap,.form-section,.actions,.history-wrap{padding-left:14px;padding-right:14px;}
   .photo-grid{grid-template-columns:1fr;}
   .stepper{grid-template-columns:1fr 1fr;padding-left:14px;padding-right:14px;}
+  #pjTop{bottom:72px;}#pjBot{bottom:26px;}
 }
 </style>
 </head>
@@ -207,6 +222,9 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
     </div>
   </div>
 </div>
+
+<button id="pjTop" class="pj" title="Back to top" aria-label="Scroll to top"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg></button>
+<button id="pjBot" class="pj" title="Go to bottom" aria-label="Scroll to bottom"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></button>
 
 <div class="card">
   <div class="card-header">
@@ -397,6 +415,7 @@ function renderCal(id){
       const dd=String(i).padStart(2,'0'),mm=String(st.month+1).padStart(2,'0'),yy=st.year;
       const fmt=`${dd}-${mm}-${yy}`;
       const dv=document.getElementById('dv_'+id);if(dv){dv.textContent=fmt;dv.classList.remove('empty');}
+      const manEl=document.getElementById('dm_'+id);if(manEl)manEl.value=fmt;
       closeAllPopups();
     };
     d.addEventListener('click',e=>{e.stopPropagation();a();});handleKeyClick(d,a);
@@ -422,12 +441,43 @@ function openCal(id){
 function makeDateField(id,label){
   if(!CAL[id])CAL[id]={date:null,open:false,year:new Date().getFullYear(),month:new Date().getMonth(),view:'days'};
   const wrap=document.createElement('div');wrap.className='field-col';
-  wrap.innerHTML=`<label>${label}</label><div style="position:relative;"><div class="date-trigger" id="dt_${id}" tabindex="0"><span class="dval empty" id="dv_${id}">Pick date</span><span class="date-icon">${icons.calendar}</span></div><div class="cal-pop" id="cp_${id}"></div></div>`;
+  wrap.innerHTML=`<label>${label}</label>
+  <div style="position:relative;">
+    <div style="display:flex;gap:5px;">
+      <input type="text" id="dm_${id}" class="date-manual" placeholder="DD-MM-YYYY" maxlength="10" tabindex="0">
+      <div class="date-trigger" id="dt_${id}" tabindex="0" title="Open calendar" style="flex:0 0 36px;padding:0;justify-content:center;">
+        <span class="date-icon">${icons.calendar}</span>
+      </div>
+    </div>
+    <div class="cal-pop" id="cp_${id}"></div>
+  </div>`;
+  // Calendar pick → fills manual input
+  const origA=()=>{};
   const pop=wrap.querySelector('.cal-pop');
   let wt;pop.addEventListener('wheel',e=>{e.preventDefault();if(wt)return;wt=setTimeout(()=>{wt=null;},150);const st=CAL[id];if(st.view==='years'){st.year+=e.deltaY>0?15:-15;}else{st.month+=e.deltaY>0?1:-1;if(st.month>11){st.month=0;st.year++;}else if(st.month<0){st.month=11;st.year--;}}renderCal(id);},{passive:false});
-  requestAnimationFrame(()=>{const dt=document.getElementById('dt_'+id);const a=e=>{e.stopPropagation();const isOpen=document.getElementById('cp_'+id)?.classList.contains('open');if(isOpen)closeAllPopups();else openCal(id);};dt?.addEventListener('click',a);handleKeyClick(dt,a);});
+  requestAnimationFrame(()=>{
+    const dt=document.getElementById('dt_'+id);
+    const manEl=document.getElementById('dm_'+id);
+    const a=e=>{e.stopPropagation();const isOpen=document.getElementById('cp_'+id)?.classList.contains('open');if(isOpen)closeAllPopups();else openCal(id);};
+    dt?.addEventListener('click',a);handleKeyClick(dt,a);
+    // Manual input: auto-format as user types
+    manEl?.addEventListener('input',()=>{
+      let v=manEl.value.replace(/[^0-9]/g,'');
+      if(v.length>2)v=v.slice(0,2)+'-'+v.slice(2);
+      if(v.length>5)v=v.slice(0,5)+'-'+v.slice(5);
+      if(v.length>10)v=v.slice(0,10);
+      manEl.value=v;
+      // Sync to CAL state if full date
+      if(v.length===10){
+        const [dd,mm,yyyy]=v.split('-').map(Number);
+        const d=new Date(yyyy,mm-1,dd);
+        if(!isNaN(d)){CAL[id].date=d;CAL[id].year=d.getFullYear();CAL[id].month=d.getMonth();}
+      }
+    });
+  });
   return wrap;
 }
+
 
 function makeSelect(id,label,options,required=false){
   const wrap=document.createElement('div');wrap.className='field-col';
@@ -618,11 +668,15 @@ function buildPhotosSection(){
 // ─────── CLEAR FORM ───────
 document.getElementById('btnClear').addEventListener('click',async()=>{
   if(!(await customConfirm('Clear all fields?','Yes, Clear')))return;
-  formWrap.querySelectorAll('input[type=text],textarea').forEach(el=>{el.value='';el.classList.remove('pre');});
-  // Reset selects
+  // Clear all text inputs and textareas
+  formWrap.querySelectorAll('input[type=text],textarea').forEach(el=>{el.value='';el.classList.remove('pre');el.style.borderColor='';el.style.boxShadow='';});
+  // Clear hidden inputs (custom selects)
+  formWrap.querySelectorAll('input[type=hidden]').forEach(el=>el.value='');
+  // Reset custom select triggers
   document.querySelectorAll('.cs-val').forEach(el=>{el.textContent='Select…';el.classList.add('empty');});
-  document.querySelectorAll('input[type=hidden]').forEach(el=>el.value='');
-  // Reset dates
+  document.querySelectorAll('.custom-select-trigger').forEach(el=>{el.style.borderColor='';el.style.boxShadow='';});
+  // Reset date manual inputs and CAL state
+  document.querySelectorAll('input[id^="dm_"]').forEach(el=>{el.value='';});
   document.querySelectorAll('.dval').forEach(el=>{el.textContent='Pick date';el.classList.add('empty');});
   Object.keys(CAL).forEach(id=>{if(CAL[id])CAL[id].date=null;});
   // Reset photos
@@ -635,7 +689,9 @@ document.getElementById('btnClear').addEventListener('click',async()=>{
   // Restore pre-filled defaults
   const defaults={DLR_CD:'N3235',DLR_NM:'KHANNA AUTOMART PVT LTD',DTC:'NA',ROM_ID:'NA'};
   Object.entries(defaults).forEach(([id,val])=>{const el=document.getElementById(id);if(el){el.value=val;el.classList.add('pre');}});
+  closeAllPopups();
   clearStatus();
+  etmUpdateSteps();
 });
 
 // ─────── COLLECT DATA ───────
@@ -660,6 +716,10 @@ function collectData(){
   });
   // MODEL from select hidden input
   const modelEl=document.getElementById('MODEL');data['MODEL']=modelEl?modelEl.value.trim():'';
+  // Date fields (manual inputs with id dm_*)
+  document.querySelectorAll('input[id^="dm_"]').forEach(el=>{
+    const key=el.id.replace('dm_','');data[el.id]=el.value.trim();
+  });
   // Service history rows
   const shCols=['N','VIN','RO','DT','KM','DC','ACT','RS','STS'];
   for(let i=1;i<=12;i++){
@@ -811,11 +871,13 @@ function renderHistory(filter=''){
     if(q&&!`${primary} ${sub}`.toLowerCase().includes(q))return;
     any=true;
     const item=document.createElement('div');item.className='hist-item';item.setAttribute('tabindex','0');
-    item.innerHTML=`<div class="hi-info"><div class="hi-name">${escHtml(primary)}</div><div class="hi-meta">${escHtml(sub)}</div></div><button type="button" class="hi-del" tabindex="0">${icons.close}</button>`;
+    item.innerHTML=`<div class="hi-info"><div class="hi-name">${escHtml(primary)}</div><div class="hi-meta">${escHtml(sub)}</div></div><button type="button" class="hi-del" tabindex="0" title="Delete">${icons.close}</button>`;
     const delBtn=item.querySelector('.hi-del');
     const delA=async e=>{e.stopPropagation();if(!(await customConfirm('Delete this entry?','Delete')))return;deleteHistory(idx);};
     delBtn.addEventListener('click',delA);handleKeyClick(delBtn,delA);
-    const itemA=()=>fillFromHistory(entry);item.addEventListener('click',itemA);handleKeyClick(item,itemA);
+    const itemA=()=>fillFromHistory(entry);
+    item.addEventListener('click',e=>{if(e.target.closest('.hi-del'))return;itemA();});
+    handleKeyClick(item,itemA);
     histList.appendChild(item);
   });
   if(!any)histList.innerHTML='<div style="text-align:center;font-size:12px;color:var(--text-muted);padding:10px;">No matching entries.</div>';
@@ -842,6 +904,20 @@ function fillFromHistory(entry){
         if(el&&entry[`${col}${i}`]!==undefined)el.value=entry[`${col}${i}`];
       });
     }
+    // Restore date fields (manual inputs)
+    Object.keys(entry).filter(k=>k.startsWith('dm_')).forEach(k=>{
+      const el=document.getElementById(k);
+      if(el&&entry[k]!==undefined){
+        el.value=entry[k];
+        // Sync CAL state
+        const calId=k.replace('dm_','');
+        if(entry[k]&&entry[k].length===10){
+          const [dd,mm,yyyy]=entry[k].split('-').map(Number);
+          const d=new Date(yyyy,mm-1,dd);
+          if(!isNaN(d)&&CAL[calId]){CAL[calId].date=d;CAL[calId].year=d.getFullYear();CAL[calId].month=d.getMonth();}
+        }
+      }
+    });
     closeAllPopups();clearStatus();
   },100);
 }
@@ -865,6 +941,29 @@ window.addEventListener('message',event=>{
     renderHistory();
   }
 });
+// ─────── PAGE JUMPERS ───────
+(()=>{
+  const pjTop=document.getElementById('pjTop');
+  const pjBot=document.getElementById('pjBot');
+  let hideTimer=null;
+  function showJumpers(){
+    const sh=document.documentElement.scrollHeight,wh=window.innerHeight;
+    const scrollable=sh>wh+20;
+    if(!scrollable){pjTop.classList.remove('vis');pjBot.classList.remove('vis');return;}
+    const st=window.scrollY;
+    const nearTop=st<60,nearBot=st>=sh-wh-60;
+    pjTop.classList.toggle('vis',!nearTop);
+    pjBot.classList.toggle('vis',!nearBot);
+  }
+  function scheduleHide(){
+    if(hideTimer)clearTimeout(hideTimer);
+    hideTimer=setTimeout(()=>{pjTop.classList.remove('vis');pjBot.classList.remove('vis');},2000);
+  }
+  window.addEventListener('scroll',()=>{showJumpers();scheduleHide();},{passive:true});
+  pjTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+  pjBot.addEventListener('click',()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'}));
+})();
+
 window.parent.postMessage({type:'requestTheme'},'*');
 </script>
 </body>
