@@ -1529,20 +1529,12 @@
 
         zip.file('ppt/slides/slide1.xml', slide1);
 
-        // ── Photos: inject up to 6 into slide2 as 3x2 grid ──
-        // Grid layout (EMU units, slide = 9144000 x 6858000)
-        // 3 cols x 2 rows, each cell ~2.9in wide x 2.6in tall, with 0.1in gap
-        // Start x=0.1in, y=0.6in (below title area)
-        const EMU = 914400; // 1 inch in EMU
-        const cols = 3, rows = 2;
-        const cellW = Math.round(2.9 * EMU);
-        const cellH = Math.round(2.6 * EMU);
-        const gapX = Math.round(0.1 * EMU);
-        const gapY = Math.round(0.15 * EMU);
-        const startX = Math.round(0.1 * EMU);
-        const startY = Math.round(0.6 * EMU);
+        // ── Photos: inject into slide2 table cells (3x2 grid) ──
+        // Table in slide2: x=1487490, y=908720, w=9378117, h=5391214
+        // 3 cols each w=3126039 EMU, 2 rows each h=2695607 EMU
+        // Cell margin: 36005 EMU each side
+        // Photos go as floating <p:pic> elements positioned exactly over each cell
 
-        // Detect image mime from base64
         function getImgExt(b64) {
           if (b64.includes('data:image/png')) return 'png';
           if (b64.includes('data:image/gif')) return 'gif';
@@ -1552,62 +1544,52 @@
         let slide2 = await zip.file('ppt/slides/slide2.xml').async('string');
         let slide2Rels = await zip.file('ppt/slides/_rels/slide2.xml.rels').async('string');
 
-        // Remove existing picture element(s) from slide2
+        // Remove existing floating pic(s)
         slide2 = slide2.replace(/<p:pic>[\s\S]*?<\/p:pic>/g, '');
 
-        // Build new pic elements + rels for each uploaded photo
+        // Table cell exact positions (EMU)
+        // Table origin: x=1487490, y=908720
+        // Col widths: all 3126039 each
+        // Row heights: all 2695607 each
+        // Cell margin 36005 — photo fills full cell (margin=0 means flush)
+        const tblX = 1487490, tblY = 908720;
+        const colW = 3126039, rowH = 2695607;
+        // slot index → [col, row]
+        const slotPos = [
+          [0,0],[1,0],[2,0],  // row1: slot0,1,2
+          [0,1],[1,1],[2,1]   // row2: slot3,4,5
+        ];
+
         let newPics = '';
         let newRels = '';
-        let picIdCounter = 10; // start from id=10 to avoid conflicts
 
-        const uploadedPhotos = photoData.map((p, i) => ({data: p, slot: i})).filter(p => p.data);
+        for (let slot = 0; slot < 6; slot++) {
+          const pd = photoData[slot];
+          if (!pd) continue;
 
-        uploadedPhotos.forEach(({data, slot}, idx) => {
-          const col = idx % cols;
-          const row = Math.floor(idx / cols);
-          const x = startX + col * (cellW + gapX);
-          const y = startY + row * (cellH + gapY);
-          const rId = `rId${20 + idx}`;
-          const imgName = `photoSlot${slot + 1}`;
-          const ext = getImgExt(data.b64);
+          const [col, row] = slotPos[slot];
+          const x = tblX + col * colW;
+          const y = tblY + row * rowH;
+          const rId = `rId${20 + slot}`;
+          const ext = getImgExt(pd.b64);
           const mediaPath = `ppt/media/photo_slot${slot + 1}.${ext}`;
-          const mimeType = ext === 'png' ? 'image/png' : ext === 'gif' ? 'image/gif' : 'image/jpeg';
 
-          // Add image file to zip
-          zip.file(mediaPath, data.b64.split(',')[1], { base64: true });
+          zip.file(mediaPath, pd.b64.split(',')[1], { base64: true });
 
-          // Build pic XML
-          newPics += `<p:pic>
-  <p:nvPicPr>
-    <p:cNvPr id="${picIdCounter++}" name="${imgName}" descr="${imgName}"/>
-    <p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr>
-    <p:nvPr/>
-  </p:nvPicPr>
-  <p:blipFill>
-    <a:blip r:embed="${rId}"/>
-    <a:stretch><a:fillRect/></a:stretch>
-  </p:blipFill>
-  <p:spPr>
-    <a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${cellW}" cy="${cellH}"/></a:xfrm>
-    <a:prstGeom prst="rect"><a:avLst/></a:prstGeom>
-  </p:spPr>
-</p:pic>`;
+          newPics += `<p:pic><p:nvPicPr><p:cNvPr id="${30 + slot}" name="Photo${slot+1}"/><p:cNvPicPr><a:picLocks noChangeAspect="1"/></p:cNvPicPr><p:nvPr/></p:nvPicPr><p:blipFill><a:blip r:embed="${rId}"/><a:stretch><a:fillRect/></a:stretch></p:blipFill><p:spPr><a:xfrm><a:off x="${x}" y="${y}"/><a:ext cx="${colW}" cy="${rowH}"/></a:xfrm><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></p:spPr></p:pic>`;
 
-          // Build rel entry
-          newRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/photo_slot${slot + 1}.${ext}"/>`;
-        });
+          newRels += `<Relationship Id="${rId}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/image" Target="../media/photo_slot${slot+1}.${ext}"/>`;
+        }
 
-        // Insert new pics before </p:spTree>
+        // Insert pics before </p:spTree>
         slide2 = slide2.replace('</p:spTree>', newPics + '</p:spTree>');
-
-        // Insert new rels before </Relationships>
         slide2Rels = slide2Rels.replace('</Relationships>', newRels + '</Relationships>');
 
         zip.file('ppt/slides/slide2.xml', slide2);
         zip.file('ppt/slides/_rels/slide2.xml.rels', slide2Rels);
-        // Also update [Content_Types].xml for any new image types
+
         let contentTypes = await zip.file('[Content_Types].xml').async('string');
-        if (!contentTypes.includes('image/png') && uploadedPhotos.some(p => getImgExt(p.data.b64) === 'png')) {
+        if (!contentTypes.includes('image/png') && photoData.some(p => p && getImgExt(p.b64) === 'png')) {
           contentTypes = contentTypes.replace('</Types>', '<Default Extension="png" ContentType="image/png"/></Types>');
         }
         zip.file('[Content_Types].xml', contentTypes);
