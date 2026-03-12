@@ -239,7 +239,6 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
     <p>Prior Work Approval — fill form then generate Excel report.</p>
   </div>
 
-  <!-- STEPPER PROGRESS -->
   <div class="stepper-container" id="stepperContainer" style="display:none;">
     <div class="stepper">
       <div class="step active" id="pw-st1" data-step="1">
@@ -747,6 +746,14 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   for(let i=1;i<=17;i++)['Date','Kms','JobType','Status'].forEach(f=>data[`sh${i}${f}`]=get(`sh${i}${f}`));
   for(let i=1;i<=11;i++)['No','Name','Qty','Rate','Tag'].forEach(f=>data[`part${i}${f}`]=get(`part${i}${f}`));
   for(let i=1;i<=6;i++)['OpCode','Name','Qty','Rate'].forEach(f=>data[`labour${i}${f}`]=get(`labour${i}${f}`));
+  
+  const getSpan=id=>{const el=document.getElementById(id);return el&&el.textContent!=='—'?el.textContent:'';};
+  for(let i=1;i<=11;i++) data[`part${i}Total`]=getSpan(`part${i}Total`);
+  for(let i=1;i<=6;i++) data[`labour${i}Total`]=getSpan(`labour${i}Total`);
+  data['partsTotal']=getSpan('partsTotal');
+  data['labourTotal']=getSpan('labourTotal');
+  data['gTotal']=getSpan('gTotal');
+
   // Collect photo dataURLs from PHOTOS store
   const photoKeys=['vinPhoto','meterPhoto','part1Photo','part2Photo','part3Photo','part4Photo','part5Photo','part6Photo','part7Photo','part8Photo','part9Photo'];
 
