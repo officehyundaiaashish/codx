@@ -529,15 +529,13 @@ function buildForm(){
   // Clear validation highlight on input + update stepper
   requestAnimationFrame(()=>{
     const vinEl=document.getElementById('VIN');
-    if(vinEl)vinEl.addEventListener('input',()=>{vinEl.style.borderColor='';vinEl.style.boxShadow='';etmUpdateSteps();});
-    // MODEL clears on select (handled in makeSelect trigger)
+    if(vinEl)vinEl.addEventListener('input',()=>{vinEl.style.borderColor='';vinEl.style.boxShadow='';});
+    // MODEL clears on select
     const modelOpts=document.getElementById('cso_MODEL');
     if(modelOpts)modelOpts.querySelectorAll('.cs-opt').forEach(opt=>{opt.addEventListener('click',()=>{const t=document.getElementById('cst_MODEL');if(t){t.style.borderColor='';t.style.boxShadow='';}etmUpdateSteps();});});
-    // Hook all form inputs for stepper
-    document.querySelectorAll('#formWrap input, #formWrap textarea').forEach(el=>{
-      el.addEventListener('input', etmUpdateSteps);
-    });
   });
+  // Single delegated listener covers all inputs including service history
+  formWrap.addEventListener('input',etmUpdateSteps);
   vGrid.appendChild(makeInput('KMS','Mileage (Kms)','Enter mileage…'));
   vGrid.appendChild(makeInput('ENG_TM','Engine / TM Type','e.g. 1.5 Turbo GDi…'));
   vGrid.appendChild(makeInput('ROM_ID','ROM ID (ECU / TCU)','Enter ROM ID…','NA'));
@@ -697,19 +695,51 @@ document.getElementById('btnClear').addEventListener('click',async()=>{
   etmUpdateSteps();
 });
 
-// ─────── COLLECT DATA ───────
+// ─────── STEPPER ───────
 function etmUpdateSteps(){
   const vin=document.getElementById('VIN')?.value?.trim();
   const model=document.getElementById('MODEL')?.value?.trim();
   const dlr=document.getElementById('DLR_CD')?.value?.trim()||document.getElementById('DLR_NM')?.value?.trim();
-  const steps=[{done:!!(vin&&model)},{done:!!dlr},{done:!!(vin&&model&&dlr)}];
+
+  // Scroll-based: which section is currently in view?
+  const sections=formWrap.querySelectorAll('.form-section');
+  let activeSecIdx=0;
+  sections.forEach((sec,i)=>{
+    const rect=sec.getBoundingClientRect();
+    if(rect.top<=window.innerHeight*0.55)activeSecIdx=i;
+  });
+
+  // Step completion by content
+  const s1done=!!(vin&&model);
+  const s2done=!!dlr;
+  const s3done=!!(vin&&model&&dlr);
+
+  // Step active = scroll has reached that section OR it's done
+  const s1active=activeSecIdx>=0;
+  const s2active=activeSecIdx>=1||s2done;
+  const s3active=activeSecIdx>=2||s3done;
+
+  const steps=[
+    {done:s1done,active:s1active},
+    {done:s2done,active:s2active},
+    {done:s3done,active:s3active}
+  ];
+
   steps.forEach((s,i)=>{
     const st=document.getElementById('etm-st'+(i+1)),sn=document.getElementById('etm-sn'+(i+1));
     if(!st||!sn)return;
-    st.className='step '+(s.done?'done':i===0?'active':'');
-    sn.innerHTML=s.done?'<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>':(i+1);
+    if(s.done){
+      st.className='step done';
+      sn.innerHTML='<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+    } else {
+      st.className='step'+(s.active?' active':'');
+      sn.textContent=i+1;
+    }
   });
 }
+
+// Hook scroll for stepper
+window.addEventListener('scroll',etmUpdateSteps,{passive:true});
 
 function collectData(){
   const data={};
@@ -956,13 +986,14 @@ window.addEventListener('message',event=>{
     const st=window.scrollY;
     const nearTop=st<60,nearBot=st>=sh-wh-60;
     pjTop.classList.toggle('vis',!nearTop);
-    pjBot.classList.toggle('vis',!nearBot);
+    pjBot.classList.toggle('vis',!nearBot); // always show unless at very bottom
   }
   function scheduleHide(){
     if(hideTimer)clearTimeout(hideTimer);
-    hideTimer=setTimeout(()=>{pjTop.classList.remove('vis');pjBot.classList.remove('vis');},2000);
+    hideTimer=setTimeout(()=>{pjTop.classList.remove('vis');},2000); // only hide top btn
   }
   window.addEventListener('scroll',()=>{showJumpers();scheduleHide();},{passive:true});
+  window.addEventListener('load',showJumpers);
   pjTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   pjBot.addEventListener('click',()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'}));
 })();
