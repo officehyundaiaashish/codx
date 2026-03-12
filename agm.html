@@ -152,7 +152,6 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg-page);color:var(--text
 .pj-btn:active{transform:scale(.95);}
 .pj-btn:focus{box-shadow:0 0 0 3px var(--focus-ring),0 4px 14px rgba(0,0,0,.2);}
 .pj-btn.hidden{opacity:0;pointer-events:none;transform:translateY(12px);}
-#pjBottom{opacity:1!important;pointer-events:all!important;transform:translateY(0)!important;}
 @media(max-width:640px){.pj-btn{width:38px;height:38px;}.page-jumper{right:10px;bottom:70px;}}
 
 *:hover{scrollbar-color:rgba(0,0,0,.2) transparent;}
@@ -1480,13 +1479,14 @@ function replaceVehHistoryXml(shXml, data){
     const nearTop=scrollTop<120;
     const nearBottom=scrollTop+clientHeight>scrollHeight-120;
     topBtn.classList.toggle('hidden',nearTop||!isScrollable);
-    // botBtn always visible
+    botBtn.classList.toggle('hidden',nearBottom||!isScrollable);
   }
 
   function scheduleHide(){
     clearTimeout(hideTimer);
     hideTimer=setTimeout(()=>{
       topBtn.classList.add('hidden');
+      botBtn.classList.add('hidden');
     },2000);
   }
 
