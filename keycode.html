@@ -4,8 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Key Code Form</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
     :root {
       --bg: #f4f4f2;
       --surface: #ffffff;
@@ -56,9 +56,9 @@
     .hist-empty { text-align:center; font-size:13px; color:var(--text3); padding:24px; }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    html { font-size: 14px; font-family: 'Inter', sans-serif; }
+    html { font-size: 14px; }
     body {
-      font-family: var(--font);
+      font-family: 'Inter', sans-serif;
       background: var(--bg);
       color: var(--text);
       padding: 20px;
@@ -219,15 +219,41 @@
     .mode-btn:hover{border-color:var(--text2);color:var(--text);}
     .mode-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 
-    /* ── Stepper ── */
-    .stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px;}
-    .step{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);transition:all var(--tr);}
+    /* ── Sticky Stepper ── */
+    .stepper-container{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:14px;position:sticky;top:0;z-index:900;}
+    .stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+    .step{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);transition:all var(--tr);}
     .step.done{background:var(--accent-s);border-color:var(--accent);}
     .step.active{border-color:var(--accent);}
     .step-n{width:26px;height:26px;border-radius:50%;background:var(--surface2);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;flex-shrink:0;}
-    .step.done .step-n{background:var(--accent);color:white;}
+    .step.done .step-n,.step.active .step-n{background:var(--accent);color:white;}
     .step-t{font-size:12.5px;font-weight:600;color:var(--text);}
     .step-s{font-size:11px;color:var(--text2);}
+
+    /* ── Page Jumpers ── */
+    .page-jumper{position:fixed;right:16px;bottom:80px;z-index:9000;display:flex;flex-direction:column;gap:8px;}
+    .pj-btn{width:42px;height:42px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 14px rgba(0,0,0,.2);transition:all .25s cubic-bezier(.4,0,.2,1);outline:none;background:var(--accent);color:#fff;}
+    .pj-btn:hover{transform:scale(1.12);box-shadow:0 6px 20px rgba(0,0,0,.3);}
+    .pj-btn:active{transform:scale(.95);}
+    .pj-btn:focus{box-shadow:0 0 0 3px var(--accent-s),0 4px 14px rgba(0,0,0,.2);}
+    .pj-btn.hidden{opacity:0;pointer-events:none;transform:translateY(12px);}
+    @media(max-width:640px){.pj-btn{width:38px;height:38px;}.page-jumper{right:10px;bottom:70px;}}
+
+    /* ── Custom Select (model dropdown) ── */
+    .cs-wrap{position:relative;user-select:none;width:100%;}
+    .cs-trigger{height:42px;border:1px solid var(--border);border-radius:8px;padding:0 14px;background:var(--bg);display:flex;align-items:center;justify-content:space-between;cursor:pointer;transition:all var(--tr);width:100%;outline:none;font-size:14px;font-family:var(--font);color:var(--text);}
+    .cs-trigger:hover{border-color:var(--accent);}
+    .cs-trigger:focus,.cs-trigger.open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-s);}
+    .cs-val{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding-right:8px;text-align:left;}
+    .cs-val.empty{color:var(--text3);}
+    .cs-arr{color:var(--text3);transition:transform .25s;display:flex;align-items:center;flex-shrink:0;}
+    .cs-trigger.open .cs-arr{transform:rotate(180deg);color:var(--text);}
+    .cs-opts{position:absolute;top:calc(100% + 4px);left:0;right:0;z-index:600;background:var(--surface);border:1px solid var(--border);border-radius:8px;box-shadow:0 10px 25px rgba(0,0,0,.15);max-height:200px;overflow-y:auto;opacity:0;transform:translateY(-6px) scaleY(.96);transform-origin:top;pointer-events:none;transition:all .18s cubic-bezier(.4,0,.2,1);}
+    [data-theme=dark] .cs-opts{background:#222220;border-color:#3a3a38;}
+    .cs-opts.open{opacity:1;transform:translateY(0) scaleY(1);pointer-events:all;}
+    .cs-opt{padding:9px 14px;font-size:13px;color:var(--text);cursor:pointer;border-bottom:1px solid var(--border);transition:background .12s;outline:none;}
+    .cs-opt:last-child{border-bottom:none;}
+    .cs-opt:hover,.cs-opt:focus{background:var(--surface2);font-weight:500;}
 
     .btn-row {
       display: flex;
@@ -352,8 +378,7 @@
       .fg.c3 { grid-template-columns: 1fr; }
       .field.s2, .field.s3 { grid-column: span 1; }
       .btn-row { flex-direction: column-reverse; }
-      .stepper{grid-template-columns:1fr 1fr;}
-      .mode-btns{flex-wrap:wrap;}
+      .stepper{grid-template-columns:1fr 1fr;}      .mode-btns{flex-wrap:wrap;}
       .mode-btn{flex:1 1 calc(50% - 3px);}
     }
 
@@ -431,6 +456,7 @@
     <span class="chip"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/></svg>XLS Export</span>
   </div>
 
+  <div class="stepper-container">
   <div class="stepper">
     <div class="step active" id="kc-st1">
       <div class="step-n" id="kc-sn1">1</div>
@@ -445,6 +471,9 @@
       <div><div class="step-t">Ready</div><div class="step-s">Export to Excel</div></div>
     </div>
   </div>
+  </div>
+
+
 
   <div class="mode-wrap">
     <div class="mode-btns">
@@ -482,9 +511,9 @@
     <div class="fg c3">
       <div class="field"><label>Date <span class="req">*</span></label>
         <div class="date-wrap">
-          <div class="date-trigger" id="dt_kc-date" tabindex="0">
-            <span class="dval empty" id="dv_kc-date">Pick a date</span>
-            <span class="date-icon"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
+          <div class="date-trigger" id="dt_kc-date" tabindex="0" style="cursor:text;">
+            <input type="text" id="di_kc-date" placeholder="DD-MM-YYYY or pick →" style="flex:1;border:none;background:transparent;font-size:14px;color:var(--text);outline:none;font-family:var(--font);width:100%;cursor:text;" tabindex="-1">
+            <span class="date-icon" id="dico_kc-date" style="cursor:pointer;flex-shrink:0;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg></span>
           </div>
           <div class="cal-pop" id="cp_kc-date"></div>
           <input type="hidden" id="kc-date" value="">
@@ -653,7 +682,9 @@
                 if (!isNaN(d)) {
                   if (!_KC_CAL[id]) _KC_CAL[id] = {};
                   Object.assign(_KC_CAL[id], {date:d, year:d.getFullYear(), month:d.getMonth(), view:'days'});
+                  const di = document.getElementById('di_'+id);
                   const dv = document.getElementById('dv_'+id);
+                  if (di) di.value = entry.shared[id];
                   if (dv) { dv.textContent = entry.shared[id]; dv.classList.remove('empty'); }
                 }
               }
@@ -727,14 +758,36 @@
     // ── End Saved Entries History ──
     let kcRows = [];
 
+    const hyundaiModels = [
+      'Hyundai Creta Electric','Hyundai Alcazar','Hyundai Creta','Hyundai Exter',
+      'Hyundai Verna','Hyundai Ioniq 5','Hyundai Tucson','Hyundai i20 N Line',
+      'Hyundai i20','Hyundai Venue N Line','Hyundai Venue','Hyundai Aura',
+      'Hyundai Grand i10 NIOS','Hyundai Grand i10','Hyundai i10','Hyundai Xcent',
+      'Hyundai Elite i20','Hyundai Active i20','Hyundai Santro','Hyundai Santro Xing',
+      'Hyundai Eon','Hyundai Accent','Hyundai Elantra','Hyundai Sonata','Hyundai Santa Fe'
+    ];
+
     function kcRowHTML(i, row = {}) {
+      const modelVal = row.model || '';
+      const modelLabel = modelVal || 'Select Model…';
+      const modelEmpty = !modelVal;
+      const opts = hyundaiModels.map(m=>`<div class="cs-opt" data-val="${m}" tabindex="0">${m}</div>`).join('');
       return `<div class="vrow" id="kcrow-${i}">
     <div class="vrow-num">VEHICLE ${i + 1}</div>
     <button class="vrow-rm" onclick="kcRemoveRow(${i})" title="Remove">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
     </button>
     <div class="fg c3">
-      <div class="field s2"><label>Model</label><input type="text" class="kr-model" placeholder="e.g. VENUE 1.2 Kappa MT S" value="${row.model || ''}"></div>
+      <div class="field s2"><label>Model</label>
+        <div class="cs-wrap">
+          <button type="button" class="cs-trigger kr-model-btn" tabindex="0">
+            <span class="cs-val${modelEmpty?' empty':''}">${_kcEsc(modelLabel)}</span>
+            <span class="cs-arr"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </button>
+          <div class="cs-opts">${opts}</div>
+          <input type="hidden" class="kr-model" value="${_kcEsc(modelVal)}">
+        </div>
+      </div>
       <div class="field"><label>Mileage (km)</label><input type="number" class="kr-mileage" placeholder="e.g. 76620" value="${row.mileage || ''}"></div>
       <div class="field s2"><label>VIN <span class="req">*</span></label><input type="text" class="kr-vin" placeholder="17-char VIN" style="font-family:var(--mono);font-size:12.5px;" value="${row.vin || ''}"></div>
       <div class="field"><label>RO No.</label><input type="text" class="kr-ro" placeholder="e.g. R202400947" value="${row.ro || ''}"></div>
@@ -747,7 +800,35 @@
       const c = document.getElementById('kc-rows');
       if (!c) return;
       c.innerHTML = kcRows.map((r, i) => kcRowHTML(i, r)).join('');
-      c.querySelectorAll('input').forEach(el => el.addEventListener('input', () => { kcReadRows(); kcScheduleSave(); }));
+      c.querySelectorAll('input:not([type=hidden])').forEach(el => el.addEventListener('input', () => { kcReadRows(); kcScheduleSave(); }));
+      // Init custom model selects
+      c.querySelectorAll('.cs-wrap').forEach(wrap => {
+        const btn = wrap.querySelector('.cs-trigger');
+        const opts = wrap.querySelector('.cs-opts');
+        const val = wrap.querySelector('.kr-model');
+        const lbl = wrap.querySelector('.cs-val');
+        const toggle = e => {
+          e.stopPropagation();
+          const isOpen = opts.classList.contains('open');
+          document.querySelectorAll('.cs-opts.open').forEach(o=>o.classList.remove('open'));
+          document.querySelectorAll('.cs-trigger.open').forEach(o=>o.classList.remove('open'));
+          if (!isOpen) { opts.classList.add('open'); btn.classList.add('open'); }
+        };
+        btn.addEventListener('click', toggle);
+        btn.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();toggle(e);} });
+        opts.querySelectorAll('.cs-opt').forEach(opt => {
+          const pick = e => {
+            e.stopPropagation();
+            const v = opt.getAttribute('data-val');
+            lbl.textContent = v; lbl.classList.remove('empty');
+            val.value = v;
+            opts.classList.remove('open'); btn.classList.remove('open');
+            kcReadRows(); kcScheduleSave();
+          };
+          opt.addEventListener('click', pick);
+          opt.addEventListener('keydown', e => { if(e.key==='Enter'||e.key===' '){e.preventDefault();pick(e);} });
+        });
+      });
     }
 
     function kcReadRows() {
@@ -817,7 +898,9 @@
                 if (!isNaN(d)) {
                   if (!_KC_CAL['kc-date']) _KC_CAL['kc-date'] = {date:null,view:'days',year:d.getFullYear(),month:d.getMonth()};
                   _KC_CAL['kc-date'].date = d; _KC_CAL['kc-date'].year = d.getFullYear(); _KC_CAL['kc-date'].month = d.getMonth();
+                  const di = document.getElementById('di_kc-date');
                   const dv = document.getElementById('dv_kc-date');
+                  if (di) di.value = data.shared[id];
                   if (dv) { dv.textContent = data.shared[id]; dv.classList.remove('empty'); }
                 }
               }
@@ -832,13 +915,29 @@
     }
 
     async function clearKcSaved() {
-      if (!(await kcConfirm('Clear all saved data?', 'Yes, Clear'))) return;
-      try {
-        localStorage.removeItem(KC_SAVE_KEY);
-      } catch (e) {}
+      if (!(await kcConfirm('Clear all form data?', 'Yes, Clear'))) return;
+      try { localStorage.removeItem(KC_SAVE_KEY); } catch (e) {}
+      // Reset shared fields to defaults
+      const defaults = {'kc-dcode':'N3235','kc-dname':'KHANNA AUTOMART PVT. LTD.','kc-rname':'NARENDRA KUMAR','kc-rcontact':'8979040022','kc-tpsm':''};
+      KC_SHARED_IDS.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = defaults[id] || '';
+      });
+      // Reset date
+      const t = new Date();
+      _KC_CAL['kc-date'] = {date:t,view:'days',year:t.getFullYear(),month:t.getMonth()};
+      const val = _kcFmt(t);
+      const di = document.getElementById('di_kc-date');
+      const hidDate = document.getElementById('kc-date');
+      if (di) di.value = val;
+      if (hidDate) hidDate.value = val;
+      // Reset rows
+      kcRows = [{ model: '', vin: '', mileage: '', ro: '', keycode: '' }];
+      kcRenderRows();
+      kcUpdateSteps();
       const el = document.getElementById('kc-save-status');
       if (el) { el.textContent = 'Cleared'; setTimeout(() => { el.textContent = ''; }, 2000); }
-      toast('Key code saved data cleared', 'info');
+      toast('Form cleared', 'info');
     }
 
     // ── Custom Calendar Logic ──
@@ -905,9 +1004,11 @@
           const act = e => {
             e.stopPropagation();
             const s = _KC_CAL[el.dataset.cid]; s.date = new Date(s.year, s.month, parseInt(el.dataset.d));
+            const di = document.getElementById('di_'+el.dataset.cid);
             const dv = document.getElementById('dv_'+el.dataset.cid);
             const hid = document.getElementById(el.dataset.cid);
             const val = _kcFmt(s.date);
+            if (di) di.value = val;
             if (dv) { dv.textContent = val; dv.classList.remove('empty'); }
             if (hid) { hid.value = val; hid.dispatchEvent(new Event('change')); }
             _kcCloseAllCals(); _kcRenderCal(el.dataset.cid);
@@ -944,6 +1045,11 @@
       }
     }
     document.addEventListener('click', _kcCloseAllCals);
+    document.addEventListener('click', () => {
+      _kcCloseAllCals();
+      document.querySelectorAll('.cs-opts.open').forEach(o=>o.classList.remove('open'));
+      document.querySelectorAll('.cs-trigger.open').forEach(o=>o.classList.remove('open'));
+    });
     window.addEventListener('scroll', _kcCloseAllCals, true);
     window.addEventListener('resize', _kcCloseAllCals);
     // ── End Calendar Logic ──
@@ -954,10 +1060,43 @@
       if (!_KC_CAL['kc-date']) _KC_CAL['kc-date'] = {date:null,view:'days',year:t.getFullYear(),month:t.getMonth()};
       if (!_KC_CAL['kc-date'].date) {
         _KC_CAL['kc-date'].date = t; _KC_CAL['kc-date'].year = t.getFullYear(); _KC_CAL['kc-date'].month = t.getMonth();
-        const dv = document.getElementById('dv_kc-date');
         const val = _kcFmt(t);
-        if (dv) { dv.textContent = val; dv.classList.remove('empty'); }
+        const di = document.getElementById('di_kc-date');
+        if (di) di.value = val;
         if (hid) hid.value = val;
+      }
+      // Wire manual date input
+      const dt = document.getElementById('dt_kc-date');
+      const di = document.getElementById('di_kc-date');
+      const ico = document.getElementById('dico_kc-date');
+      if (di) {
+        di.addEventListener('input', () => {
+          const v = di.value.trim();
+          if (/^\d{2}-\d{2}-\d{4}$/.test(v)) {
+            const p = v.split('-'); const d = new Date(+p[2],+p[1]-1,+p[0]);
+            if (!isNaN(d)) {
+              if (!_KC_CAL['kc-date']) _KC_CAL['kc-date'] = {};
+              Object.assign(_KC_CAL['kc-date'],{date:d,year:d.getFullYear(),month:d.getMonth(),view:'days'});
+              const hid = document.getElementById('kc-date');
+              if (hid) { hid.value = v; hid.dispatchEvent(new Event('change')); }
+            }
+          }
+          kcScheduleSave();
+        });
+        di.addEventListener('focus', () => { if(dt){ dt.style.borderColor='var(--accent)'; dt.style.boxShadow='0 0 0 3px var(--accent-s)'; } });
+        di.addEventListener('blur', () => { if(dt){ dt.style.borderColor=''; dt.style.boxShadow=''; } });
+      }
+      if (ico) {
+        ico.addEventListener('click', e => {
+          e.stopPropagation();
+          const isOpen = document.getElementById('cp_kc-date')?.classList.contains('open');
+          if (isOpen) _kcCloseAllCals(); else _kcOpenCal('kc-date');
+        });
+      }
+      if (dt) {
+        dt.addEventListener('click', e => {
+          if (ico && !ico.contains(e.target) && e.target !== ico) di?.focus();
+        });
       }
     }
 
@@ -1107,7 +1246,45 @@
       document.getElementById("loader").className = s ? "show" : "";
     }
 
-    document.addEventListener("DOMContentLoaded", initKcForm);
+    document.addEventListener("DOMContentLoaded", () => {
+      initKcForm();
+      // ── Page Jumpers (AGM pattern) ──
+      (function(){
+        const jumperHTML=`<div class="page-jumper" id="pageJumper">
+          <button class="pj-btn hidden" id="pjTop" title="Go to top" tabindex="0" aria-label="Scroll to top">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="18 15 12 9 6 15"/></svg>
+          </button>
+          <button class="pj-btn hidden" id="pjBottom" title="Go to bottom" tabindex="0" aria-label="Scroll to bottom">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+        </div>`;
+        document.body.insertAdjacentHTML('beforeend',jumperHTML);
+        const topBtn=document.getElementById('pjTop');
+        const botBtn=document.getElementById('pjBottom');
+        let hideTimer=null;
+        function showJumpers(){
+          const scrollTop=window.scrollY||document.documentElement.scrollTop;
+          const scrollHeight=document.documentElement.scrollHeight;
+          const clientHeight=window.innerHeight;
+          const isScrollable=scrollHeight>clientHeight+50;
+          const nearTop=scrollTop<120;
+          const nearBottom=scrollTop+clientHeight>scrollHeight-120;
+          topBtn.classList.toggle('hidden',nearTop||!isScrollable);
+          botBtn.classList.toggle('hidden',nearBottom||!isScrollable);
+        }
+        function scheduleHide(){
+          clearTimeout(hideTimer);
+          hideTimer=setTimeout(()=>{topBtn.classList.add('hidden');botBtn.classList.add('hidden');},2000);
+        }
+        function onScroll(){showJumpers();scheduleHide();}
+        window.addEventListener('scroll',onScroll,{passive:true});
+        window.addEventListener('resize',()=>{showJumpers();},{passive:true});
+        setTimeout(showJumpers,300);
+        topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
+        botBtn.addEventListener('click',()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'}));
+        [topBtn,botBtn].forEach(b=>b.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();b.click();}}));
+      })();
+    });
   </script>
 </body>
 </html>
