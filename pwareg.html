@@ -125,15 +125,22 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .cd.om{color:var(--border-input);pointer-events:none;}
 
 .tbl-wrap{overflow-x:auto;margin-top:4px;}
-.pwa-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.pwa-table{width:100%;border-collapse:collapse;font-size:12.5px;user-select:none;}
 .pwa-table th{background:var(--table-head);color:var(--text-muted);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px;text-align:left;border:1px solid var(--border-light);white-space:nowrap;}
-.pwa-table td{border:1px solid var(--border-light);padding:0;vertical-align:middle;}
+.pwa-table td{border:1px solid var(--border-light);padding:0;vertical-align:middle;position:relative;}
 .pwa-table td.num{width:28px;text-align:center;color:var(--text-muted);font-size:11px;background:var(--table-head);font-weight:600;padding:0 6px;white-space:nowrap;}
 .pwa-table td.total-cell{background:var(--bg-hover);font-size:12.5px;font-weight:600;padding:0 8px;min-width:70px;white-space:nowrap;}
 .pwa-table td.total-cell span{display:block;padding:8px 0;}
 .pwa-table td input{width:100%;height:34px;border:none;background:transparent;color:var(--text-main);font-size:12.5px;font-family:'Inter',sans-serif;padding:0 8px;outline:none;transition:background .15s;}
 .pwa-table td input:focus{background:var(--focus-ring);}
 .pwa-table td input::placeholder{color:var(--text-placeholder);}
+
+/* Excel-like Selection Styles */
+.pwa-table td input.cell-selected {
+  background-color: var(--focus-ring);
+  box-shadow: inset 0 0 0 1.5px var(--border-focus);
+}
+
 .pwa-table tr.total-row td{background:var(--bg-hover);font-weight:700;font-size:12.5px;padding:8px;color:var(--text-main);}
 .pwa-table tr.gtotal-row td{background:var(--accent-bg);color:var(--accent-text);font-weight:700;font-size:13px;padding:9px 8px;}
 
@@ -328,7 +335,7 @@ const occurrenceOpts=["Always","Intermittent","Right after starting","When engin
 const natureCodeOpts=["Noise/Rattle","Vibration","Leakage","Warning Light ON","Overheating","Hard Shifting","Loss of Power","Poor Mileage","Starting Trouble","Smoke Output","Smell/Odor","Stalling"];
 const timePeriodOpts=["All times","Morning/Cold Start","After warming up","During rain/wet","In hot weather","In cold weather","After long drive","Short trips only","Idling","Under heavy load"];
 const speedRangeOpts=["Idle (0 km/h)","Low Speed (1-30 km/h)","Medium Speed (30-60 km/h)","High Speed (60-100 km/h)","Over 100 km/h","While accelerating","While decelerating","Varies","NA"];
-const problemConditionOpts=["Engine Cold","Engine Hot","A/C ON","A/C OFF","Under Heavy Load","Driving Uphill","Driving Downhill","Full Throttle","Light Throttle","Braking","Turning Left","Turning Right"];
+const problemConditionOpts=occurrenceOpts; // Exact sync with occurrence
 
 const ALL_SELECTS = ['fuelType','ew','mailYN','roadCondition','causeCode','occurrence','natureCode','timePeriod','speedRange','problemCondition'];
 const MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
@@ -486,9 +493,13 @@ function makeInput(id,label,placeholder,defVal='',full=false){
   wrap.appendChild(lbl);wrap.appendChild(inp);return wrap;
 }
 
-function makeTextarea(id,label,placeholder){
+function makeTextarea(id,label,placeholder,defVal=''){
   const wrap=document.createElement('div');wrap.className='field-col full';
-  wrap.innerHTML=`<label>${label}</label><textarea id="${id}" placeholder="${placeholder||''}" tabindex="0"></textarea>`;
+  const lbl=document.createElement('label'); lbl.textContent=label;
+  const ta=document.createElement('textarea');
+  ta.id=id; ta.placeholder=placeholder||''; ta.tabIndex=0;
+  if(defVal){ta.value=defVal; ta.classList.add('pre'); ta.addEventListener('focus',()=>ta.classList.remove('pre'));}
+  wrap.appendChild(lbl); wrap.appendChild(ta);
   return wrap;
 }
 
@@ -502,16 +513,16 @@ function buildForm(){
   let sec=mkSec('Dealer & Vehicle Information');
   const dvGrid=document.createElement('div');dvGrid.className='grid-wrap';
   dvGrid.appendChild(makeInput('dealerCode','Dealer Code','','N3235'));
-  dvGrid.appendChild(makeInput('dealerName','Dealer Name','e.g. KHANNA AUTOMART…'));
+  dvGrid.appendChild(makeInput('dealerName','Dealer Name','e.g. KHANNA AUTOMART…', 'Khanna Automart Pvt Ltd'));
   dvGrid.appendChild(makeInput('model','Vehicle Model','e.g. Hyundai Verna…'));
   dvGrid.appendChild(makeSelect('fuelType','Fuel Type',fuelTypes));
   dvGrid.appendChild(makeInput('tmType','T/M Type','e.g. VERNA 1.5 Turbo GDi…'));
   dvGrid.appendChild(makeInput('vin','VIN','Enter VIN number…'));
   dvGrid.appendChild(makeInput('engineNo','Engine Number','Enter engine number…'));
-  dvGrid.appendChild(makeInput('tmNumber','T/M Number','Enter T/M number…'));
+  dvGrid.appendChild(makeInput('tmNumber','T/M Number','Enter T/M number…', 'NA'));
   dvGrid.appendChild(makeInput('mileage','Mileage','Enter mileage…'));
   dvGrid.appendChild(makeSelect('ew','EW (Warranty)',ynOpts));
-  dvGrid.appendChild(makeInput('numVehicles','Vehicles Affected','e.g. 1…'));
+  dvGrid.appendChild(makeInput('numVehicles','Vehicles Affected','e.g. 1…', '1'));
   dvGrid.appendChild(makeSelect('mailYN','Mail Y/N',ynOpts));
   dvGrid.appendChild(makeDateField('productionDate','Production Date'));
   dvGrid.appendChild(makeDateField('deliveryDate','Delivery Date'));
@@ -527,7 +538,7 @@ function buildForm(){
   piGrid.appendChild(makeInput('affectedPart','Affected Part','Enter affected part…'));
   piGrid.appendChild(makeInput('dtc','DTC','','NA'));
   piGrid.appendChild(makeInput('partSupplier','Part Supplier','','HMIL'));
-  piGrid.appendChild(makeInput('partLotNo','Part Lot No','Enter lot number…'));
+  piGrid.appendChild(makeInput('partLotNo','Part Lot No','Enter lot number…', 'NA'));
   sec.appendChild(piGrid);formWrap.appendChild(sec);
 
   // Problem Nature
@@ -551,7 +562,7 @@ function buildForm(){
   naGrid.appendChild(makeTextarea('detailedSymptom','(2) Detailed Symptom & Condition','Describe detailed symptom…'));
   naGrid.appendChild(makeTextarea('investigationResult','(3) Investigation Result & Possible Cause','Describe investigation findings…'));
   naGrid.appendChild(makeTextarea('correctiveAction','(4) Corrective Action & Result','Describe corrective action…'));
-  naGrid.appendChild(makeTextarea('comment','(5) Comment','Any additional comments…'));
+  naGrid.appendChild(makeTextarea('comment','(5) Comment','Any additional comments…', 'Please review and do needful regarding concern.'));
   sec.appendChild(naGrid);formWrap.appendChild(sec);
 
   // Staff
@@ -564,6 +575,11 @@ function buildForm(){
   sec.appendChild(stGrid);formWrap.appendChild(sec);
 
   buildPhotographsSection();
+
+  // Attach Table Drag-Select Logic
+  requestAnimationFrame(()=>{
+    setupTableDragSelect();
+  });
 }
 
 function mkSec(title){
@@ -680,6 +696,86 @@ function buildPhotographsSection(){
   sec.appendChild(grid);formWrap.appendChild(sec);
 }
 
+// ─────── TABLE DRAG & SELECT LOGIC (Excel-like) ───────
+let isDragging=false, startCell=null, selectedCells=new Set();
+
+function clearSelection(){ 
+  selectedCells.forEach(i=>i.classList.remove('cell-selected')); 
+  selectedCells.clear(); 
+}
+
+function getCellPos(inp){
+  const td=inp.closest('td'), tr=td?td.closest('tr'):null, tb=tr?tr.closest('tbody'):null;
+  if(!tb) return null;
+  return { tb, r:Array.from(tb.children).indexOf(tr), c:Array.from(tr.children).indexOf(td) };
+}
+
+function selectBox(start, end){
+  clearSelection();
+  const s=getCellPos(start), e=getCellPos(end);
+  if(!s||!e||s.tb!==e.tb){ selectedCells.add(start); start.classList.add('cell-selected'); return; }
+  const r1=Math.min(s.r,e.r), r2=Math.max(s.r,e.r), c1=Math.min(s.c,e.c), c2=Math.max(s.c,e.c);
+  const rows=s.tb.children;
+  for(let i=r1; i<=r2; i++){
+      const tds=rows[i].children;
+      for(let j=c1; j<=c2; j++){
+          const inp=tds[j].querySelector('input');
+          if(inp){ selectedCells.add(inp); inp.classList.add('cell-selected'); }
+      }
+  }
+}
+
+function setupTableDragSelect(){
+  const inps=document.querySelectorAll('.pwa-table td input');
+  inps.forEach(inp=>{
+      inp.addEventListener('mousedown',e=>{
+          isDragging=true; startCell=inp; clearSelection();
+          selectedCells.add(inp); inp.classList.add('cell-selected');
+      });
+      inp.addEventListener('mouseenter',e=>{
+          if(isDragging && startCell){
+              selectBox(startCell, inp);
+              inp.blur(); startCell.blur(); // Focus hata do taaki native selection disturb na kare
+          }
+      });
+  });
+}
+
+// Global Document listeners for Drag & Select
+document.addEventListener('mouseup',()=>{ isDragging=false; });
+document.addEventListener('mousedown', e=>{
+  if(!e.target.closest('.pwa-table') && !e.target.closest('.hist-item')) {
+      clearSelection();
+  }
+});
+document.addEventListener('keydown', e=>{
+  if(selectedCells.size > 0){
+      if(e.key==='Delete' || e.key==='Backspace'){
+          if(selectedCells.size > 1) e.preventDefault(); // allow backspace standard editing in single cell
+          selectedCells.forEach(inp=>{
+              inp.value=''; 
+              inp.dispatchEvent(new Event('input')); // Trigger calculation auto-update
+          });
+      } else if((e.ctrlKey || e.metaKey) && e.key==='c'){
+          if(selectedCells.size > 1) {
+              e.preventDefault();
+              let map=new Map();
+              selectedCells.forEach(inp=>{
+                  const p=getCellPos(inp); if(!p)return;
+                  if(!map.has(p.r)) map.set(p.r, new Map());
+                  map.get(p.r).set(p.c, inp.value);
+              });
+              let rows=Array.from(map.keys()).sort((a,b)=>a-b);
+              let text=rows.map(r=>{
+                  let cols=Array.from(map.get(r).keys()).sort((a,b)=>a-b);
+                  return cols.map(c=>map.get(r).get(c)).join('\t');
+              }).join('\n');
+              navigator.clipboard.writeText(text).catch(()=>{});
+          }
+      }
+  }
+});
+
 // ─────── STEPPER LOGIC ───────
 function updateStepper(){
   const stepperContainer=document.getElementById('stepperContainer');
@@ -725,7 +821,7 @@ function updateStepper(){
 document.getElementById('btnClear').addEventListener('click',async()=>{
   if(!(await customConfirm('Clear all form data?','Yes, Clear'))) return;
   formWrap.querySelectorAll('input[type=text],textarea').forEach(el=>{
-    const defs={serviceManager:'NARENDRA KUMAR',warrantyManager:'AASHISH GIRI',partsManager:'MANOJ',serviceAdvisor:'SHUBHAM',dtc:'NA',partSupplier:'HMIL',dealerCode:'N3235',sh1Status:'CURRENT'};
+    const defs={serviceManager:'NARENDRA KUMAR',warrantyManager:'AASHISH GIRI',partsManager:'MANOJ',serviceAdvisor:'SHUBHAM',dtc:'NA',partSupplier:'HMIL',dealerCode:'N3235',sh1Status:'CURRENT', dealerName:'Khanna Automart Pvt Ltd', tmNumber:'NA', numVehicles:'1', partLotNo:'NA', comment:'Please review and do needful regarding concern.'};
     el.value=defs[el.id]||'';
     if(defs[el.id])el.classList.add('pre');else el.classList.remove('pre');
   });
@@ -737,7 +833,7 @@ document.getElementById('btnClear').addEventListener('click',async()=>{
   for(let i=1;i<=11;i++){const el=document.getElementById(`part${i}Total`);if(el)el.textContent='—';}
   for(let i=1;i<=6;i++){const el=document.getElementById(`labour${i}Total`);if(el)el.textContent='—';}
   ['partsTotal','labourTotal','gTotal'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='—';});
-  closeAllPopups();clearStatus();
+  closeAllPopups();clearStatus(); clearSelection();
 });
 
 // ─────── GENERATE XLSX (pure value injection — formatting 100% preserved) ───────
