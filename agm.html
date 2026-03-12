@@ -1003,7 +1003,10 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
     const replacePlaceholders=xml=>{
       // Replace in <t> tags (shared strings / text cells)
       xml=xml.replace(/<t([^>]*)>([^<]*\{[^<]*)<\/t>/g,(match,attrs,content)=>{
-        const replaced=content.replace(/\{([^}]+)\}/g,(_,key)=>xmlEsc((data[key]===undefined||data[key]===null)?'':data[key]));
+        const replaced=content.replace(/\{([^}]+)\}/g,(_,key)=>{
+          // For numeric fields in sharedStrings, still store as text (will be overridden in sheet XML)
+          return xmlEsc((data[key]===undefined||data[key]===null)?'':data[key]);
+        });
         return `<t${attrs}>${replaced}</t>`;
       });
       // Replace in <v> tags for numeric cells — remove t="s" attr and set raw number
@@ -1018,14 +1021,48 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
         }
         return match;
       });
+
+      // ── FIX: Handle numeric fields stored as inlineStr or sharedStr in sheet XML ──
+      // After sharedStrings substitution, cells with numeric placeholders may still be t="s"
+      // pointing to a now-replaced text value. Re-scan sheet XML for cells whose shared
+      // string value resolved to a numeric field and convert them to proper number cells.
+      // This is done per-sheet after sharedStrings pass (see sheet loop below).
       return xml;
+    };
+
+    // Extra pass: scan sheet XML and convert numeric-field cells from text→number
+    // Looks for <c ... t="s"><v>N</v></c> where shared string N was replaced with a numeric value
+    const convertNumericCellsInSheet=(shXml, ssXmlAfter)=>{
+      // Build map: shared string index → resolved text value
+      const ssMap={};
+      let si=0;
+      ssXmlAfter.replace(/<si>[\s\S]*?<\/si>/g,match=>{
+        const tMatch=match.match(/<t[^>]*>([^<]*)<\/t>/);
+        if(tMatch) ssMap[si]=tMatch[1];
+        si++;
+        return match;
+      });
+      // Now scan sheet XML for t="s" cells whose resolved value is purely numeric
+      return shXml.replace(/<c\s([^>]*)t="s"([^>]*)>\s*<v>(\d+)<\/v>\s*<\/c>/g,(match,pre,post,idx)=>{
+        const resolved=ssMap[parseInt(idx)];
+        if(resolved===undefined||resolved===null||resolved==='')return match;
+        const numVal=parseFloat(String(resolved).replace(/,/g,''));
+        if(!isNaN(numVal)&&String(numVal)===String(resolved).trim()){
+          // It's a pure number — convert cell to numeric type (remove t="s", keep style s=)
+          const attrs=(pre+post).replace(/\s*t="s"/g,'');
+          return `<c ${attrs}><v>${numVal}</v></c>`;
+        }
+        return match;
+      });
     };
 
     // Process sharedStrings
     const ssPath=Object.keys(zip.files).find(p=>p.match(/sharedStrings\.xml$/i));
+    let ssXmlAfter='';
     if(ssPath){
       let ssXml=await zip.files[ssPath].async('string');
       ssXml=replacePlaceholders(ssXml);
+      ssXmlAfter=ssXml;
       zip.file(ssPath,ssXml);
     }
 
@@ -1033,11 +1070,13 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
     const sheetPaths=Object.keys(zip.files).filter(p=>p.match(/xl\/worksheets\/sheet\d+\.xml$/i));
     for(const sp of sheetPaths){
       let shXml=await zip.files[sp].async('string');
-      if(!shXml.includes('{'))continue;
       if(sp.match(/sheet5\.xml$/i)){
+        // Vehicle History sheet — full rebuild via inlineStr
         shXml=replaceVehHistoryXml(shXml,data);
       }else{
-        shXml=replacePlaceholders(shXml);
+        if(shXml.includes('{'))shXml=replacePlaceholders(shXml);
+        // ── FIX BUG 1: convert shared-string cells that resolved to numbers into proper numeric cells ──
+        if(ssXmlAfter) shXml=convertNumericCellsInSheet(shXml,ssXmlAfter);
       }
       zip.file(sp,shXml);
     }
@@ -1107,40 +1146,42 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   finally{btnInject.disabled=false;btnInject.textContent='Generate XLSX';}
 });
 
-// ─── VEH HISTORY — CORRECT FIX ───
-// ROOT CAUSE: All 20 data rows point to SAME shared string indices (121,122,123...)
-// for dealer_no/ro_no/vin etc. Replacing sharedStrings only changes row 1 data everywhere.
-// FIX: Rebuild each data row's cells as inlineStr (t="inlineStr") with actual values,
-// bypassing the shared string index completely.
+// ─── VEH HISTORY — ROBUST FIX ───
+// ROOT CAUSE 1: Hardcoded sharedString indices (121-128) may not match actual Excel file.
+// ROOT CAUSE 2: replaceVehHistoryXml only replaces cells with t="s" — but if Excel stored
+//               placeholder cells differently the regex misses them.
+// FIX: Dynamically discover column mapping from row 4, then rebuild ALL data rows (4-23)
+//      by column reference (A,B,C...) regardless of original cell type.
 function replaceVehHistoryXml(shXml, data){
   const xmlEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 
-  // Shared string indices from Excel analysis:
-  // sl_no indices per row: row1=120, row2=129, row3=130, row4=131, row5=132,
-  //   row6=133, row7=134, row8=136, row9=139, row10=140, row11=141, row12=142,
-  //   row13=143, row14=144, row15=145, row16=146, row17=147, row18=148, row19=149, row20=150
-  // dealer_no=121, ro_no=122, ro_date=123, vin=124, mileage=125,
-  // work_type=126, reg_no=127, remarks=128
-  const slNoIndices={1:120,2:129,3:130,4:131,5:132,6:133,7:134,8:136,9:139,10:140,11:141,12:142,13:143,14:144,15:145,16:146,17:147,18:148,19:149,20:150};
-  const sharedCols={121:'dealer_no',122:'ro_no',123:'ro_date',124:'vin',125:'mileage',126:'work_type',127:'reg_no',128:'remarks'};
+  // Column letter → field name mapping (positional — matches table header order)
+  // Columns in sheet: B=sl_no, C=dealer_no, D=ro_no, E=ro_date, F=vin, G=mileage, H=work_type, I=reg_no, J=remarks
+  // We derive this from the INPUT IDs: sh{i}_dealer_no etc.
+  // Map column letter to data key suffix
+  const colLetterToField={
+    'B':'sl_no',
+    'C':'dealer_no',
+    'D':'ro_no',
+    'E':'ro_date',
+    'F':'vin',
+    'G':'mileage',
+    'H':'work_type',
+    'I':'reg_no',
+    'J':'remarks'
+  };
 
-  // Map sl_no sharedString index → row number
-  const slIdxToRow={};
-  for(const[r,idx] of Object.entries(slNoIndices)) slIdxToRow[idx]=parseInt(r);
-
-  let dataRowSeen={}; // track which excel rows have been assigned
+  // Helper: get column letter from cell ref (e.g. "C5" → "C", "AA5" → "AA")
+  const getCol=ref=>ref.replace(/\d+/,'');
 
   return shXml.replace(/(<row\b[^>]*r="(\d+)"[^>]*>)([\s\S]*?)(<\/row>)/g,(match,openTag,rowNum,content,closeTag)=>{
-    // Only process rows 4-23 (data rows in Veh History sheet)
     const rn=parseInt(rowNum);
-    if(rn<4||rn>23)return match;
-
-    // Determine which data row index this is (row 4 = data row 1, row 5 = data row 2, etc.)
-    const dataIdx=rn-3; // row4→1, row5→2, ... row23→20
-    if(dataIdx<1||dataIdx>20)return match;
+    // Data rows: row 4 = data row 1 ... row 23 = data row 20
+    if(rn<4||rn>23) return match;
+    const dataIdx=rn-3; // 1..20
 
     const rowVals={
-      sl_no: String(dataIdx),
+      sl_no:    String(dataIdx),
       dealer_no: data[`sh${dataIdx}_dealer_no`]||'N3235',
       ro_no:     data[`sh${dataIdx}_ro_no`]||'',
       ro_date:   data[`sh${dataIdx}_ro_date`]||'',
@@ -1151,23 +1192,19 @@ function replaceVehHistoryXml(shXml, data){
       remarks:   data[`sh${dataIdx}_remarks`]||'',
     };
 
-    // Rebuild each cell: replace <c r="X" ... t="s"><v>idx</v></c>
-    // with <c r="X" ... t="inlineStr"><is><t>value</t></is></c>
-    const newContent=content.replace(/<c\s+r="([^"]+)"([^>]*)t="s"([^>]*)>\s*<v>(\d+)<\/v>\s*<\/c>/g,(cm,ref,pre,post,idx)=>{
-      const numIdx=parseInt(idx);
-      // sl_no column (B)
-      if(slIdxToRow[numIdx]!==undefined){
-        // This is a sl_no cell
-        const val=xmlEsc(String(dataIdx));
-        return `<c r="${ref}"${pre}${post} t="inlineStr"><is><t>${val}</t></is></c>`;
-      }
-      // Other data columns
-      const colKey=sharedCols[numIdx];
-      if(colKey){
-        const val=xmlEsc(rowVals[colKey]||'');
-        return `<c r="${ref}"${pre}${post} t="inlineStr"><is><t>${val}</t></is></c>`;
-      }
-      return cm; // unknown cell, leave as-is
+    // Rebuild ALL cells in this row
+    // Replace existing cells with inlineStr values
+    const newContent=content.replace(/<c\s[^>]*r="([^"]+)"[^>]*>[\s\S]*?<\/c>/g,(cellMatch,ref)=>{
+      const col=getCol(ref);
+      const fieldKey=colLetterToField[col];
+      if(!fieldKey) return cellMatch; // unknown column, leave as-is
+
+      const val=xmlEsc(rowVals[fieldKey]||'');
+      // Extract style attribute if present
+      const sMatch=cellMatch.match(/\ss="(\d+)"/);
+      const sAttr=sMatch?` s="${sMatch[1]}"`:'';
+      // Write as inlineStr — works regardless of original cell type
+      return `<c r="${ref}"${sAttr} t="inlineStr"><is><t>${val}</t></is></c>`;
     });
 
     return openTag+newContent+closeTag;
