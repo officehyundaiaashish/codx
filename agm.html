@@ -1479,14 +1479,13 @@ function replaceVehHistoryXml(shXml, data){
     const nearTop=scrollTop<120;
     const nearBottom=scrollTop+clientHeight>scrollHeight-120;
     topBtn.classList.toggle('hidden',nearTop||!isScrollable);
-    botBtn.classList.toggle('hidden',nearBottom||!isScrollable);
+    botBtn.classList.toggle('hidden',nearBottom||!isScrollable); // always show unless at very bottom
   }
 
   function scheduleHide(){
     clearTimeout(hideTimer);
     hideTimer=setTimeout(()=>{
-      topBtn.classList.add('hidden');
-      botBtn.classList.add('hidden');
+      topBtn.classList.add('hidden'); // only hide top btn
     },2000);
   }
 
@@ -1496,16 +1495,9 @@ function replaceVehHistoryXml(shXml, data){
   }
 
   window.addEventListener('scroll',onScroll,{passive:true});
-  window.addEventListener('resize',()=>{showJumpers();scheduleHide();},{passive:true});
-  // Start hidden — only appear on scroll
-  setTimeout(()=>{
-    const scrollHeight=document.documentElement.scrollHeight;
-    const clientHeight=window.innerHeight;
-    if(scrollHeight<=clientHeight+50){
-      topBtn.classList.add('hidden');
-      botBtn.classList.add('hidden');
-    }
-  },500);
+  window.addEventListener('resize',()=>{showJumpers();},{passive:true});
+  // Show bottom button immediately on load
+  setTimeout(showJumpers,300);
 
   topBtn.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
   botBtn.addEventListener('click',()=>window.scrollTo({top:document.documentElement.scrollHeight,behavior:'smooth'}));
