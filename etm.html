@@ -34,13 +34,15 @@
 *::-webkit-scrollbar-thumb:hover{background:var(--border-input);}
 
 /* ── Stepper ── */
-.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:14px 20px 0;}
+.stepper-container{padding:14px 20px;border-bottom:1px solid var(--border-light);background:var(--bg-card);position:sticky;top:0;z-index:900;}
+.stepper{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
 .step{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;transition:all .18s;}
 .step.done{background:rgba(0,44,95,.06);border-color:var(--accent-bg);}
 [data-theme=dark] .step.done{background:rgba(77,143,214,.1);}
-.step.active{border-color:var(--accent-bg);}
+.step.active{border-color:var(--accent-bg);box-shadow:0 0 0 2px var(--focus-ring);}
 .step-n{width:24px;height:24px;border-radius:50%;background:var(--bg-hover);color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;flex-shrink:0;}
 .step.done .step-n{background:var(--accent-bg);color:var(--accent-text);}
+.step.active .step-n{background:var(--accent-bg);color:var(--accent-text);}
 .step-t{font-size:12px;font-weight:600;color:var(--text-main);}
 .step-s{font-size:10.5px;color:var(--text-muted);}
 
@@ -135,13 +137,17 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 
 /* ── Table ── */
 .tbl-wrap{overflow-x:auto;margin-top:4px;}
-.pwa-table{width:100%;border-collapse:collapse;font-size:12.5px;}
+.pwa-table{width:100%;border-collapse:collapse;font-size:12.5px;user-select:none;}
 .pwa-table th{background:var(--table-head);color:var(--text-muted);font-size:10.5px;font-weight:600;text-transform:uppercase;letter-spacing:.04em;padding:8px;text-align:left;border:1px solid var(--border-light);white-space:nowrap;}
 .pwa-table td{border:1px solid var(--border-light);padding:0;vertical-align:middle;}
 .pwa-table td.num{width:28px;text-align:center;color:var(--text-muted);font-size:11px;background:var(--table-head);font-weight:600;padding:0 6px;white-space:nowrap;}
 .pwa-table td input{width:100%;height:34px;border:none;background:transparent;color:var(--text-main);font-size:12.5px;font-family:'Inter',sans-serif;padding:0 8px;outline:none;transition:background .15s;}
 .pwa-table td input:focus{background:var(--focus-ring);}
 .pwa-table td input::placeholder{color:var(--text-placeholder);}
+.pwa-table td.cell-selected input{background:rgba(0,44,95,0.12);}
+[data-theme=dark] .pwa-table td.cell-selected input{background:rgba(77,143,214,0.18);}
+.pwa-table td.cell-selected{background:rgba(0,44,95,0.08);}
+[data-theme=dark] .pwa-table td.cell-selected{background:rgba(77,143,214,0.12);}
 
 /* ── Photos ── */
 .photo-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px;}
@@ -208,7 +214,8 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
   .grid-wrap{grid-template-columns:1fr;gap:8px;}
   .card-header,.mode-wrap,.form-section,.actions,.history-wrap{padding-left:14px;padding-right:14px;}
   .photo-grid{grid-template-columns:1fr;}
-  .stepper{grid-template-columns:1fr 1fr;padding-left:14px;padding-right:14px;}
+  .stepper-container{padding:10px 14px;}
+  .stepper{grid-template-columns:1fr 1fr;}
   .page-jumper{right:10px;bottom:70px;}
 }
 </style>
@@ -236,6 +243,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
     <p>Engine &amp; TM Replacement — fill form then generate PPTX report.</p>
   </div>
 
+  <div class="stepper-container">
   <div class="stepper" id="etm-stepper">
     <div class="step active" id="etm-st1">
       <div class="step-n" id="etm-sn1">1</div>
@@ -249,6 +257,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
       <div class="step-n" id="etm-sn3">3</div>
       <div><div class="step-t">Ready</div><div class="step-s">Generate PPTX</div></div>
     </div>
+  </div>
   </div>
 
   <div class="mode-wrap show" id="modeWrap">
@@ -506,10 +515,13 @@ function makeInput(id,label,placeholder,defVal='',full=false,required=false){
   wrap.appendChild(lbl);wrap.appendChild(inp);return wrap;
 }
 
-function makeTextarea(id,label,placeholder,full=true){
+function makeTextarea(id,label,placeholder,hasPrefill=false,defVal='',full=true){
   const wrap=document.createElement('div');wrap.className='field-col'+(full?' full':'');
-  wrap.innerHTML=`<label>${label}</label><textarea id="${id}" placeholder="${placeholder||''}" tabindex="0"></textarea>`;
-  return wrap;
+  const ta=document.createElement('textarea');ta.id=id;ta.setAttribute('tabindex','0');
+  if(hasPrefill&&defVal){ta.value=defVal;ta.classList.add('pre');ta.addEventListener('focus',()=>ta.classList.remove('pre'));}
+  else{ta.placeholder=placeholder||'';}
+  wrap.innerHTML=`<label>${label}</label>`;
+  wrap.appendChild(ta);return wrap;
 }
 
 function mkSec(title){
@@ -534,6 +546,11 @@ function buildForm(){
     // MODEL clears on select
     const modelOpts=document.getElementById('cso_MODEL');
     if(modelOpts)modelOpts.querySelectorAll('.cs-opt').forEach(opt=>{opt.addEventListener('click',()=>{const t=document.getElementById('cst_MODEL');if(t){t.style.borderColor='';t.style.boxShadow='';}etmUpdateSteps();});});
+    // PROB_NAT and DRV_PAT selects trigger stepper
+    ['PROB_NAT','DRV_PAT'].forEach(id=>{
+      const opts=document.getElementById('cso_'+id);
+      if(opts)opts.querySelectorAll('.cs-opt').forEach(opt=>{opt.addEventListener('click',etmUpdateSteps);});
+    });
   });
   // Single delegated listener covers all inputs including service history
   formWrap.addEventListener('input',etmUpdateSteps);
@@ -549,13 +566,23 @@ function buildForm(){
   sec=mkSec('Complaint & Field Details');
   const cGrid=document.createElement('div');cGrid.className='grid-wrap';
   cGrid.appendChild(makeTextarea('COMPLAINT','Field Complaint','Describe the field complaint…'));
-  cGrid.appendChild(makeTextarea('PROB_NAT','Problem Nature','Describe problem nature…'));
-  cGrid.appendChild(makeTextarea('DRV_PAT','Driving Pattern / Condition','e.g. City driving, AC on, Gear 3…'));
+  cGrid.appendChild(makeSelect('PROB_NAT','Problem Nature',[
+    'Abnormal Noise','Vibration','Poor Performance','Hard Starting / No Start',
+    'Stalling / Cutting Off','Overheating','Oil Leak','Coolant Leak',
+    'Excessive Smoke','MIL / Warning Lamp ON'
+  ]));
+  cGrid.appendChild(makeSelect('DRV_PAT','Driving Pattern / Condition',[
+    'City Driving – Stop & Go','Highway Driving – Steady Speed','Mixed City & Highway',
+    'Uphill / Mountain Driving','Cold Start – Morning First Start',
+    'Hot Restart – After Engine Warm','AC ON – City Driving',
+    'AC OFF – City Driving','Heavy Load / Full Passenger',
+    'Low Speed Crawling / Parking'
+  ]));
   cGrid.appendChild(makeTextarea('DLR_STD','Dealer Study Details','Standard reference / specification…'));
   cGrid.appendChild(makeTextarea('DLR_OBS','Dealer Observation','What was observed during investigation…'));
   cGrid.appendChild(makeTextarea('DLR_ACT','Dealer Action & RO History','Actions taken, RO references…'));
-  cGrid.appendChild(makeTextarea('RMRKS','Remarks','Any additional remarks…'));
-  cGrid.appendChild(makeTextarea('PHOTO_NOTE','Photo Note','Notes for the photos…'));
+  cGrid.appendChild(makeTextarea('RMRKS','Remarks','',true,'Please review and do needful.'));
+  cGrid.appendChild(makeTextarea('PHOTO_NOTE','Photo Note','',true,'NA'));
   sec.appendChild(cGrid);formWrap.appendChild(sec);
 
   // ── Service History Table ──
@@ -615,6 +642,115 @@ function buildServiceHistorySection(){
         if(el) el.addEventListener('paste',e=>handlePaste(e,'sh',i,col,12,shCols));
       });
     }
+    // ── Bulk drag-select + keyboard edit ──
+    initTableBulkEdit(sec);
+  });
+}
+
+// ─────── BULK TABLE DRAG SELECT + KEYBOARD ───────
+function initTableBulkEdit(sec){
+  const table=sec.querySelector('.pwa-table');
+  if(!table)return;
+  let isDragging=false;
+  let dragStart=null;
+  const selectedCells=new Set();
+
+  const getCellCoords=(td)=>{
+    const tr=td.parentElement;
+    const rowIdx=tr.rowIndex;
+    const cellIdx=td.cellIndex;
+    return{r:rowIdx,c:cellIdx};
+  };
+
+  const clearSelection=()=>{
+    selectedCells.forEach(td=>td.classList.remove('cell-selected'));
+    selectedCells.clear();
+  };
+
+  const selectRange=(startTd,endTd)=>{
+    clearSelection();
+    const s=getCellCoords(startTd),e=getCellCoords(endTd);
+    const r1=Math.min(s.r,e.r),r2=Math.max(s.r,e.r);
+    const c1=Math.min(s.c,e.c),c2=Math.max(s.c,e.c);
+    table.querySelectorAll('tbody tr').forEach(tr=>{
+      if(tr.rowIndex<r1||tr.rowIndex>r2)return;
+      Array.from(tr.cells).forEach(td=>{
+        if(td.classList.contains('num'))return;
+        if(td.cellIndex>=c1&&td.cellIndex<=c2){
+          td.classList.add('cell-selected');
+          selectedCells.add(td);
+        }
+      });
+    });
+  };
+
+  table.addEventListener('mousedown',e=>{
+    const td=e.target.closest('tbody td:not(.num)');
+    if(!td)return;
+    if(e.button!==0)return;
+    isDragging=true;
+    dragStart=td;
+    clearSelection();
+    td.classList.add('cell-selected');
+    selectedCells.add(td);
+    e.preventDefault();
+  });
+
+  table.addEventListener('mouseover',e=>{
+    if(!isDragging||!dragStart)return;
+    const td=e.target.closest('tbody td:not(.num)');
+    if(!td)return;
+    selectRange(dragStart,td);
+  });
+
+  document.addEventListener('mouseup',()=>{
+    if(isDragging){isDragging=false;}
+  });
+
+  table.addEventListener('click',e=>{
+    const inp=e.target.closest('input');
+    if(inp&&selectedCells.size<=1){clearSelection();}
+  });
+
+  const buildSelectionTSV=()=>{
+    const coords=[];
+    selectedCells.forEach(td=>{coords.push({r:td.parentElement.rowIndex,c:td.cellIndex,td});});
+    if(!coords.length)return'';
+    const r1=Math.min(...coords.map(x=>x.r)),r2=Math.max(...coords.map(x=>x.r));
+    const c1=Math.min(...coords.map(x=>x.c)),c2=Math.max(...coords.map(x=>x.c));
+    const grid=[];
+    for(let r=r1;r<=r2;r++){
+      const row=[];
+      for(let c=c1;c<=c2;c++){
+        const match=coords.find(x=>x.r===r&&x.c===c);
+        row.push(match?match.td.querySelector('input')?.value||'':'');
+      }
+      grid.push(row.join('\t'));
+    }
+    return grid.join('\n');
+  };
+
+  document.addEventListener('keydown',e=>{
+    if(selectedCells.size===0)return;
+    const active=document.activeElement;
+    const inTable=table.contains(active);
+    if(!inTable&&active&&(active.tagName==='INPUT'||active.tagName==='TEXTAREA'))return;
+
+    if(e.key==='Delete'||e.key==='Backspace'){
+      e.preventDefault();
+      selectedCells.forEach(td=>{const inp=td.querySelector('input');if(inp)inp.value='';});
+      etmUpdateSteps();
+    }
+    if((e.ctrlKey||e.metaKey)&&e.key==='c'){
+      const rows=buildSelectionTSV();
+      navigator.clipboard?.writeText(rows).catch(()=>{});
+    }
+    if((e.ctrlKey||e.metaKey)&&e.key==='x'){
+      const rows=buildSelectionTSV();
+      navigator.clipboard?.writeText(rows).catch(()=>{});
+      selectedCells.forEach(td=>{const inp=td.querySelector('input');if(inp)inp.value='';});
+      etmUpdateSteps();
+    }
   });
 }
 
@@ -655,11 +791,12 @@ function buildPhotosSection(){
           PHOTOS[slot.id]={dataUrl:ev.target.result,filename:file.name,rId:slot.rId};
           document.getElementById('pi_'+slot.id).src=ev.target.result;
           document.getElementById('ps_'+slot.id).classList.add('filled');
+          etmUpdateSteps();
         };
         reader.readAsDataURL(file);
       });
       const rmBtn=document.getElementById('prm_'+slot.id);
-      const rmA=e=>{e.stopPropagation();delete PHOTOS[slot.id];document.getElementById('pi_'+slot.id).src='';document.getElementById('pf_'+slot.id).value='';document.getElementById('ps_'+slot.id).classList.remove('filled');};
+      const rmA=e=>{e.stopPropagation();delete PHOTOS[slot.id];document.getElementById('pi_'+slot.id).src='';document.getElementById('pf_'+slot.id).value='';document.getElementById('ps_'+slot.id).classList.remove('filled');etmUpdateSteps();};
       rmBtn?.addEventListener('click',rmA);handleKeyClick(rmBtn,rmA);
     });
   });
@@ -691,6 +828,15 @@ document.getElementById('btnClear').addEventListener('click',async()=>{
   // Restore pre-filled defaults
   const defaults={DLR_CD:'N3235',DLR_NM:'KHANNA AUTOMART PVT LTD',DTC:'NA',ROM_ID:'NA'};
   Object.entries(defaults).forEach(([id,val])=>{const el=document.getElementById(id);if(el){el.value=val;el.classList.add('pre');}});
+  // Restore textarea prefills
+  const taDefaults={RMRKS:'Please review and do needful.',PHOTO_NOTE:'NA'};
+  Object.entries(taDefaults).forEach(([id,val])=>{const el=document.getElementById(id);if(el){el.value=val;el.classList.add('pre');}});
+  // Reset PROB_NAT and DRV_PAT dropdowns
+  ['PROB_NAT','DRV_PAT'].forEach(id=>{
+    const hidEl=document.getElementById(id);if(hidEl)hidEl.value='';
+    const lbl=document.getElementById('csv_'+id);if(lbl){lbl.textContent='Select…';lbl.classList.add('empty');}
+    const trig=document.getElementById('cst_'+id);if(trig){trig.style.borderColor='';trig.style.boxShadow='';}
+  });
   closeAllPopups();
   clearStatus();
   etmUpdateSteps();
@@ -702,6 +848,23 @@ function etmUpdateSteps(){
   const model=document.getElementById('MODEL')?.value?.trim();
   const dlr=document.getElementById('DLR_CD')?.value?.trim()||document.getElementById('DLR_NM')?.value?.trim();
 
+  // Step 1 done: VIN + Model both filled
+  const s1done=!!(vin&&model);
+
+  // Step 2 done: dealer filled + at least 1 service history row has any value
+  const shCols=['N','VIN','RO','DT','KM','DC','ACT','RS','STS'];
+  let tableHasRow=false;
+  for(let i=1;i<=12&&!tableHasRow;i++){
+    for(const col of shCols){
+      const el=document.getElementById(`sh${i}${col}`);
+      if(el&&el.value.trim()){tableHasRow=true;break;}
+    }
+  }
+  const s2done=!!(dlr&&tableHasRow);
+
+  // Step 3 done: at least 1 photo uploaded
+  const s3done=Object.keys(PHOTOS).length>0;
+
   // Scroll-based: which section is currently in view?
   const sections=formWrap.querySelectorAll('.form-section');
   let activeSecIdx=0;
@@ -710,12 +873,6 @@ function etmUpdateSteps(){
     if(rect.top<=window.innerHeight*0.55)activeSecIdx=i;
   });
 
-  // Step completion by content
-  const s1done=!!(vin&&model);
-  const s2done=!!dlr;
-  const s3done=!!(vin&&model&&dlr);
-
-  // Step active = scroll has reached that section OR it's done
   const s1active=activeSecIdx>=0;
   const s2active=activeSecIdx>=1||s2done;
   const s3active=activeSecIdx>=2||s3done;
@@ -744,12 +901,14 @@ window.addEventListener('scroll',etmUpdateSteps,{passive:true});
 
 function collectData(){
   const data={};
-  // MODEL comes from hidden input (custom select)
-  ['VIN','KMS','ENG_TM','ROM_ID','DTC','DLR_CD','DLR_NM','COMPLAINT','PROB_NAT','DRV_PAT','DLR_STD','DLR_OBS','DLR_ACT','RMRKS','PHOTO_NOTE'].forEach(id=>{
+  // MODEL, PROB_NAT, DRV_PAT come from hidden inputs (custom selects)
+  ['VIN','KMS','ENG_TM','ROM_ID','DTC','DLR_CD','DLR_NM','COMPLAINT','DLR_STD','DLR_OBS','DLR_ACT','RMRKS','PHOTO_NOTE'].forEach(id=>{
     const el=document.getElementById(id);data[id]=el?el.value.trim():'';
   });
-  // MODEL from select hidden input
-  const modelEl=document.getElementById('MODEL');data['MODEL']=modelEl?modelEl.value.trim():'';
+  // MODEL, PROB_NAT, DRV_PAT from select hidden inputs
+  ['MODEL','PROB_NAT','DRV_PAT'].forEach(id=>{
+    const el=document.getElementById(id);data[id]=el?el.value.trim():'';
+  });
   // Date fields (manual inputs with id dm_*)
   document.querySelectorAll('input[id^="dm_"]').forEach(el=>{
     const key=el.id.replace('dm_','');data[el.id]=el.value.trim();
@@ -921,9 +1080,15 @@ function fillFromHistory(entry){
   setMode('form');
   setTimeout(()=>{
     // Plain text fields
-    ['VIN','KMS','ENG_TM','ROM_ID','DTC','DLR_CD','DLR_NM','COMPLAINT','PROB_NAT','DRV_PAT','DLR_STD','DLR_OBS','DLR_ACT','RMRKS','PHOTO_NOTE'].forEach(id=>{
+    ['VIN','KMS','ENG_TM','ROM_ID','DTC','DLR_CD','DLR_NM','COMPLAINT','DLR_STD','DLR_OBS','DLR_ACT','RMRKS','PHOTO_NOTE'].forEach(id=>{
       const el=document.getElementById(id);
       if(el&&entry[id]!==undefined){el.value=entry[id];el.classList.remove('pre');}
+    });
+    // Restore PROB_NAT and DRV_PAT dropdowns
+    ['PROB_NAT','DRV_PAT'].forEach(id=>{
+      if(!entry[id])return;
+      const hidEl=document.getElementById(id);if(hidEl)hidEl.value=entry[id];
+      const lbl=document.getElementById('csv_'+id);if(lbl){lbl.textContent=entry[id];lbl.classList.remove('empty');}
     });
     // Restore MODEL select
     if(entry.MODEL){
@@ -980,7 +1145,7 @@ window.addEventListener('message',event=>{
   const pjTop=document.getElementById('pjTop');
   const pjBot=document.getElementById('pjBot');
   let hideTimer=null;
-  function showJumpers(){
+  const showJumpers=()=>{
     const sh=document.documentElement.scrollHeight,wh=window.innerHeight;
     const scrollable=sh>wh+20;
     if(!scrollable){pjTop.classList.remove('vis');pjBot.classList.remove('vis');return;}
@@ -989,11 +1154,11 @@ window.addEventListener('message',event=>{
     const nearBottom=st+wh>sh-60;
     pjTop.classList.toggle('vis',!nearTop);
     pjBot.classList.toggle('vis',!nearBottom);
-  }
-  function scheduleHide(){
+  };
+  const scheduleHide=()=>{
     if(hideTimer)clearTimeout(hideTimer);
     hideTimer=setTimeout(()=>{pjTop.classList.remove('vis');pjBot.classList.remove('vis');},2000);
-  }
+  };
   window.addEventListener('scroll',()=>{showJumpers();scheduleHide();},{passive:true});
   window.addEventListener('load',showJumpers);
   pjTop.addEventListener('click',()=>window.scrollTo({top:0,behavior:'smooth'}));
