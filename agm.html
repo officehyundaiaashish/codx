@@ -481,11 +481,11 @@ function buildBatteryDataSection(){
   g.appendChild(makeInput('pdi_soc','SOC','Enter SOC…','NA'));
 
   const analDiv=document.createElement('div');analDiv.className='sub-lbl';analDiv.textContent='Battery Analyser Result';g.appendChild(analDiv);
-  g.appendChild(makeInput('analyser_voltage','Voltage','e.g. 12.4V…','NA'));
-  g.appendChild(makeInput('analyser_cca','CCA','Enter CCA…','NA'));
-  g.appendChild(makeInput('analyser_soc','SOC','Enter SOC…','NA'));
+  g.appendChild(makeInput('analyser_voltage','Voltage','e.g. 12.4V…'));
+  g.appendChild(makeInput('analyser_cca','CCA','Enter CCA…'));
+  g.appendChild(makeInput('analyser_soc','SOC','Enter SOC…'));
   g.appendChild(makeSelect('analyser_result','Result',['Replace','Recharge','Found Ok','No Problem','Battery Dead']));
-  g.appendChild(makeInput('result_slip','Result Slip','Enter result slip no…','NA'));
+  g.appendChild(makeInput('result_slip','Result Slip','Enter result slip no…'));
 
   const daDiv=document.createElement('div');daDiv.className='sub-lbl';daDiv.textContent='Dealer Action';g.appendChild(daDiv);
   g.appendChild(makeSelect('dealer_action','Recharge / Replaced',dealerActionOpts));
@@ -583,11 +583,13 @@ function buildNDMSSection(){
   g.appendChild(makeInput('hmil_share_pct_part','HMIL Share % (Part)','e.g. 80'));
   g.appendChild(makeInput('dealer_share_pct_part','Dealer Share % (Part)','e.g. 10'));
   g.appendChild(makeInput('customer_share_pct_part','Customer Share % (Part)','e.g. 10'));
+  const partErr=document.createElement('div');partErr.id='pct_err_part';partErr.className='full';partErr.style.cssText='grid-column:1/-1;display:none;font-size:12px;font-weight:600;color:var(--danger-color);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:8px 12px;margin-top:2px;';partErr.textContent='⚠ Part % total exceeds 100%. The three fields must add up to exactly 100%.';g.appendChild(partErr);
 
   const ls=document.createElement('div');ls.className='sub-lbl';ls.textContent='Labour Sharing % (Total must = 100%)';g.appendChild(ls);
   g.appendChild(makeInput('hmil_share_pct_labour','HMIL Share % (Labour)','e.g. 80'));
   g.appendChild(makeInput('dealer_share_pct_labour','Dealer Share % (Labour)','e.g. 10'));
   g.appendChild(makeInput('customer_share_pct_labour','Customer Share % (Labour)','e.g. 10'));
+  const labErr=document.createElement('div');labErr.id='pct_err_labour';labErr.className='full';labErr.style.cssText='grid-column:1/-1;display:none;font-size:12px;font-weight:600;color:var(--danger-color);background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:7px;padding:8px 12px;margin-top:2px;';labErr.textContent='⚠ Labour % total exceeds 100%. The three fields must add up to exactly 100%.';g.appendChild(labErr);
   sec.appendChild(g);
 
   // Live sharing calculation table
@@ -670,7 +672,7 @@ function calcNDMS(){
   const partTotal=gv('part_total_cost_with_tax');
   const labTotal=gv('labour_total_cost_with_tax');
 
-  // Part sharing — 100% means the percentage IS the amount ratio
+  // Part sharing
   const hPctP=gv('hmil_share_pct_part');
   const dPctP=gv('dealer_share_pct_part');
   const cPctP=gv('customer_share_pct_part');
@@ -687,6 +689,29 @@ function calcNDMS(){
   const dAmtL=labTotal*(dPctL/100);
   const cAmtL=labTotal*(cPctL/100);
   const checkL=hPctL+dPctL+cPctL;
+
+  // ── Percentage over-100 validation ──
+  const partOver=checkP>100.001;
+  const labOver=checkL>100.001;
+  const partIds=['hmil_share_pct_part','dealer_share_pct_part','customer_share_pct_part'];
+  const labIds=['hmil_share_pct_labour','dealer_share_pct_labour','customer_share_pct_labour'];
+  partIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(partOver){el.style.borderColor='var(--danger-color)';el.style.boxShadow='0 0 0 3px rgba(239,68,68,0.15)';}
+    else{el.style.borderColor='';el.style.boxShadow='';}
+  });
+  labIds.forEach(id=>{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(labOver){el.style.borderColor='var(--danger-color)';el.style.boxShadow='0 0 0 3px rgba(239,68,68,0.15)';}
+    else{el.style.borderColor='';el.style.boxShadow='';}
+  });
+  // Show/hide inline error messages
+  const partErrEl=document.getElementById('pct_err_part');
+  const labErrEl=document.getElementById('pct_err_labour');
+  if(partErrEl)partErrEl.style.display=partOver?'block':'none';
+  if(labErrEl)labErrEl.style.display=labOver?'block':'none';
 
   // Update table
   setEl('ns_part_total',fmt(partTotal));
@@ -705,7 +730,7 @@ function calcNDMS(){
   setEl('ns_cust_pct_labour',fmtPct(cPctL));
   setEl('ns_cust_amt_labour',fmt(cAmtL));
 
-  // Check column - green tick if 100%, red warning if not
+  // Check column
   const checkEl_p=document.getElementById('ns_check_part');
   const checkEl_l=document.getElementById('ns_check_labour');
   if(checkEl_p){
@@ -986,6 +1011,20 @@ function extFromMime(mime){if(mime==='image/png')return 'png';if(mime==='image/g
 document.getElementById('btnInject').addEventListener('click',async()=>{
   if(!templateBuffer){showStatus('Template not loaded.','error');return;}
   const btnInject=document.getElementById('btnInject');
+  // Validate % totals before proceeding
+  const gv=id=>{const el=document.getElementById(id);return parseFloat(el?.value)||0;};
+  const checkP=gv('hmil_share_pct_part')+gv('dealer_share_pct_part')+gv('customer_share_pct_part');
+  const checkL=gv('hmil_share_pct_labour')+gv('dealer_share_pct_labour')+gv('customer_share_pct_labour');
+  if(checkP>100.001){
+    showStatus('⚠ Part sharing % total is '+checkP.toFixed(1)+'% — must be exactly 100%. Please fix before generating.','error');
+    document.getElementById('hmil_share_pct_part')?.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
+  if(checkL>100.001){
+    showStatus('⚠ Labour sharing % total is '+checkL.toFixed(1)+'% — must be exactly 100%. Please fix before generating.','error');
+    document.getElementById('hmil_share_pct_labour')?.scrollIntoView({behavior:'smooth',block:'center'});
+    return;
+  }
   btnInject.disabled=true;btnInject.textContent='Processing…';clearStatus();
   try{
     const get=id=>{const el=document.getElementById(id);return el?el.value.trim():'';};
