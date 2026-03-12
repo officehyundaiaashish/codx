@@ -35,7 +35,10 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .card-header h1{font-size:17px;font-weight:600;color:var(--text-main);}
 .card-header p{font-size:12px;color:var(--text-muted);margin-top:3px;}
 
-.stepper-container{padding:14px 20px;border-bottom:1px solid var(--border-light);background:var(--bg-card);position:sticky;top:0;z-index:900;}
+/* ── Sticky Wrapper for Stepper + Nav ── */
+.top-sticky-wrap { position:sticky; top:0; z-index:900; background:var(--bg-card); border-bottom:1px solid var(--border-light); box-shadow:0 4px 10px -4px rgba(0,0,0,.05); }
+
+.stepper-container{padding:14px 20px;border-bottom:1px solid var(--border-light);}
 .stepper{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 .step{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--bg-card);border:1px solid var(--border-light);border-radius:8px;transition:all .18s;}
 .step.done{background:rgba(0,44,95,.06);border-color:var(--accent-bg);}
@@ -47,7 +50,7 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
 .step-t{font-size:12px;font-weight:600;color:var(--text-main);}
 .step-s{font-size:10.5px;color:var(--text-muted);}
 
-.mode-wrap{margin:14px 20px 0;display:none;}
+.mode-wrap{padding:14px 20px;display:none;}
 .mode-wrap.show{display:block;}
 .mode-lbl{font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px;}
 .mode-btns{display:flex;gap:5px;}
@@ -251,38 +254,40 @@ body{font-family:'Inter',sans-serif;background:var(--bg-page);color:var(--text-m
     <p>Prior Work Approval — fill form then generate Excel report.</p>
   </div>
 
-  <div class="stepper-container" id="stepperContainer" style="display:none;">
-    <div class="stepper">
-      <div class="step" id="pw-st1" data-step="1">
-        <div class="step-n" id="pw-sn1">1</div>
-        <div><div class="step-t">Vehicle</div><div class="step-s">Dealer, VIN, model</div></div>
-      </div>
-      <div class="step" id="pw-st2" data-step="2">
-        <div class="step-n" id="pw-sn2">2</div>
-        <div><div class="step-t">Parts</div><div class="step-s">Part info, history</div></div>
-      </div>
-      <div class="step" id="pw-st3" data-step="3">
-        <div class="step-n" id="pw-sn3">3</div>
-        <div><div class="step-t">Labour</div><div class="step-s">Estimate, contacts</div></div>
-      </div>
-      <div class="step" id="pw-st4" data-step="4">
-        <div class="step-n" id="pw-sn4">4</div>
-        <div><div class="step-t">Photos</div><div class="step-s">Upload images</div></div>
+  <div class="top-sticky-wrap" id="topStickyWrap" style="display:none;">
+    <div class="stepper-container" id="stepperContainer">
+      <div class="stepper">
+        <div class="step" id="pw-st1" data-step="1">
+          <div class="step-n" id="pw-sn1">1</div>
+          <div><div class="step-t">Vehicle</div><div class="step-s">Dealer, VIN, model</div></div>
+        </div>
+        <div class="step" id="pw-st2" data-step="2">
+          <div class="step-n" id="pw-sn2">2</div>
+          <div><div class="step-t">Parts</div><div class="step-s">Part info, history</div></div>
+        </div>
+        <div class="step" id="pw-st3" data-step="3">
+          <div class="step-n" id="pw-sn3">3</div>
+          <div><div class="step-t">Labour</div><div class="step-s">Estimate, contacts</div></div>
+        </div>
+        <div class="step" id="pw-st4" data-step="4">
+          <div class="step-n" id="pw-sn4">4</div>
+          <div><div class="step-t">Photos</div><div class="step-s">Upload images</div></div>
+        </div>
       </div>
     </div>
-  </div>
 
-  <div class="mode-wrap" id="modeWrap">
-    <div class="mode-lbl">Navigation</div>
-    <div class="mode-btns">
-      <button class="mode-btn active" id="modeForm" onclick="setMode('form')" tabindex="0">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
-        Fill Form
-      </button>
-      <button class="mode-btn" id="modeHistory" onclick="setMode('history')" tabindex="0">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-        Saved Entries
-      </button>
+    <div class="mode-wrap" id="modeWrap">
+      <div class="mode-lbl">Navigation</div>
+      <div class="mode-btns">
+        <button class="mode-btn active" id="modeForm" onclick="setMode('form')" tabindex="0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="12" y2="16"/></svg>
+          Fill Form
+        </button>
+        <button class="mode-btn" id="modeHistory" onclick="setMode('history')" tabindex="0">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          Saved Entries
+        </button>
+      </div>
     </div>
   </div>
 
@@ -357,6 +362,8 @@ const handleKeyClick=(el,action)=>el.addEventListener('keydown',e=>{if(e.key==='
 const formWrap=document.getElementById('formWrap');
 const actionsBar=document.getElementById('actionsBar');
 const statusEl=document.getElementById('status');
+const topStickyWrap=document.getElementById('topStickyWrap');
+const stepperContainer=document.getElementById('stepperContainer');
 const modeWrap=document.getElementById('modeWrap');
 const histWrap=document.getElementById('histWrap');
 const histList=document.getElementById('histList');
@@ -371,7 +378,8 @@ window.addEventListener('DOMContentLoaded',async()=>{
     const r=await fetch('pwareg.xlsx');
     if(!r.ok) throw new Error('not found');
     templateBuffer=await r.arrayBuffer();
-    modeWrap.classList.add('show');setMode('form');clearStatus();
+    topStickyWrap.style.display='block';
+    setMode('form');clearStatus();
   }catch(e){
     showStatus('Error: Could not load pwareg.xlsx','error');
     formWrap.innerHTML='<div style="text-align:center;font-size:13px;color:var(--text-muted);padding:32px;">Template missing. Please upload pwareg.xlsx.</div>';
@@ -380,19 +388,22 @@ window.addEventListener('DOMContentLoaded',async()=>{
 
 function setMode(mode){
   currentMode=mode;
-  const stepperContainer=document.getElementById('stepperContainer');
   document.getElementById('modeForm').classList.toggle('active',mode==='form');
   document.getElementById('modeHistory').classList.toggle('active',mode==='history');
   if(mode==='history'){
     formWrap.style.display='none';
     actionsBar.style.display='none';
     histWrap.classList.add('show');
-    if(stepperContainer)stepperContainer.style.display='none';
+    stepperContainer.style.display='none';
+    modeWrap.style.borderBottom='none';
+    modeWrap.classList.add('show');
     renderHistory();
   }else{
     histWrap.classList.remove('show');
     formWrap.style.display='block';
-    if(stepperContainer)stepperContainer.style.display='block';
+    stepperContainer.style.display='block';
+    modeWrap.style.borderBottom='1px solid var(--border-light)';
+    modeWrap.classList.add('show');
     if(templateBuffer){
       actionsBar.style.display='flex';
       buildForm();
