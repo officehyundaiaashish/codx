@@ -1025,6 +1025,8 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
     }
 
     const zip=await JSZip.loadAsync(templateBuffer);
+    // Remove calcChain to prevent "unreadable content" error — Excel will recalculate fresh
+    zip.remove('xl/calcChain.xml');
 
     const xmlEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
 
@@ -1123,6 +1125,11 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
         if(shXml.includes('{'))shXml=replacePlaceholders(shXml);
         if(ssXmlAfter) shXml=convertNumericCellsInSheet(shXml,ssXmlAfter);
         shXml=replaceNDMSFormulaXml(shXml,data);
+      }else if(sp.match(/sheet3\.xml$/i)){
+        // Invoice sheet — replace placeholders + inject calculated totals into formula cells
+        if(shXml.includes('{'))shXml=replacePlaceholders(shXml);
+        if(ssXmlAfter) shXml=convertNumericCellsInSheet(shXml,ssXmlAfter);
+        shXml=replaceInvoiceFormulaXml(shXml,data);
       }else{
         if(shXml.includes('{'))shXml=replacePlaceholders(shXml);
         // ── FIX BUG 1: convert shared-string cells that resolved to numbers into proper numeric cells ──
@@ -1211,41 +1218,143 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   finally{btnInject.disabled=false;btnInject.textContent='Generate XLSX';}
 });
 
-// ─── NDMS SHEET — INJECT CALCULATED VALUES INTO FORMULA CELLS ───
-// Excel sheet4 layout (NDMS Invoice, Sharing %):
-//   Row 2: Part  — M2=part_total, N2=hmil_pct_part,   O2=hmil_amt(formula),  P2=dealer_pct, Q2=dealer_amt, R2=cust_pct, S2=cust_amt
-//   Row 3: Labour— M3=lab_total,  N3=hmil_pct_labour, O3=hmil_amt(formula),  P3=dealer_pct, Q3=dealer_amt, R3=cust_pct, S3=cust_amt
-//   Row 4: Total — M4=formula,    O4=formula, Q4=formula, S4=formula
-// We replace formula cells (t="e") with our pre-calculated numeric values,
-// preserving the cell's style (s=) attribute.
+// ─── NDMS SHEET — INJECT CALCULATED VALUES + FIX % CELL DISPLAY ───
+// Excel sheet4 layout:
+//   Row 2: Part  — M2=part_total, N2=hmil_pct%(style39=date!), O2=hmil_amt(formula)...
+//   Row 3: Labour— M3=lab_total,  N3=hmil_pct%(style39), O3=hmil_amt(formula)...
+//   Row 4: Total — M4=formula, O4=formula, Q4=formula, S4=formula
+// BUG: style39 has numFmtId=14 (date format) → 80 displays as "8000%"
+// FIX: change % cells to style38 (General format, same fill/font) so 80 shows as plain 80
 function replaceNDMSFormulaXml(shXml, data){
-  // Map of cell reference → data key
-  const cellMap={
-    // Formula cells — replace with calculated values
-    'O2':'ndms_hmil_amt_part',
-    'Q2':'ndms_dealer_amt_part',
-    'S2':'ndms_cust_amt_part',
-    'O3':'ndms_hmil_amt_labour',
-    'Q3':'ndms_dealer_amt_labour',
-    'S3':'ndms_cust_amt_labour',
-    'M4':'ndms_grand_total',
-    'O4':'ndms_grand_hmil_amt',
-    'Q4':'ndms_grand_dealer_amt',
-    'S4':'ndms_grand_cust_amt',
+  // Formula cells — replace with calculated numeric values
+  const formulaCellMap={
+    'O2':'ndms_hmil_amt_part',   'Q2':'ndms_dealer_amt_part',   'S2':'ndms_cust_amt_part',
+    'O3':'ndms_hmil_amt_labour', 'Q3':'ndms_dealer_amt_labour', 'S3':'ndms_cust_amt_labour',
+    'M4':'ndms_grand_total',     'O4':'ndms_grand_hmil_amt',    'Q4':'ndms_grand_dealer_amt', 'S4':'ndms_grand_cust_amt',
   };
+  // Percentage INPUT cells — fix style from 39 (date fmt) to 38 (General) so display is correct
+  // These cells already get their value from convertNumericCellsInSheet (80 stored as number)
+  // but style39 makes Excel show 80 as "8000%" — change to style38 fixes display
+  const pctCells=new Set(['N2','P2','R2','N3','P3','R3']);
 
-  // Replace each formula cell with a plain numeric cell
-  // Matches: <c r="O2" s="40" t="e"><f>M2*N2%</f><v>#VALUE!</v></c>  (or any formula/value)
-  return shXml.replace(/<c\s([^>]*)r="([A-Z]+\d+)"([^>]*)>(?:<f>[^<]*<\/f>)?<v>[^<]*<\/v><\/c>/g,(match,pre,ref,post)=>{
-    const key=cellMap[ref];
+  // Replace formula cells (t="e") with plain numbers
+  shXml=shXml.replace(/<c\s([^>]*)r="([A-Z]+\d+)"([^>]*)>(?:<f>[^<]*<\/f>)?<v>[^<]*<\/v><\/c>/g,(match,pre,ref,post)=>{
+    const key=formulaCellMap[ref];
     if(key===undefined) return match;
     const val=data[key];
     if(val===undefined||val===null||val==='') return match;
     const numVal=parseFloat(String(val));
     if(isNaN(numVal)) return match;
-    // Keep style attribute, remove t= and formula, write as plain number cell
     const allAttrs=(pre+post).replace(/\s*t="[^"]*"/g,'').trim();
     return `<c ${allAttrs} r="${ref}"><v>${numVal}</v></c>`;
+  });
+  // Fix percentage display cells: change s="39" → s="38" to avoid date-format glitch
+  shXml=shXml.replace(/<c\s([^>]*)r="([A-Z]+\d+)"([^>]*)/g,(match,pre,ref,post)=>{
+    if(!pctCells.has(ref)) return match;
+    const fixed=(pre+post).replace(/s="39"/g,'s="38"');
+    return `<c ${fixed} r="${ref}"`;
+  });
+  return shXml;
+}
+
+// ─── INVOICE SHEET — INJECT CALCULATED TOTALS INTO FORMULA CELLS ───
+// ─── INVOICE SHEET — FULL DIRECT INJECTION ───
+// Sheet3 exact cell layout (Estimation section, columns Q–W):
+//   Row 2:  Headers (SI No / Part No / Part Desc / List Price / Qty / Amt ex-tax / Total w-tax)
+//   Row 3:  Part row 1   → Q3=si_no_1, R3=part_number_1, S3=part_description_1,
+//                           T3=part_list_price_1, U3=part_qty_1, V3=part_amount_1, W3=V3*1.18
+//   Row 4:  Part row 2   → Q4=si_no_2, R4=part_number_2, S4=part_description_2,
+//                           T4=part_list_price_2, U4=part_qty_2, V4=part_amount_2, W4=V4*1.18
+//   Row 5:  Parts Total  → S5="Total Part Amount", V5=SUM(V3:V4), W5=SUM(W3:W4)
+//   Row 8:  Labour headers
+//   Row 9:  Labour row 1 → Q9=si_no_labour_1, R9=labour_code_1, S9=labour_description_1,
+//                           T9=labour_list_price_1, U9=labour_qty_1, V9=labour_amount_1, W9=V9*1.18
+//   Row 10: Labour row 2 → Q10=si_no_labour_2, R10=labour_code_2, S10=labour_description_2,
+//                           T10=labour_list_price_2, U10=labour_qty_2, V10=labour_amount_2, W10=V10*1.18
+//   Row 11: Labour Total → S11="Total Labour Amount", T11=SUM(V9:V10), W11=SUM(W9:W10)
+//   Row 12: Grand Total  → Q12="Total Amount", W12=W5+W11
+//
+// STRATEGY: bypass sharedStrings entirely for data cells — write inlineStr for text,
+//           plain <v> for numbers. Replace all formula cells with calculated values.
+function replaceInvoiceFormulaXml(shXml, data){
+  const xmlEsc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;');
+  const n=k=>parseFloat(data[k]||0);
+
+  // Pre-calculate all values
+  const p1amt = +(n('part_list_price_1')*n('part_qty_1')).toFixed(2);
+  const p2amt = +(n('part_list_price_2')*n('part_qty_2')).toFixed(2);
+  const l1amt = +(n('labour_list_price_1')*n('labour_qty_1')).toFixed(2);
+  const l2amt = +(n('labour_list_price_2')*n('labour_qty_2')).toFixed(2);
+  const w3    = +(p1amt*1.18).toFixed(2);
+  const w4    = +(p2amt*1.18).toFixed(2);
+  const w9    = +(l1amt*1.18).toFixed(2);
+  const w10   = +(l2amt*1.18).toFixed(2);
+  const v5    = +(p1amt+p2amt).toFixed(2);
+  const w5    = +(w3+w4).toFixed(2);
+  const t11   = +(l1amt+l2amt).toFixed(2);
+  const w11   = +(w9+w10).toFixed(2);
+  const w12   = +(w5+w11).toFixed(2);
+
+  // Direct cell value map — text cells use inlineStr, number cells use plain <v>
+  // Format: [value, 'str'|'num', keep_original_style]
+  const cellMap={
+    // Part row 1
+    'Q3':[data.si_no_1||'','str'],
+    'R3':[data.part_number_1||'','str'],
+    'S3':[data.part_description_1||'','str'],
+    'T3':[n('part_list_price_1'),'num'],
+    'U3':[n('part_qty_1'),'num'],
+    'V3':[p1amt,'num'],
+    'W3':[w3,'num'],
+    // Part row 2
+    'Q4':[data.si_no_2||'','str'],
+    'R4':[data.part_number_2||'','str'],
+    'S4':[data.part_description_2||'','str'],
+    'T4':[n('part_list_price_2'),'num'],
+    'U4':[n('part_qty_2'),'num'],
+    'V4':[p2amt,'num'],
+    'W4':[w4,'num'],
+    // Parts total row
+    'V5':[v5,'num'],
+    'W5':[w5,'num'],
+    // Labour row 1
+    'Q9':[data.si_no_labour_1||'','str'],
+    'R9':[data.labour_code_1||'','str'],
+    'S9':[data.labour_description_1||'','str'],
+    'T9':[n('labour_list_price_1'),'num'],
+    'U9':[n('labour_qty_1'),'num'],
+    'V9':[l1amt,'num'],
+    'W9':[w9,'num'],
+    // Labour row 2
+    'Q10':[data.si_no_labour_2||'','str'],
+    'R10':[data.labour_code_2||'','str'],
+    'S10':[data.labour_description_2||'','str'],
+    'T10':[n('labour_list_price_2'),'num'],
+    'U10':[n('labour_qty_2'),'num'],
+    'V10':[l2amt,'num'],
+    'W10':[w10,'num'],
+    // Labour total row
+    'T11':[t11,'num'],
+    'W11':[w11,'num'],
+    // Grand total
+    'W12':[w12,'num'],
+  };
+
+  // Replace every cell in the map — handles t="s", t="e", or any type
+  return shXml.replace(/<c\s+r="([^"]+)"([^>]*)>[\s\S]*?<\/c>/g,(match,ref,attrs)=>{
+    const entry=cellMap[ref];
+    if(!entry) return match;
+    const [val,type]=entry;
+    // Extract style attribute to preserve formatting
+    const sMatch=attrs.match(/\ss="(\d+)"/);
+    const sAttr=sMatch?` s="${sMatch[1]}"`:'';
+    if(type==='str'){
+      const escaped=xmlEsc(String(val));
+      return `<c r="${ref}"${sAttr} t="inlineStr"><is><t>${escaped}</t></is></c>`;
+    } else {
+      const numVal=isNaN(val)||val===''?0:+val;
+      return `<c r="${ref}"${sAttr}><v>${numVal}</v></c>`;
+    }
   });
 }
 
