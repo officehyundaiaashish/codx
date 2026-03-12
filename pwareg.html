@@ -747,7 +747,7 @@ document.getElementById('btnInject').addEventListener('click',async()=>{
   for(let i=1;i<=11;i++)['No','Name','Qty','Rate','Tag'].forEach(f=>data[`part${i}${f}`]=get(`part${i}${f}`));
   for(let i=1;i<=6;i++)['OpCode','Name','Qty','Rate'].forEach(f=>data[`labour${i}${f}`]=get(`labour${i}${f}`));
   
-  const getSpan=id=>{const el=document.getElementById(id);return el&&el.textContent!=='—'?el.textContent:'';};
+  const getSpan=id=>{const el=document.getElementById(id);return el&&el.textContent!=='—'?el.textContent.replace(/,/g, ''):'';};
   for(let i=1;i<=11;i++) data[`part${i}Total`]=getSpan(`part${i}Total`);
   for(let i=1;i<=6;i++) data[`labour${i}Total`]=getSpan(`labour${i}Total`);
   data['partsTotal']=getSpan('partsTotal');
