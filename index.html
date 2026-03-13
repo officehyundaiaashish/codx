@@ -222,70 +222,6 @@
         .gh-crumb-sep { font-size: 11px; opacity: 0.3; }
         .gh-tree-loading { text-align: center; padding: 20px; font-size: 11px; opacity: 0.5; }
 
-        /* ===== LOCAL EXPLORER ===== */
-        #local-explorer-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
-            display: flex; align-items: flex-end; justify-content: center;
-        }
-        #local-explorer-overlay.active { opacity: 1; pointer-events: auto; }
-        #local-explorer-modal {
-            background: var(--glass-bg); border: 1px solid var(--glass-border);
-            border-radius: 24px 24px 0 0; width: 100%; max-width: 480px;
-            max-height: 82vh; display: flex; flex-direction: column;
-            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
-            overflow: hidden;
-        }
-        #local-explorer-overlay.active #local-explorer-modal { transform: translateY(0); }
-        #local-explorer-header {
-            display: flex; align-items: center; gap: 10px; padding: 16px 16px 10px;
-            border-bottom: 1px solid var(--glass-border); flex-shrink: 0;
-        }
-        #local-explorer-breadcrumb {
-            display: flex; align-items: center; gap: 4px; flex: 1; overflow-x: auto; flex-wrap: nowrap;
-        }
-        #local-explorer-breadcrumb::-webkit-scrollbar { display: none; }
-        .le-crumb { font-size: 12px; font-weight: 700; color: var(--accent); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
-        .le-crumb-sep { font-size: 12px; opacity: 0.3; flex-shrink: 0; }
-        #local-explorer-list { flex: 1; overflow-y: auto; padding: 8px; }
-        #local-explorer-list::-webkit-scrollbar { display: none; }
-        .le-item {
-            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-            border-radius: 12px; margin-bottom: 4px; cursor: pointer;
-            transition: background 0.15s, transform 0.1s;
-            animation: leItemIn 0.2s ease both;
-        }
-        @keyframes leItemIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
-        .le-item:active { background: var(--accent-dim); transform: scale(0.98); }
-        .le-item-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .le-item-icon.folder { background: rgba(16,185,129,0.15); }
-        .le-item-icon.file { background: rgba(128,128,128,0.1); }
-        .le-item-icon .material-icons-round { font-size: 20px; }
-        .le-item-icon.folder .material-icons-round { color: var(--accent); }
-        .le-item-icon.file .material-icons-round { color: var(--text-color); opacity: 0.6; }
-        .le-item-info { flex: 1; min-width: 0; }
-        .le-item-name { font-size: 13px; font-weight: 600; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .le-item-meta { font-size: 10px; opacity: 0.45; margin-top: 1px; }
-        .le-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
-        .le-action-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: rgba(128,128,128,0.1); color: var(--text-color); display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; transition: transform 0.1s, background 0.15s; }
-        .le-action-btn:active { transform: scale(0.88); background: var(--accent-dim); color: var(--accent); }
-        .le-action-btn .material-icons-round { font-size: 15px; pointer-events: none; }
-        #local-explorer-fab {
-            position: absolute; bottom: 20px; right: 20px;
-            display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
-        }
-        .le-fab-btn {
-            display: flex; align-items: center; gap: 8px;
-            background: var(--accent); color: white; border: none; border-radius: 20px;
-            padding: 10px 16px; font-family: 'Poppins',sans-serif; font-size: 12px; font-weight: 600;
-            cursor: pointer; transition: transform 0.15s, opacity 0.15s;
-            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
-        }
-        .le-fab-btn:active { transform: scale(0.95); }
-        .le-fab-btn .material-icons-round { font-size: 16px; pointer-events: none; }
-        .le-empty { text-align: center; padding: 40px 20px; opacity: 0.4; }
-        .le-empty .material-icons-round { font-size: 40px; display: block; margin-bottom: 8px; }
-        .le-empty-text { font-size: 12px; }
-
         /* File Tabs Bar */
         .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
         .file-tabs-bar::-webkit-scrollbar { display: none; }
@@ -616,8 +552,8 @@
 <div class="app-layout">
     <div class="app-header" id="header">
         <div class="tabs">
-            <div class="tab" id="tab-code" onclick="switchTab('editor')">Code</div>
-            <div class="tab active" id="tab-preview" onclick="switchTab('preview')">Preview</div>
+            <div class="tab active" id="tab-code" onclick="switchTab('editor')">Code</div>
+            <div class="tab" id="tab-preview" onclick="switchTab('preview')">Preview</div>
         </div>
         
         <div style="display:flex; align-items:center;">
@@ -718,7 +654,6 @@
                     <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span>Open</button>
                     <button class="toolbar-btn" onclick="saveFile()"><span class="material-icons-round">save</span>Save</button>
                     <button class="toolbar-btn" onclick="saveFileToRepo()"><span class="material-icons-round">cloud_upload</span>Commit</button>
-                    <button class="toolbar-btn" onclick="openLocalExplorer()"><span class="material-icons-round">phone_android</span>Device</button>
                     <button class="toolbar-btn" onclick="closeAllTabs()"><span class="material-icons-round">playlist_remove</span>Close All</button>
                     <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">hub</span>GitHub</button>
                 </div>
@@ -833,25 +768,6 @@
     </div>
 </div>
 
-<!-- Local Explorer Modal -->
-<div id="local-explorer-overlay" onclick="if(event.target===this)closeLocalExplorer()">
-    <div id="local-explorer-modal">
-        <div id="local-explorer-header">
-            <span class="material-icons-round" style="color:var(--accent);font-size:20px;flex-shrink:0;">phone_android</span>
-            <div id="local-explorer-breadcrumb"></div>
-            <span class="material-icons-round" onclick="closeLocalExplorer()" style="font-size:20px;opacity:0.4;cursor:pointer;pointer-events:auto;flex-shrink:0;">close</span>
-        </div>
-        <div id="local-explorer-list"></div>
-        <div style="position:relative;padding:10px 16px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--glass-border);flex-shrink:0;">
-            <button class="le-fab-btn" onclick="leNewFile()" style="flex:1;">
-                <span class="material-icons-round">add</span> New File
-            </button>
-            <button class="le-fab-btn" onclick="leNewFolder()" style="flex:1;background:rgba(128,128,128,0.15);color:var(--text-color);box-shadow:none;">
-                <span class="material-icons-round">create_new_folder</span> New Folder
-            </button>
-        </div>
-    </div>
-</div>
 
 <input type="file" id="agent-file-input" accept=".html,.js,.css,.txt,.json,.md" style="display:none;">
 
@@ -1443,7 +1359,7 @@
     // ── NAV PANEL STATE MANAGER ──
     // Rule: restoreBtn is ALWAYS visible when panel is collapsed AND we are NOT in preview.
     // On launch: panel starts collapsed, restoreBtn visible.
-    let _inPreview = true; // starts in preview by default
+    let _inPreview = false; // starts in code view
 
     function _collapseNav() {
         bottomPanel.classList.add('collapsed');
@@ -1606,24 +1522,28 @@
 
     function closeFileTab(id, e) {
         e.stopPropagation();
-        let idx = fileTabs.findIndex(t => t.id === id);
-        fileTabs.splice(idx, 1);
-        if(fileTabs.length === 0) {
-            // Create a fresh blank tab so editor is never empty
-            const blank = { id: tabIdCounter++, name: 'index.html', content: '' };
-            fileTabs.push(blank);
-            activeTabId = blank.id;
-            _setEditorValueFast(blank.content);
-            _setEditorMode(blank.name, blank.content);
-            currentFileName = blank.name;
-        } else if(activeTabId === id) {
-            let newTab = fileTabs[Math.max(0, idx - 1)];
-            activeTabId = newTab.id;
-            _setEditorValueFast(newTab.content);
-            _setEditorMode(newTab.name, newTab.content);
-            currentFileName = newTab.name;
-        }
-        renderFileTabs();
+        const tab = fileTabs.find(t => t.id === id);
+        const name = tab ? tab.name : 'this file';
+        cdConfirm('Close Tab', `Close "${name}"? Unsaved changes will be lost.`, 'Close', 'Cancel', (ok) => {
+            if(!ok) return;
+            let idx = fileTabs.findIndex(t => t.id === id);
+            fileTabs.splice(idx, 1);
+            if(fileTabs.length === 0) {
+                const blank = { id: tabIdCounter++, name: 'index.html', content: '' };
+                fileTabs.push(blank);
+                activeTabId = blank.id;
+                _setEditorValueFast(blank.content);
+                _setEditorMode(blank.name, blank.content);
+                currentFileName = blank.name;
+            } else if(activeTabId === id) {
+                let newTab = fileTabs[Math.max(0, idx - 1)];
+                activeTabId = newTab.id;
+                _setEditorValueFast(newTab.content);
+                _setEditorMode(newTab.name, newTab.content);
+                currentFileName = newTab.name;
+            }
+            renderFileTabs();
+        });
     }
 
     function openFileInTab(name, content, forceNew) {
@@ -1643,9 +1563,6 @@
     }
 
     renderFileTabs();
-    // Start in preview by default
-    switchTab('preview', document.getElementById('tab-preview'));
-
     let currentFileName = "index.html";
     function loadFile(event) {
         const file = event.target.files[0]; if (!file) return;
@@ -2056,175 +1973,6 @@
         });
     }
 
-    // ===== LOCAL EXPLORER =====
-    // Stores: { path: { name, type:'file'|'folder', content?, created, modified } }
-    const LE_KEY = 'codx_local_fs';
-
-    function _leLoadFS() {
-        try { return JSON.parse(localStorage.getItem(LE_KEY) || '{}'); } catch(e) { return {}; }
-    }
-    function _leSaveFS(fs) {
-        localStorage.setItem(LE_KEY, JSON.stringify(fs));
-    }
-
-    let _lePath = '/'; // current folder
-
-    function openLocalExplorer() {
-        _lePath = '/';
-        document.getElementById('local-explorer-overlay').classList.add('active');
-        _leRender();
-    }
-    function closeLocalExplorer() {
-        document.getElementById('local-explorer-overlay').classList.remove('active');
-    }
-
-    function _leRender() {
-        const fs = _leLoadFS();
-        const list = document.getElementById('local-explorer-list');
-        const bc = document.getElementById('local-explorer-breadcrumb');
-
-        // Breadcrumb
-        bc.innerHTML = '';
-        const parts = _lePath === '/' ? [] : _lePath.replace(/^\//, '').split('/').filter(Boolean);
-        const rootEl = document.createElement('span'); rootEl.className = 'le-crumb'; rootEl.textContent = 'Device';
-        rootEl.onclick = () => { _lePath = '/'; _leRender(); };
-        bc.appendChild(rootEl);
-        parts.forEach((part, i) => {
-            const sep = document.createElement('span'); sep.className = 'le-crumb-sep'; sep.textContent = '/'; bc.appendChild(sep);
-            const c = document.createElement('span'); c.className = 'le-crumb'; c.textContent = part;
-            const p = '/' + parts.slice(0, i+1).join('/');
-            c.onclick = () => { _lePath = p; _leRender(); };
-            bc.appendChild(c);
-        });
-
-        // Get items at current path
-        const prefix = _lePath === '/' ? '/' : _lePath + '/';
-        const items = [];
-        Object.entries(fs).forEach(([path, node]) => {
-            if(_lePath === '/') {
-                // Root: show top-level items (no slash after first /)
-                const rel = path.replace(/^\//, '');
-                if(!rel.includes('/')) items.push({ path, ...node });
-            } else {
-                if(path.startsWith(prefix)) {
-                    const rel = path.slice(prefix.length);
-                    if(rel && !rel.includes('/')) items.push({ path, ...node });
-                }
-            }
-        });
-        items.sort((a,b) => { if(a.type === b.type) return a.name.localeCompare(b.name); return a.type === 'folder' ? -1 : 1; });
-
-        list.innerHTML = '';
-        if(items.length === 0) {
-            list.innerHTML = `<div class="le-empty"><span class="material-icons-round">folder_open</span><div class="le-empty-text">Empty — create a file or folder</div></div>`;
-        } else {
-            items.forEach((item, idx) => {
-                const el = document.createElement('div');
-                el.className = 'le-item';
-                el.style.animationDelay = (idx * 0.04) + 's';
-                const isFolder = item.type === 'folder';
-                const ext = item.name.split('.').pop().toLowerCase();
-                const fileIconMap = { html:'html',js:'javascript',css:'palette',json:'data_object',md:'description',txt:'article' };
-                const fileIcon = fileIconMap[ext] || 'insert_drive_file';
-                el.innerHTML = `
-                    <div class="le-item-icon ${isFolder ? 'folder' : 'file'}">
-                        <span class="material-icons-round">${isFolder ? 'folder' : fileIcon}</span>
-                    </div>
-                    <div class="le-item-info">
-                        <div class="le-item-name">${item.name}</div>
-                        <div class="le-item-meta">${isFolder ? 'Folder' : _leFileSize(item.content)}</div>
-                    </div>
-                    <div class="le-item-actions">
-                        ${!isFolder ? `<button class="le-action-btn" title="Open in Editor" onclick="event.stopPropagation();leOpenFile('${item.path}')"><span class="material-icons-round">edit</span></button>` : ''}
-                        ${!isFolder ? `<button class="le-action-btn" title="Download" onclick="event.stopPropagation();leDownload('${item.path}')"><span class="material-icons-round">download</span></button>` : ''}
-                        <button class="le-action-btn" title="Rename" onclick="event.stopPropagation();leRename('${item.path}')"><span class="material-icons-round">drive_file_rename_outline</span></button>
-                        <button class="le-action-btn" title="Delete" style="color:#ef4444" onclick="event.stopPropagation();leDelete('${item.path}')"><span class="material-icons-round">delete</span></button>
-                    </div>
-                `;
-                el.onclick = () => { if(isFolder) { _lePath = item.path; _leRender(); } else leOpenFile(item.path); };
-                list.appendChild(el);
-            });
-        }
-    }
-
-    function _leFileSize(content) {
-        if(!content) return '0 B';
-        const b = new Blob([content]).size;
-        if(b < 1024) return b + ' B';
-        if(b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
-        return (b/1024/1024).toFixed(1) + ' MB';
-    }
-
-    function leNewFile() {
-        cdPrompt('New File', 'File name:', 'index.html', (name) => {
-            if(!name) return;
-            const fs = _leLoadFS();
-            const path = (_lePath === '/' ? '/' : _lePath + '/') + name;
-            if(fs[path]) { cdAlert('Exists', 'A file with that name already exists.', 'warn'); return; }
-            fs[path] = { name, type: 'file', content: _getBlankContentForFile(name), created: Date.now(), modified: Date.now() };
-            _leSaveFS(fs); _leRender();
-        });
-    }
-
-    function leNewFolder() {
-        cdPrompt('New Folder', 'Folder name:', 'my-project', (name) => {
-            if(!name) return;
-            const fs = _leLoadFS();
-            const path = (_lePath === '/' ? '/' : _lePath + '/') + name;
-            if(fs[path]) { cdAlert('Exists', 'Already exists.', 'warn'); return; }
-            fs[path] = { name, type: 'folder', created: Date.now(), modified: Date.now() };
-            _leSaveFS(fs); _leRender();
-        });
-    }
-
-    function leOpenFile(path) {
-        const fs = _leLoadFS();
-        const node = fs[path]; if(!node) return;
-        closeLocalExplorer();
-        cdConfirm('Open File', `Open "${node.name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
-            openFileInTab(node.name, node.content || '', useNew);
-            // Auto-save back to local FS on editor change
-            _leCurrentPath = path;
-        });
-    }
-
-    let _leCurrentPath = null;
-    // Hook: save to local FS when file is saved
-    const _origSaveFile = saveFile;
-
-    function leDownload(path) {
-        const fs = _leLoadFS(); const node = fs[path]; if(!node) return;
-        const a = document.createElement('a');
-        a.href = URL.createObjectURL(new Blob([node.content || ''], {type:'text/plain'}));
-        a.download = node.name; a.click();
-    }
-
-    function leRename(path) {
-        const fs = _leLoadFS(); const node = fs[path]; if(!node) return;
-        cdPrompt('Rename', 'New name:', node.name, (newName) => {
-            if(!newName || newName === node.name) return;
-            const dir = path.substring(0, path.lastIndexOf('/')) || '/';
-            const newPath = (dir === '/' ? '/' : dir + '/') + newName;
-            // Rename all children too (for folders)
-            const toRename = Object.keys(fs).filter(k => k === path || k.startsWith(path + '/'));
-            toRename.forEach(k => {
-                const newK = newPath + k.slice(path.length);
-                fs[newK] = { ...fs[k], name: k === path ? newName : fs[k].name };
-                delete fs[k];
-            });
-            _leSaveFS(fs); _leRender();
-        });
-    }
-
-    function leDelete(path) {
-        const fs = _leLoadFS(); const node = fs[path]; if(!node) return;
-        cdConfirm('Delete', `Delete "${node.name}"? This cannot be undone.`, 'Delete', 'Cancel', (ok) => {
-            if(!ok) return;
-            // Delete item and all children
-            Object.keys(fs).filter(k => k === path || k.startsWith(path + '/')).forEach(k => delete fs[k]);
-            _leSaveFS(fs); _leRender();
-        });
-    }
 
     // ===== CUSTOM DIALOG ENGINE =====
     let _cdResolve = null;
@@ -2455,12 +2203,16 @@
     }
 
     function _removeAgent(i) {
-        agentList.splice(i, 1);
-        if(activeAgentIdx >= agentList.length) activeAgentIdx = Math.max(0, agentList.length - 1);
-        _saveAgentList();
-        _renderConnectedAgents();
-        if(agentList.length === 0) closeAgentBar();
-        else _updateAgentBarLabel();
+        const ag = agentList[i];
+        cdConfirm('Remove Agent', `Remove "${ag ? ag.providerName : 'this agent'}"?`, 'Remove', 'Cancel', (ok) => {
+            if(!ok) return;
+            agentList.splice(i, 1);
+            if(activeAgentIdx >= agentList.length) activeAgentIdx = Math.max(0, agentList.length - 1);
+            _saveAgentList();
+            _renderConnectedAgents();
+            if(agentList.length === 0) closeAgentBar();
+            else _updateAgentBarLabel();
+        });
     }
 
     function _updateAgentBarLabel() {
@@ -2483,12 +2235,15 @@
     }
 
     function disconnectAgent() {
-        agentList = []; activeAgentIdx = 0;
-        localStorage.removeItem('agent_list');
-        localStorage.removeItem('agent_active_idx');
-        localStorage.removeItem('agent_config');
-        closeAgentModal(); closeAgentBar();
-        _renderConnectedAgents();
+        cdConfirm('Remove All Agents', 'Remove all connected agents?', 'Remove All', 'Cancel', (ok) => {
+            if(!ok) return;
+            agentList = []; activeAgentIdx = 0;
+            localStorage.removeItem('agent_list');
+            localStorage.removeItem('agent_active_idx');
+            localStorage.removeItem('agent_config');
+            closeAgentModal(); closeAgentBar();
+            _renderConnectedAgents();
+        });
     }
 
     let _agentTargetTabId = null; // which tab agent works on
