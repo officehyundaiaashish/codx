@@ -594,7 +594,7 @@
                 </div>
                 <div id="agent-compact-row">
                     <div class="agent-status-dot"></div>
-                    <span id="agent-bar-label">AI</span>
+                    <span id="agent-bar-label" onclick="openAgentModal()" style="cursor:pointer;" title="Switch agent">AI</span>
                     <textarea id="agent-prompt" placeholder="Ask agent to edit code..." rows="1"></textarea>
                     <button id="agent-attach-btn" onclick="document.getElementById('agent-file-input').click()">
                         <span class="material-icons-round">attach_file</span>
@@ -817,42 +817,49 @@
 <!-- Agent Setup Modal -->
 <div id="agent-overlay" onclick="closeAgentModal()"></div>
 <div id="agent-modal" class="no-select">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <div style="display:flex; align-items:center; gap:8px;">
             <span class="material-icons-round" style="color:var(--accent); font-size:20px;">smart_toy</span>
-            <span style="font-weight:600; font-size:15px; color:var(--text-color);">AI Agent</span>
+            <span style="font-weight:700; font-size:15px; color:var(--text-color);">AI Agents</span>
         </div>
         <span class="material-icons-round" onclick="closeAgentModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
     </div>
-    <div id="agent-setup-section">
-        <div style="font-size:13px; font-weight:700; color:var(--text-color); margin-bottom:4px;">Paste your API Key</div>
-        <div style="font-size:10px; opacity:0.5; margin-bottom:12px; font-family:'Poppins',sans-serif; line-height:1.6;">
-            Provider &amp; model auto-detected from key format.<br>
-            Gemini (free): <b>aistudio.google.com</b><br>
-            Groq (free): <b>console.groq.com</b><br>
-            OpenRouter (free): <b>openrouter.ai</b>
+
+    <!-- Free providers tip -->
+    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:10px;line-height:1.7;color:var(--text-color);opacity:0.85;">
+        <span style="font-weight:700;color:var(--accent);">⚡ Best Free AI:</span>
+        <span style="font-weight:600;"> Groq</span> — console.groq.com · No quota · Super fast<br>
+        <span style="font-weight:600;"> OpenRouter</span> — openrouter.ai · Many free models<br>
+        <span style="font-weight:600;"> Gemini</span> — aistudio.google.com · Has daily limits
+    </div>
+
+    <!-- Connected agents list -->
+    <div id="agent-connected-section" style="display:none; margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Connected Agents — tap to switch active</div>
+        <div id="agent-list-container"></div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+            <button class="modal-btn secondary" onclick="disconnectAgent()" style="flex:1;font-size:11px;padding:8px;">
+                <span style="display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-icons-round" style="font-size:14px;">logout</span>Remove All</span>
+            </button>
+            <button class="modal-btn" onclick="closeAgentModal();openAgentBar();" style="flex:1;font-size:11px;padding:8px;display:flex;align-items:center;justify-content:center;gap:4px;">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">psychology</span> Open Bar
+            </button>
         </div>
-        <input type="text" id="agent-api-key" placeholder="AIza... / gsk_... / sk-..."
+        <div style="height:1px;background:var(--glass-border);margin:12px 0;"></div>
+    </div>
+
+    <!-- Add new agent -->
+    <div id="agent-setup-section">
+        <div style="font-size:11px; font-weight:700; color:var(--text-color); margin-bottom:8px;">Add Agent — Paste API Key</div>
+        <input type="text" id="agent-api-key" placeholder="AIza... / gsk_... / sk-or-... / sk-..."
             style="width:100%; padding:11px 12px; border-radius:10px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); color:var(--text-color); font-family:'Poppins',sans-serif; font-size:13px; margin-bottom:8px; user-select:text; -webkit-user-select:text; transition:border-color 0.15s;"
             oninput="agentKeyPreview(this.value)">
         <div id="agent-detect-badge" style="display:none; align-items:center; gap:8px; background:var(--accent-dim); border:1px solid var(--accent); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:11px; font-weight:600; color:var(--accent);">
             <span class="material-icons-round" style="font-size:15px;pointer-events:none;">auto_awesome</span>
             <span id="agent-detect-text">Detected: —</span>
         </div>
-        <button class="modal-btn" onclick="connectAgent()" style="width:100%;">Connect &amp; Start</button>
-    </div>
-        <div id="agent-connected-section" style="display:none;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-            <div style="display:flex; align-items:center; gap:6px;">
-                <div style="width:8px; height:8px; border-radius:50%; background:var(--accent); "></div>
-                <span style="font-size:12px; color:var(--accent); font-weight:600;" id="agent-connected-label">Connected</span>
-            </div>
-            <span style="font-size:11px; opacity:0.5; cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="disconnectAgent()">
-                <span class="material-icons-round" style="font-size:13px;">logout</span> Disconnect
-            </span>
-        </div>
-        <button class="modal-btn" onclick="openAgentBar()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px;">
-            <span class="material-icons-round" style="font-size:16px; pointer-events:none;">psychology</span> Open Agent Bar
+        <button class="modal-btn" onclick="connectAgent()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span class="material-icons-round" style="font-size:16px;pointer-events:none;">add_circle</span> Connect Agent
         </button>
     </div>
 </div>
@@ -861,6 +868,10 @@
 
 <script>
     // Use dynamic viewport height to avoid Chrome bottom bar clipping
+    // GitHub modal refs — declared early so closeGithubModal() never hits TDZ
+    const ghModal = document.getElementById('github-modal');
+    const ghOverlay = document.getElementById('gh-overlay');
+
     function _setBodyHeight() {
         const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         document.body.style.height = h + 'px';
@@ -1498,6 +1509,8 @@
     }
 
     renderFileTabs();
+    // Start in preview by default
+    switchTab('preview', document.getElementById('tab-preview'));
 
     let currentFileName = "index.html";
     function loadFile(event) {
@@ -1553,8 +1566,6 @@
     function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
 
     // --- GITHUB MANAGER ---
-    const ghModal = document.getElementById('github-modal');
-    const ghOverlay = document.getElementById('gh-overlay');
     let ghCurrentRepo = "", ghCurrentFile = "", ghCurrentSha = "";
 
     function openGithubModal() {
@@ -1845,19 +1856,41 @@
     // The select wrappers in HTML will be used as containers
 
     // ===== AGENT SYSTEM =====
-    let agentConfig = null;
+    // ── MULTI-AGENT SYSTEM ──
+    // agentList = array of connected agents, activeAgentIdx = which one is active
+    let agentList = [];
+    let activeAgentIdx = 0;
     let agentAttachment = null;
-    // Diff review queue — pending edits waiting for accept/reject
     let _agentPendingEdits = [];
     let _agentOriginalCode = '';
-    // Undo history for agent edits (separate from editor undo — full snapshots)
     let _agentUndoStack = [];
     const AGENT_UNDO_LIMIT = 20;
 
-    // Load saved config on startup
+    // Backwards compat: load old single agent_config OR new agent_list
     (function() {
-        try { const s = localStorage.getItem('agent_config'); if(s) agentConfig = JSON.parse(s); } catch(e){}
+        try {
+            const list = localStorage.getItem('agent_list');
+            if(list) { agentList = JSON.parse(list); }
+            else {
+                const old = localStorage.getItem('agent_config');
+                if(old) { agentList = [JSON.parse(old)]; _saveAgentList(); }
+            }
+            activeAgentIdx = parseInt(localStorage.getItem('agent_active_idx') || '0') || 0;
+            if(activeAgentIdx >= agentList.length) activeAgentIdx = 0;
+        } catch(e){}
     })();
+
+    function _saveAgentList() {
+        localStorage.setItem('agent_list', JSON.stringify(agentList));
+        localStorage.setItem('agent_active_idx', String(activeAgentIdx));
+    }
+
+    function _activeAgent() {
+        return agentList[activeAgentIdx] || null;
+    }
+
+    // Legacy compat shim
+    Object.defineProperty(window, 'agentConfig', { get: () => _activeAgent(), set: () => {} });
 
     document.getElementById('agent-file-input').addEventListener('change', (e) => {
         const file = e.target.files[0]; if(!file) return;
@@ -1866,7 +1899,6 @@
         r.readAsText(file); e.target.value = '';
     });
 
-    // Auto-expand textarea height
     document.getElementById('agent-prompt').addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 100) + 'px';
@@ -1882,7 +1914,7 @@
         if (/^gsk_[A-Za-z0-9]{20,}/.test(key))
             return { provider:'groq', providerName:'Groq – Llama 3.3 70B',
                 url:'https://api.groq.com/openai/v1/chat/completions',
-                model:'llama-3.3-70b-versatile', label:'Groq – Llama 3.3 70B · Free' };
+                model:'llama-3.3-70b-versatile', label:'Groq – Llama 3.3 70B · Free ⚡' };
         if (/^sk-or-[A-Za-z0-9]{10,}/.test(key))
             return { provider:'openrouter', providerName:'OpenRouter – Mistral 7B',
                 url:'https://openrouter.ai/api/v1/chat/completions',
@@ -1915,46 +1947,91 @@
         const d = _detectProviderFromKey(key);
         if (!d) {
             cdAlert('Agent',
-                'Key format not recognised.\n\n' +
-                'Gemini key starts with: AIza\n' +
-                'Groq key starts with: gsk_\n' +
-                'OpenRouter key starts with: sk-or-\n' +
-                'OpenAI key starts with: sk-\n' +
-                'Anthropic key starts with: sk-ant-', 'warn');
+                'Key format not recognised.\n\nGroq (FREE ⚡): gsk_...\nGemini (free): AIza...\nOpenRouter (free): sk-or-...\nOpenAI: sk-...\nAnthropic: sk-ant-...', 'warn');
             return;
         }
-        agentConfig = { ...d, key };
-        localStorage.setItem('agent_config', JSON.stringify(agentConfig));
-        closeAgentModal();
-        openAgentBar();
+        // Check duplicate
+        const exists = agentList.findIndex(a => a.provider === d.provider);
+        if(exists !== -1) {
+            agentList[exists] = { ...d, key };
+            activeAgentIdx = exists;
+            cdAlert('Agent', d.providerName + ' key updated.', 'info');
+        } else {
+            agentList.push({ ...d, key });
+            activeAgentIdx = agentList.length - 1;
+        }
+        _saveAgentList();
+        document.getElementById('agent-api-key').value = '';
+        document.getElementById('agent-detect-badge').style.display = 'none';
+        document.getElementById('agent-api-key').style.borderColor = '';
+        _renderConnectedAgents();
     }
 
+    function _renderConnectedAgents() {
+        const section = document.getElementById('agent-connected-section');
+        const setup = document.getElementById('agent-setup-section');
+        if(agentList.length === 0) {
+            setup.style.display = 'block';
+            section.style.display = 'none';
+            return;
+        }
+        setup.style.display = 'block'; // always show — can add more
+        section.style.display = 'block';
+        const list = document.getElementById('agent-list-container');
+        list.innerHTML = '';
+        agentList.forEach((ag, i) => {
+            const isActive = i === activeAgentIdx;
+            const row = document.createElement('div');
+            row.style.cssText = `display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;margin-bottom:5px;border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--glass-border)'};background:${isActive ? 'var(--accent-dim)' : 'rgba(0,0,0,0.15)'};cursor:pointer;transition:all 0.2s;`;
+            row.innerHTML = `
+                <div style="width:8px;height:8px;border-radius:50%;background:${isActive ? '#10b981' : '#6b7280'};flex-shrink:0;"></div>
+                <div style="flex:1;min-width:0;">
+                    <div style="font-size:12px;font-weight:700;color:var(--text-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${ag.providerName}</div>
+                    <div style="font-size:10px;opacity:0.5;">${ag.label || ag.provider}</div>
+                </div>
+                ${isActive ? '<span class="material-icons-round" style="font-size:14px;color:var(--accent);flex-shrink:0;">check_circle</span>' : ''}
+                <span class="material-icons-round" style="font-size:15px;opacity:0.35;cursor:pointer;pointer-events:auto;flex-shrink:0;" onclick="event.stopPropagation();_removeAgent(${i})">delete</span>
+            `;
+            row.onclick = () => { activeAgentIdx = i; _saveAgentList(); _renderConnectedAgents(); };
+            list.appendChild(row);
+        });
+    }
+
+    function _removeAgent(i) {
+        agentList.splice(i, 1);
+        if(activeAgentIdx >= agentList.length) activeAgentIdx = Math.max(0, agentList.length - 1);
+        _saveAgentList();
+        _renderConnectedAgents();
+        if(agentList.length === 0) closeAgentBar();
+        else _updateAgentBarLabel();
+    }
+
+    function _updateAgentBarLabel() {
+        const ag = _activeAgent();
+        if(!ag) return;
+        document.getElementById('agent-bar-label').textContent = ag.providerName;
+        _pingAgentModel();
+    }
 
     function openAgentModal() {
         closeGithubModal();
         document.getElementById('agent-overlay').classList.add('active');
         document.getElementById('agent-modal').classList.add('active');
-        if(agentConfig) {
-            document.getElementById('agent-setup-section').style.display = 'none';
-            document.getElementById('agent-connected-section').style.display = 'block';
-            document.getElementById('agent-connected-label').textContent = 'Connected · ' + agentConfig.providerName;
-        } else {
-            document.getElementById('agent-setup-section').style.display = 'block';
-            document.getElementById('agent-connected-section').style.display = 'none';
-        }
+        _renderConnectedAgents();
     }
+
     function closeAgentModal() {
         document.getElementById('agent-overlay').classList.remove('active');
         document.getElementById('agent-modal').classList.remove('active');
     }
 
-
-
     function disconnectAgent() {
-        agentConfig = null; localStorage.removeItem('agent_config');
+        agentList = []; activeAgentIdx = 0;
+        localStorage.removeItem('agent_list');
+        localStorage.removeItem('agent_active_idx');
+        localStorage.removeItem('agent_config');
         closeAgentModal(); closeAgentBar();
-        document.getElementById('agent-setup-section').style.display = 'block';
-        document.getElementById('agent-connected-section').style.display = 'none';
+        _renderConnectedAgents();
     }
 
     let _agentTargetTabId = null; // which tab agent works on
@@ -1982,17 +2059,13 @@
 
     function openAgentBar() {
         closeAgentModal();
-        if(!agentConfig) { openAgentModal(); return; }
+        if(!_activeAgent()) { openAgentModal(); return; }
         const bar = document.getElementById('agent-bar');
         bar.classList.add('visible');
-        document.getElementById('agent-bar-label').textContent = agentConfig.providerName;
+        _updateAgentBarLabel();
         _updateAgentFileSelector();
-        // Expand nav panel so agent bar is visible inside it
         _expandNav();
-        // Add nav tab indicator
         _addAgentNavTab();
-        // Show green dot immediately
-        _pingAgentModel();
         setTimeout(() => document.getElementById('agent-prompt').focus(), 250);
     }
 
@@ -2003,7 +2076,7 @@
         tab.id = 'agent-nav-tab';
         tab.className = 'file-tab';
         tab.style.cssText = 'color:var(--accent);border-bottom-color:var(--accent);opacity:1;gap:4px;';
-        tab.innerHTML = `<span class="material-icons-round" style="font-size:14px;pointer-events:none">smart_toy</span><span style="pointer-events:none">${agentConfig.providerName}</span><span id="agent-nav-status" style="width:7px;height:7px;border-radius:50%;background:#6b7280;display:inline-block;margin-left:2px;flex-shrink:0;" title="Checking..."></span><span class="material-icons-round ft-close" onclick="closeAgentBar();_removeAgentNavTab();" style="font-size:13px;opacity:0.5;pointer-events:auto;">close</span>`;
+        tab.innerHTML = `<span class="material-icons-round" style="font-size:14px;pointer-events:none">smart_toy</span><span style="pointer-events:none">${_activeAgent()?.providerName||'AI'}</span><span id="agent-nav-status" style="width:7px;height:7px;border-radius:50%;background:#6b7280;display:inline-block;margin-left:2px;flex-shrink:0;" title="Checking..."></span><span class="material-icons-round ft-close" onclick="closeAgentBar();_removeAgentNavTab();" style="font-size:13px;opacity:0.5;pointer-events:auto;">close</span>`;
         tab.onclick = (e) => { if(!e.target.classList.contains('ft-close')) openAgentBar(); };
         bar.appendChild(tab);
     }
@@ -2018,7 +2091,7 @@
         const barDot = document.querySelector('.agent-status-dot');
         // Key already validated by connectAgent() — if we got here, it's connected
         // Just show green immediately; no need to burn tokens on a test call
-        if(dot) { dot.style.background = '#10b981'; dot.title = 'Connected · ' + (agentConfig.providerName || ''); }
+        if(dot) { dot.style.background = '#10b981'; dot.title = 'Connected · ' + (_activeAgent()?.providerName||'AI' || ''); }
         if(barDot) barDot.style.background = '#10b981';
     }
     function closeAgentBar() {
@@ -2028,7 +2101,7 @@
     }
 
     async function _callAgentAPI(systemPrompt, userMsg) {
-        const cfg = agentConfig;
+        const cfg = _activeAgent();
         // 30s timeout — prevents silent hang on slow networks
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 30000);
@@ -2084,7 +2157,7 @@
     }
 
     async function sendAgentPrompt() {
-        if(!agentConfig) { openAgentModal(); return; }
+        if(!_activeAgent()) { openAgentModal(); return; }
         const userRequest = document.getElementById('agent-prompt').value.trim();
         if(!userRequest) return;
         if(_agentPendingEdits.length > 0) { cdAlert('Agent', 'Please accept or reject the current edits first.', 'warn'); return; }
