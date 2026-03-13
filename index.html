@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#10b981">
-    <title>Afs Ultra Editor</title>
+    <title>Afs Pro Editor</title>
     
     <link rel="manifest" href='data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Afs%20Editor%22%2C%22short_name%22%3A%22Editor%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%230a0a0c%22%2C%22theme_color%22%3A%22%2310b981%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D'>
     
@@ -37,22 +37,14 @@
             --accent-dim: rgba(5, 150, 105, 0.1);
         }
 
-        /* Anti-Google Search & Anti-Selection for UI Elements */
         * { box-sizing: border-box; margin: 0; padding: 0; outline: none; }
-        .no-select {
-            -webkit-user-select: none; -moz-user-select: none; -ms-user-select: none; user-select: none;
-            -webkit-touch-callout: none; /* Prevents Android context menu */
-            -webkit-tap-highlight-color: transparent;
-        }
+        .no-select { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; -webkit-tap-highlight-color: transparent; }
 
-        body, html { width: 100%; height: 100%; position: fixed; overflow: hidden; font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); }
+        /* Lock Body Height to prevent Code Editor squishing when keyboard opens */
+        body, html { width: 100vw; position: fixed; overflow: hidden; font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); }
         .app-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
-        /* Header */
-        .app-header {
-            flex-shrink: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); 
-            padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50;
-        }
+        .app-header { flex-shrink: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50; }
         .tabs { display: flex; background: rgba(0,0,0,0.2); padding: 2px; border-radius: 20px; }
         body.light-theme .tabs { background: rgba(0,0,0,0.05); }
         .tab { padding: 4px 14px; border-radius: 18px; font-weight: 600; font-size: 12px; color: var(--text-color); opacity: 0.7; transition: var(--transition); cursor: pointer; }
@@ -60,20 +52,20 @@
         
         .main-container { flex-grow: 1; position: relative; background-color: var(--editor-bg); overflow: hidden; }
 
-        /* STRICT MONOSPACE FOR ACCURACY AND SPEED */
         #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 14px; font-family: 'Courier New', Courier, monospace !important; z-index: 10; }
         #preview { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: none; background: white; visibility: hidden; opacity: 0; z-index: 20; }
         #preview.active-pane { visibility: visible; opacity: 1; }
 
+        /* Hide Ace 3-dots Mobile Menu globally */
+        .ace_mobile-menu, .ace_tooltip { display: none !important; opacity: 0 !important; pointer-events: none !important; }
         .ace_selection { background: rgba(255, 235, 59, 0.4) !important; }
         .ace_selected-word { background: rgba(255, 213, 79, 0.5) !important; border: 1px solid #ffb300 !important; border-radius: 2px; }
 
-        /* Fast Smooth Scroll Jumpers */
-        .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; z-index: 45; }
-        .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.4; transition: var(--transition); cursor: pointer; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers.visible { opacity: 1; }
+        .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.5; transition: var(--transition); cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
 
-        /* Bottom Nav */
         .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; transform: translateY(0); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
         .bottom-wrapper.collapsed { transform: translateY(100%); }
         .bottom-area { background: var(--glass-bg); backdrop-filter: blur(25px); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -5px 25px rgba(0,0,0,0.3); }
@@ -84,7 +76,7 @@
         .cursor-nav::-webkit-scrollbar { display: none; }
         .icon-btn { background: rgba(128, 128, 128, 0.08); border: none; border-radius: 12px; min-width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--text-color); flex-shrink: 0; cursor: pointer;}
         .icon-btn:active { background: var(--accent-dim); color: var(--accent); transform: scale(0.92); }
-        .icon-btn .material-icons-round { font-size: 20px; pointer-events: none; } /* Stop targetting icon directly */
+        .icon-btn .material-icons-round { font-size: 20px; pointer-events: none; }
 
         .toolbar { display: flex; overflow-x: auto; gap: 15px; padding: 5px 15px 10px 15px; scroll-behavior: smooth; }
         .toolbar::-webkit-scrollbar { display: none; }
@@ -96,22 +88,21 @@
         .restore-btn.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
         .restore-btn .material-icons-round { font-size: 18px; pointer-events: none; }
 
-        /* Perfectly Smooth GPU Accelerated Modal */
+        /* Shared Modal CSS (Bottom Aligned, visual viewport handled) */
         .modal { 
-            position: absolute; top: 10px; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); 
-            border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; z-index: 60; 
-            box-shadow: 0 10px 50px rgba(0,0,0,0.5);
-            /* GPU Accelerated Slide & Fade */
-            transform: translateY(-150%); opacity: 0; pointer-events: none;
-            transition: transform 0.4s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+            position: fixed; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); 
+            border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; z-index: 100; 
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8); transition: opacity 0.3s ease;
+            bottom: -150%; opacity: 0; pointer-events: none;
         }
-        .modal.active { transform: translateY(0); opacity: 1; pointer-events: auto; }
+        .modal.active { bottom: 20px; opacity: 1; pointer-events: auto; }
         
-        .modal textarea { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; resize: none; height: 45px; font-size: 13px; }
+        .modal textarea, .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
         .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer;}
         .modal-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text-color); }
-        #file-input { display: none; }
+        
+        #github-modal input, #github-modal select { font-family: 'Poppins', sans-serif; }
     </style>
 </head>
 <body class="dark-theme no-select">
@@ -124,8 +115,11 @@
         </div>
         
         <div style="display:flex; align-items:center;">
-            <button class="icon-btn no-select" id="install-btn" style="display:none; width:30px; height:30px; background:var(--accent-dim); min-width:30px; border: 1px solid var(--accent); margin-left: 5px;">
+            <button class="icon-btn no-select" id="install-btn" style="display:none; width:30px; height:30px; background:var(--accent-dim); min-width:30px; border: 1px solid var(--accent); margin-right: 5px;">
                 <span class="material-icons-round" style="color:var(--accent); font-size:16px;">download</span>
+            </button>
+            <button class="icon-btn no-select" style="width:30px; height:30px; background:none; min-width:30px;" onclick="toggleTheme()">
+                <span class="material-icons-round" id="theme-icon" style="color:var(--accent); font-size:18px;">light_mode</span>
             </button>
         </div>
     </div>
@@ -169,10 +163,7 @@
                 <button class="toolbar-btn" onclick="editor.undo()"><span class="material-icons-round">undo</span> Undo</button>
                 <button class="toolbar-btn" onclick="editor.redo()"><span class="material-icons-round">redo</span> Redo</button>
                 <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">search</span> Find</button>
-                
-                <button class="toolbar-btn" onclick="toggleTheme()">
-                    <span class="material-icons-round" id="theme-icon">light_mode</span> Palette
-                </button>
+                <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">cloud_sync</span> GitSync</button>
             </div>
         </div>
     </div>
@@ -182,8 +173,8 @@
     <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
         Find & Replace <span class="material-icons-round" onclick="toggleFindReplace()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
     </div>
-    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text;"></textarea>
-    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text;"></textarea>
+    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px;"></textarea>
+    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px;"></textarea>
     <div class="modal-actions">
         <button class="modal-btn secondary" onclick="clearFind()">Clear</button>
         <button class="modal-btn" onclick="findText(true)">Find Next</button>
@@ -191,109 +182,144 @@
     </div>
 </div>
 
+<div class="modal no-select" id="github-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
+        GitHub Sync <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
+    </div>
+    
+    <div id="gh-login-section">
+        <input type="text" id="gh-token" placeholder="Personal Access Token (PAT)" style="user-select:text;">
+        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:10px;">Login & Save Device</button>
+    </div>
+
+    <div id="gh-repo-section" style="display:none;">
+        <div style="font-size:11px; color:var(--accent); margin-bottom:5px; text-align:right; cursor:pointer;" onclick="ghLogout()">Logout</div>
+        
+        <select id="gh-repo-select" onchange="fetchGhFiles()">
+            <option value="">Select Repository...</option>
+        </select>
+        
+        <select id="gh-file-select" style="display:none;" onchange="enableLoadBtn()">
+            <option value="">Select File...</option>
+        </select>
+
+        <div class="modal-actions" style="margin-top:10px;">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled>Load Repo Code</button>
+            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444;">Commit Edit</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    // --- APP INSTALLATION (PWA) ---
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-btn');
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex';
-    });
-    installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') installBtn.style.display = 'none';
-            deferredPrompt = null;
+    // FIX: Lock initial height to prevent squishing when keyboard opens
+    document.body.style.height = window.innerHeight + 'px';
+    
+    // VISUAL VIEWPORT: Smoothly slide active modal up when keyboard opens
+    window.visualViewport.addEventListener('resize', () => {
+        let kbHeight = window.innerHeight - window.visualViewport.height;
+        let activeModal = document.querySelector('.modal.active');
+        if (activeModal) {
+            activeModal.style.bottom = kbHeight > 0 ? (kbHeight + 10) + 'px' : '20px';
         }
     });
 
-    // --- EDITOR ---
+    // --- EDITOR CORE ---
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow_night_eighties"); 
     editor.session.setMode("ace/mode/html");
     
-    // EXTREME PERFORMANCE (Rules strictly followed)
     editor.setOptions({
-        fontSize: "14px", showLineNumbers: true, showGutter: true,
-        wrap: false, displayIndentGuides: false, showPrintMargin: false,
-        useWorker: false, animatedScroll: false, tooltipFollowsMouse: false,
+        fontSize: "14px", showLineNumbers: true, showGutter: true, wrap: false, displayIndentGuides: false, 
+        showPrintMargin: false, useWorker: false, animatedScroll: false, tooltipFollowsMouse: false,
         highlightActiveLine: false, showFoldWidgets: false
     });
+    // Extra guard against mobile menu
+    editor.setOption("touchScroll", true);
 
-    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>Green Theme</title>\n</head>\n<body>\n  <h1>Zero Lag Expected</h1>\n</body>\n</html>", -1);
+    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>Afs</title>\n</head>\n<body>\n  <h1>Welcome!</h1>\n</body>\n</html>", -1);
 
-    // CUSTOM 60FPS SMOOTH FAST SCROLL
+    // --- SMART JUMP SCROLLERS ---
+    let scrollTimeout;
+    const jumpers = document.getElementById('jumpers');
+    
+    function checkScrollable() {
+        // Only show jump arrows if content is larger than editor view
+        let isScrollable = editor.renderer.layerConfig.maxHeight > editor.renderer.$size.scrollerHeight;
+        jumpers.style.display = isScrollable ? 'flex' : 'none';
+        return isScrollable;
+    }
+
+    editor.session.on("changeScrollTop", function() {
+        if(!checkScrollable()) return;
+        jumpers.classList.add('visible');
+        clearTimeout(scrollTimeout);
+        scrollTimeout = setTimeout(() => { jumpers.classList.remove('visible'); }, 2000);
+    });
+    
+    editor.session.on("change", checkScrollable); // Check on edits
+
     function customFastScroll(direction) {
         let startPos = editor.renderer.getScrollTop();
         let distance = direction === 'up' ? -800 : 800;
-        let endPos = Math.max(0, startPos + distance);
-        let duration = 300; 
+        let maxScroll = editor.renderer.layerConfig.maxHeight - editor.renderer.$size.scrollerHeight;
+        let endPos = Math.max(0, Math.min(maxScroll, startPos + distance));
+        
+        let duration = 250; 
         let startTime = null;
-
         function animation(currentTime) {
             if (startTime === null) startTime = currentTime;
             let timeElapsed = currentTime - startTime;
             let progress = Math.min(timeElapsed / duration, 1);
-            let ease = 1 - Math.pow(1 - progress, 3); // Cubic ease out
-            
-            editor.renderer.scrollToY(startPos + (distance * ease));
-            
-            if (timeElapsed < duration) {
-                requestAnimationFrame(animation);
-            }
+            let ease = 1 - Math.pow(1 - progress, 3);
+            editor.renderer.scrollToY(startPos + ((endPos - startPos) * ease));
+            if (timeElapsed < duration) requestAnimationFrame(animation);
         }
         requestAnimationFrame(animation);
     }
 
-    async function pasteClipboard() {
-        try { const text = await navigator.clipboard.readText(); editor.insert(text); } 
-        catch (err) { alert("Please paste natively from your keyboard."); }
-    }
-    async function copyClipboard() {
-        try {
-            const text = editor.getSelectedText();
-            if(text) { await navigator.clipboard.writeText(text); alert("Copied!"); } 
-            else { alert("Double-tap or select text first."); }
-        } catch (err) { alert("Copy failed."); }
-    }
+    // --- CLIPBOARD & PREVIEW ---
+    async function pasteClipboard() { try { const text = await navigator.clipboard.readText(); editor.insert(text); } catch (err) { alert("Please paste natively."); } }
+    async function copyClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); alert("Copied!"); } else { alert("Double-tap text first."); } } catch (err) { alert("Copy failed."); } }
 
-    // Zero-Flicker Zoom
-    const editorWrapper = document.getElementById('editor');
-    let initialDistance = null, initialFontSize = 14, zoomReq;
-    editorWrapper.addEventListener('touchstart', (e) => {
-        if (e.touches.length === 2) {
-            initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-            initialFontSize = parseInt(editor.getOption("fontSize"));
+    function switchTab(tabName) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        const bottomPanel = document.getElementById('bottom-panel');
+        const restoreBtn = document.getElementById('restore-btn');
+        
+        if(tabName === 'preview') {
+            event.currentTarget.classList.add('active'); 
+            document.getElementById('preview').classList.add('active-pane');
+            document.getElementById('editor').style.opacity = '0'; 
+            document.getElementById('editor').style.pointerEvents = 'none';
+            
+            // Hide Editing UI fully
+            jumpers.style.display = 'none';
+            bottomPanel.style.display = 'none';
+            restoreBtn.style.display = 'none';
+            document.getElementById('find-modal').classList.remove('active');
+            closeGithubModal();
+
+            let code = editor.getValue();
+            if(!code.includes('viewport')) code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
+            document.getElementById('preview').src = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
+            
+        } else {
+            event.currentTarget.classList.add('active'); 
+            document.getElementById('preview').classList.remove('active-pane');
+            document.getElementById('editor').style.opacity = '1'; 
+            document.getElementById('editor').style.pointerEvents = 'auto';
+            
+            // RESTORE Editing UI safely
+            checkScrollable(); // Re-evaluates jumpers
+            bottomPanel.style.display = ''; // Reset to default CSS
+            if(bottomPanel.classList.contains('collapsed')) {
+                restoreBtn.style.display = ''; 
+            }
+            editor.focus();
         }
-    });
-    editorWrapper.addEventListener('touchmove', (e) => {
-        if (e.touches.length === 2 && initialDistance) {
-            e.preventDefault(); 
-            const currentDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-            let currentScale = currentDistance / initialDistance;
-            let newSize = Math.round(initialFontSize * currentScale);
-            if(newSize > 40) newSize = 40; if(newSize < 10) newSize = 10;
-            if(zoomReq) cancelAnimationFrame(zoomReq);
-            zoomReq = requestAnimationFrame(() => { editor.setFontSize(newSize + "px"); });
-        }
-    }, {passive: false});
-    editorWrapper.addEventListener('touchend', (e) => { if (e.touches.length < 2) initialDistance = null; });
+    }
 
-    // Swipe Nav
-    const bottomPanel = document.getElementById('bottom-panel'), restoreBtn = document.getElementById('restore-btn');
-    let startY = 0, startX = 0, isSwipingDown = false;
-    bottomPanel.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; startX = e.touches[0].clientX; isSwipingDown = false; bottomPanel.style.transition = 'none'; }, {passive: true});
-    bottomPanel.addEventListener('touchmove', (e) => { 
-        let deltaY = e.touches[0].clientY - startY, deltaX = e.touches[0].clientX - startX;
-        if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) { isSwipingDown = true; bottomPanel.style.transform = `translateY(${deltaY}px)`; }
-    }, {passive: true});
-    bottomPanel.addEventListener('touchend', (e) => {
-        bottomPanel.style.transition = ''; 
-        if (isSwipingDown && e.changedTouches[0].clientY - startY > 40) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); } 
-        else { bottomPanel.style.transform = 'translateY(0)'; }
-    });
-    function restoreBottomPanel() { bottomPanel.classList.remove('collapsed'); restoreBtn.classList.remove('visible'); }
-
+    // --- UI INTERACTIONS ---
     function toggleTheme() {
         let isDark = document.body.classList.contains('dark-theme');
         document.body.className = isDark ? 'light-theme no-select' : 'dark-theme no-select';
@@ -301,66 +327,25 @@
         document.getElementById('theme-icon').innerText = isDark ? 'dark_mode' : 'light_mode';
     }
 
-    // Hide everything in Preview logic
-    function switchTab(tabName) {
-        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-        if(tabName === 'preview') {
-            event.currentTarget.classList.add('active'); 
-            
-            // Activate Preview
-            document.getElementById('preview').classList.add('active-pane');
-            document.getElementById('editor').style.opacity = '0'; 
-            document.getElementById('editor').style.pointerEvents = 'none';
-            
-            // HIDE ALL EDITING UI
-            document.getElementById('jumpers').style.display = 'none';
-            bottomPanel.style.display = 'none';
-            restoreBtn.style.display = 'none';
-            document.getElementById('find-modal').classList.remove('active');
+    const bottomPanel = document.getElementById('bottom-panel'), restoreBtn = document.getElementById('restore-btn');
+    let startY = 0, startX = 0, isSwipingDown = false;
+    bottomPanel.addEventListener('touchstart', (e) => { startY = e.touches[0].clientY; startX = e.touches[0].clientX; isSwipingDown = false; bottomPanel.style.transition = 'none'; }, {passive: true});
+    bottomPanel.addEventListener('touchmove', (e) => { let deltaY = e.touches[0].clientY - startY, deltaX = e.touches[0].clientX - startX; if (Math.abs(deltaY) > Math.abs(deltaX) && deltaY > 0) { isSwipingDown = true; bottomPanel.style.transform = `translateY(${deltaY}px)`; } }, {passive: true});
+    bottomPanel.addEventListener('touchend', (e) => {
+        bottomPanel.style.transition = ''; 
+        if (isSwipingDown && e.changedTouches[0].clientY - startY > 40) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); } 
+        else { bottomPanel.style.transform = 'translateY(0)'; }
+    });
+    function restoreBottomPanel() { bottomPanel.classList.remove('collapsed'); restoreBtn.classList.remove('visible'); }
 
-            let code = editor.getValue();
-            if(!code.includes('viewport')) {
-                code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
-            }
-            document.getElementById('preview').src = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
-            
-        } else {
-            event.currentTarget.classList.add('active'); 
-            
-            // Hide Preview
-            document.getElementById('preview').classList.remove('active-pane');
-            document.getElementById('editor').style.opacity = '1'; 
-            document.getElementById('editor').style.pointerEvents = 'auto';
-            
-            // RESTORE ALL EDITING UI
-            document.getElementById('jumpers').style.display = 'flex';
-            bottomPanel.style.display = 'block';
-            if(bottomPanel.classList.contains('collapsed')) {
-                restoreBtn.style.display = 'flex';
-            }
-            editor.focus();
-        }
-    }
-
-    let currentFileName = "index.html";
-    function loadFile(event) {
-        const file = event.target.files[0]; if (!file) return; currentFileName = file.name;
-        const reader = new FileReader(); reader.onload = e => editor.setValue(e.target.result, -1); reader.readAsText(file);
-    }
-    async function saveFile() {
-        const code = editor.getValue();
-        if (window.showSaveFilePicker) { try { const handle = await window.showSaveFilePicker({ suggestedName: currentFileName }); const writable = await handle.createWritable(); await writable.write(code); await writable.close(); return; } catch (err) {} }
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = currentFileName; a.click();
-    }
-
-    // Modal Smooth GPU Logic
+    // --- FIND & REPLACE ---
     const findModal = document.getElementById('find-modal');
     function toggleFindReplace() { 
-        findModal.classList.toggle('active'); 
-        if (findModal.classList.contains('active')) { 
-            bottomPanel.classList.add('collapsed'); 
-            bottomPanel.style.transform = ''; 
-            restoreBtn.classList.add('visible'); 
+        closeGithubModal();
+        let isActive = findModal.classList.toggle('active'); 
+        if (isActive) { 
+            bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible');
+            findModal.style.bottom = '20px'; // Default state
         }
     }
     
@@ -368,18 +353,146 @@
         let searchStr = document.getElementById('find-input').value.trim();
         if (!searchStr) return;
         editor.find(searchStr, { wrap: true, caseSensitive: true, wholeWord: false }); 
+        
         let match = editor.getSelectionRange();
-        if(match.isEmpty() && showErrorAlert) { alert("Error: No exact match found!"); editor.clearSelection(); }
+        if(match.isEmpty() && showErrorAlert) { 
+            alert("Error: No exact match found!"); editor.clearSelection(); 
+        } else if (!match.isEmpty()) {
+            // Keep Selection Visible in Center of screen above keyboard
+            editor.renderer.scrollSelectionIntoView(match.start, match.end);
+            editor.centerSelection(); 
+        }
     }
     
     function replaceText() { 
         let replaceStr = document.getElementById('replace-input').value;
         let match = editor.getSelectionRange();
         if(!match.isEmpty()) { editor.replace(replaceStr); findText(false); } 
-        else { alert("Error: Please click 'Find Next' to highlight code before replacing."); }
+        else { alert("Error: Click 'Find Next' first."); }
+    }
+    function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
+
+    // --- GITHUB INTEGRATION ---
+    const ghModal = document.getElementById('github-modal');
+    let ghCurrentRepo = "", ghCurrentFile = "", ghCurrentSha = "";
+
+    function openGithubModal() {
+        findModal.classList.remove('active');
+        ghModal.classList.add('active');
+        if(!bottomPanel.classList.contains('collapsed')) {
+            bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible');
+        }
+        ghModal.style.bottom = '20px';
+        checkGhLogin();
     }
     
-    function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
+    function closeGithubModal() { ghModal.classList.remove('active'); }
+
+    function checkGhLogin() {
+        let token = localStorage.getItem('gh_token');
+        if(token) {
+            document.getElementById('gh-login-section').style.display = 'none';
+            document.getElementById('gh-repo-section').style.display = 'block';
+            if(document.getElementById('gh-repo-select').options.length <= 1) fetchGhRepos();
+        } else {
+            document.getElementById('gh-login-section').style.display = 'block';
+            document.getElementById('gh-repo-section').style.display = 'none';
+        }
+    }
+
+    function saveGhToken() {
+        let tk = document.getElementById('gh-token').value.trim();
+        if(tk) { localStorage.setItem('gh_token', tk); checkGhLogin(); }
+    }
+
+    function ghLogout() { localStorage.removeItem('gh_token'); checkGhLogin(); }
+
+    async function ghApi(endpoint, method='GET', body=null) {
+        let token = localStorage.getItem('gh_token');
+        let opts = { method, headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }};
+        if(body) opts.body = JSON.stringify(body);
+        let res = await fetch(`https://api.github.com${endpoint}`, opts);
+        if(!res.ok) throw new Error(await res.text());
+        return res.json();
+    }
+
+    // Secure utf8 base64 encoding/decoding
+    function encodeB64(str) { return btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, function(match, p1) { return String.fromCharCode('0x' + p1); })); }
+    function decodeB64(str) { return decodeURIComponent(atob(str).split('').map(function(c) { return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2); }).join('')); }
+
+    async function fetchGhRepos() {
+        try {
+            document.getElementById('gh-load-btn').innerText = "Loading Repos...";
+            let repos = await ghApi('/user/repos?sort=updated');
+            let sel = document.getElementById('gh-repo-select');
+            sel.innerHTML = '<option value="">Select Repository...</option>';
+            repos.forEach(r => { sel.innerHTML += `<option value="${r.full_name}">${r.name}</option>`; });
+            document.getElementById('gh-load-btn').innerText = "Load Repo Code";
+        } catch(e) { alert("Failed to load Repos. Check Token."); ghLogout(); }
+    }
+
+    async function fetchGhFiles() {
+        ghCurrentRepo = document.getElementById('gh-repo-select').value;
+        let fileSel = document.getElementById('gh-file-select');
+        document.getElementById('gh-commit-btn').disabled = true;
+        if(!ghCurrentRepo) { fileSel.style.display = 'none'; return; }
+        
+        try {
+            fileSel.style.display = 'block';
+            fileSel.innerHTML = '<option value="">Loading Files...</option>';
+            // Get default branch tree recursive
+            let repoData = await ghApi(`/repos/${ghCurrentRepo}`);
+            let branch = repoData.default_branch;
+            let treeData = await ghApi(`/repos/${ghCurrentRepo}/git/trees/${branch}?recursive=1`);
+            
+            fileSel.innerHTML = '<option value="">Select File to Edit...</option>';
+            treeData.tree.forEach(file => {
+                if(file.type === 'blob') { // Only files
+                    fileSel.innerHTML += `<option value="${file.path}">${file.path}</option>`;
+                }
+            });
+        } catch(e) { alert("Failed to load files."); fileSel.style.display = 'none'; }
+    }
+
+    function enableLoadBtn() {
+        ghCurrentFile = document.getElementById('gh-file-select').value;
+        document.getElementById('gh-load-btn').disabled = !ghCurrentFile;
+        document.getElementById('gh-commit-btn').disabled = true; // Must load first
+    }
+
+    async function loadGhFile() {
+        try {
+            document.getElementById('gh-load-btn').innerText = "Loading...";
+            let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`);
+            ghCurrentSha = fileData.sha; // Save SHA for commit
+            let content = decodeB64(fileData.content);
+            editor.setValue(content, -1);
+            
+            document.getElementById('gh-load-btn').innerText = "Load Repo Code";
+            document.getElementById('gh-commit-btn').disabled = false;
+            closeGithubModal();
+            alert("File loaded securely from GitHub!");
+        } catch(e) { alert("Failed to download file."); document.getElementById('gh-load-btn').innerText = "Load Repo Code"; }
+    }
+
+    async function commitGhFile() {
+        if(!ghCurrentSha) return alert("Please Load a file first before committing!");
+        let msg = prompt("Enter commit message:", "Update " + ghCurrentFile);
+        if(msg === null) return;
+        
+        try {
+            document.getElementById('gh-commit-btn').innerText = "Committing...";
+            let contentB64 = encodeB64(editor.getValue());
+            await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', {
+                message: msg,
+                content: contentB64,
+                sha: ghCurrentSha
+            });
+            alert("Success! Code committed to GitHub.");
+            document.getElementById('gh-commit-btn').innerText = "Commit Edit";
+            closeGithubModal();
+        } catch(e) { alert("Commit failed."); document.getElementById('gh-commit-btn').innerText = "Commit Edit"; }
+    }
 </script>
 </body>
 </html>
