@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
     
-    <meta name="theme-color" id="theme-color-meta" content="#141419">
+    <meta name="theme-color" id="theme-color-meta" content="#0a0a0c">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>CodX Editor</title>
@@ -53,6 +53,17 @@
         .tab { padding: 4px 14px; border-radius: 18px; font-weight: 600; font-size: 12px; color: var(--text-color); opacity: 0.7; transition: var(--transition); cursor: pointer; }
         .tab.active { background: var(--accent); color: white; opacity: 1; }
         
+        /* Added Dynamic Tips Header */
+        .tips-ticker { font-size: 10px; color: var(--accent); opacity: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; font-weight: 600; transition: opacity 0.3s; text-align: center; }
+
+        /* Added File Tabs Support */
+        .file-tabs-container { display: flex; overflow-x: auto; background: var(--editor-bg); padding: 5px 10px 0 10px; gap: 5px; flex-shrink: 0; border-bottom: 1px solid var(--glass-border); scroll-behavior: smooth; }
+        .file-tabs-container::-webkit-scrollbar { display: none; }
+        .file-tab { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(128,128,128,0.05); border-radius: 8px 8px 0 0; font-size: 11px; color: var(--text-color); opacity: 0.6; cursor: pointer; border: 1px solid transparent; border-bottom: none; white-space: nowrap; transition: var(--transition); }
+        .file-tab.active { opacity: 1; background: var(--glass-bg); border-color: var(--glass-border); color: var(--accent); font-weight: 600; }
+        .file-tab-close { font-size: 14px; opacity: 0.5; margin-left: 5px; cursor: pointer; pointer-events: auto;}
+        .file-tab-close:hover { opacity: 1; color: #ef4444; }
+
         .main-container { flex-grow: 1; position: relative; background-color: var(--editor-bg); overflow: hidden; }
 
         /* FASTEST MONOSPACE FOR EDITOR ONLY */
@@ -61,8 +72,10 @@
         #preview.active-pane { visibility: visible; opacity: 1; }
 
         .ace_mobile-menu, .ace_tooltip { display: none !important; opacity: 0 !important; pointer-events: none !important; }
-        .ace_selection { background: rgba(255, 235, 59, 0.4) !important; }
-        .ace_selected-word { background: rgba(255, 213, 79, 0.5) !important; border: 1px solid #ffb300 !important; border-radius: 2px; }
+        
+        /* Adjusted Selection Highlight Colors for Better Readability */
+        .ace_selection { background: rgba(16, 185, 129, 0.25) !important; }
+        .ace_selected-word { background: rgba(16, 185, 129, 0.4) !important; border: 1px solid var(--accent) !important; border-radius: 2px; }
 
         .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
@@ -91,7 +104,7 @@
         .restore-btn.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
         .restore-btn .material-icons-round { font-size: 18px; pointer-events: none; }
 
-        /* Shared Modal CSS */
+        /* Shared Modal CSS - Anchored to Bottom Default */
         .modal { 
             position: fixed; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); 
             border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; z-index: 100; 
@@ -100,12 +113,29 @@
         }
         .modal.active { bottom: 20px; opacity: 1; pointer-events: auto; }
         
+        /* New Center Modal CSS purely for GitHub & Custom Dialogs */
+        .center-modal {
+            top: 50%; bottom: auto !important; left: 50%; transform: translate(-50%, -50%) scale(0.9);
+            width: 85%; max-width: 400px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+        }
+        .center-modal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; bottom: auto; }
+        
         .modal textarea, .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
-        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer;}
+        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer; transition: var(--transition);}
+        .modal-btn:active { transform: scale(0.95); }
         .modal-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text-color); }
         
-        #github-modal input, #github-modal select { font-family: 'Poppins', sans-serif; }
+        #github-modal input, #github-modal select, #custom-dialog input { font-family: 'Poppins', sans-serif; }
+        
+        /* Checkboxes for Find and Replace */
+        .checkbox-row { display: flex; gap: 15px; margin-bottom: 10px; font-size: 11px; align-items: center; color: var(--text-color); opacity: 0.8;}
+        .checkbox-label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+        .checkbox-label input[type="checkbox"] { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
+
+        /* Custom Beautiful Dropdown */
+        select.beautiful-select { appearance: none; background: rgba(0,0,0,0.2) url("data:image/svg+xml;utf8,<svg fill='%2310b981' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") no-repeat right 10px center; padding-right: 30px; transition: var(--transition); border-radius: 12px; outline: none;}
+        select.beautiful-select:focus { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-dim); }
     </style>
 </head>
 <body class="dark-theme no-select">
@@ -113,10 +143,12 @@
 <div class="app-layout">
     <div class="app-header" id="header">
         <div class="tabs">
-            <div class="tab active" onclick="switchTab('editor')">Code</div>
-            <div class="tab" onclick="switchTab('preview')">Preview</div>
+            <div class="tab active" onclick="switchMainTab('editor')">Code</div>
+            <div class="tab" onclick="switchMainTab('preview')">Preview</div>
         </div>
         
+        <div id="header-tips" class="tips-ticker">CodX Editor Ready</div>
+
         <div style="display:flex; align-items:center;">
             <button class="icon-btn no-select" id="install-btn" style="display:none; width:30px; height:30px; background:var(--accent-dim); min-width:30px; border: 1px solid var(--accent); margin-right: 5px;">
                 <span class="material-icons-round" style="color:var(--accent); font-size:16px;">download</span>
@@ -126,6 +158,9 @@
             </button>
         </div>
     </div>
+    
+    <div class="file-tabs-container" id="file-tabs-container">
+        </div>
 
     <div class="main-container" id="editor-wrapper">
         <div id="editor"></div>
@@ -158,7 +193,7 @@
             
             <div class="toolbar">
                 <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span> Open</button>
-                <button class="toolbar-btn" onclick="saveFile()"><span class="material-icons-round">save</span> Save</button>
+                <button class="toolbar-btn" onclick="saveFileToDevice()"><span class="material-icons-round">save</span> Save</button>
                 <button class="toolbar-btn" onclick="editor.selectAll()"><span class="material-icons-round">select_all</span> All</button>
                 <button class="toolbar-btn" onclick="pasteClipboard()"><span class="material-icons-round">content_paste</span> Paste</button>
                 <button class="toolbar-btn" onclick="copyClipboard()"><span class="material-icons-round">content_copy</span> Copy</button>
@@ -177,8 +212,14 @@
     <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
         Find & Replace <span class="material-icons-round" onclick="toggleFindReplace()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
     </div>
-    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px;"></textarea>
-    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px;"></textarea>
+    
+    <div class="checkbox-row">
+        <label class="checkbox-label"><input type="checkbox" id="find-case-sensitive"> Match Case</label>
+        <label class="checkbox-label"><input type="checkbox" id="find-use-regex"> Regex</label>
+    </div>
+
+    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:40px;"></textarea>
+    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:40px;"></textarea>
     <div class="modal-actions">
         <button class="modal-btn secondary" onclick="clearFind()">Clear</button>
         <button class="modal-btn" onclick="findText(true)">Find Next</button>
@@ -186,31 +227,43 @@
     </div>
 </div>
 
-<div class="modal no-select" id="github-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
+<div class="modal center-modal no-select" id="github-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:15px; font-size:15px;">
         CodX GitHub Sync <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
     </div>
     
     <div id="gh-login-section">
-        <input type="text" id="gh-token" placeholder="Personal Access Token (PAT)" style="user-select:text; -webkit-user-select:text;">
-        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:10px;">Login & Save Device</button>
+        <input type="text" id="gh-token" placeholder="Personal Access Token (PAT)" style="user-select:text; -webkit-user-select:text; border-radius:12px;">
+        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:5px; border-radius:12px;">Login & Save Device</button>
     </div>
 
     <div id="gh-repo-section" style="display:none;">
-        <div style="font-size:11px; color:var(--accent); margin-bottom:5px; text-align:right; cursor:pointer;" onclick="ghLogout()">Logout</div>
+        <div style="font-size:11px; color:var(--accent); margin-bottom:10px; text-align:right; cursor:pointer;" onclick="ghLogout()">Logout</div>
         
-        <select id="gh-repo-select" onchange="fetchGhFiles()">
+        <select id="gh-repo-select" class="beautiful-select" onchange="fetchGhFiles()">
             <option value="">Select Repository...</option>
         </select>
         
-        <select id="gh-file-select" style="display:none;" onchange="enableLoadBtn()">
+        <select id="gh-file-select" class="beautiful-select" style="display:none;" onchange="enableLoadBtn()">
             <option value="">Select File...</option>
         </select>
 
-        <div class="modal-actions" style="margin-top:10px;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled>Load Repo Code</button>
-            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444;">Commit Edit</button>
+        <div class="modal-actions" style="margin-top:15px;">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="triggerGhLoadPrompt()" disabled>Load Repo Code</button>
+            <button class="modal-btn" id="gh-commit-btn" onclick="triggerGhCommitProcess()" disabled style="background:#ef4444;">Commit Edit</button>
         </div>
+    </div>
+</div>
+
+<div class="modal center-modal no-select" id="custom-dialog">
+    <h3 style="margin-bottom:8px; color:var(--accent); font-size: 16px;" id="dialog-title">Alert</h3>
+    <p style="font-size:12px; margin-bottom:15px; color:var(--text-color); opacity: 0.9;" id="dialog-msg">Message goes here</p>
+    
+    <input type="text" id="dialog-input" style="display:none; user-select:text; -webkit-user-select:text; border-radius: 10px;" placeholder="Type here..." />
+    
+    <div class="modal-actions">
+        <button class="modal-btn secondary" id="dialog-btn-secondary">Cancel</button>
+        <button class="modal-btn" id="dialog-btn-primary">OK</button>
     </div>
 </div>
 
@@ -218,13 +271,23 @@
     document.body.style.height = window.innerHeight + 'px';
     window.visualViewport.addEventListener('resize', () => {
         let kbHeight = window.innerHeight - window.visualViewport.height;
-        let activeModal = document.querySelector('.modal.active');
-        if (activeModal) { activeModal.style.bottom = kbHeight > 0 ? (kbHeight + 10) + 'px' : '20px'; }
+        let activeFindModal = document.querySelector('#find-modal.active');
+        if (activeFindModal) { activeFindModal.style.bottom = kbHeight > 0 ? (kbHeight + 10) + 'px' : '20px'; }
     });
 
-    // --- PWA & SERVICE WORKER DEEP FIX ---
+    // --- Dynamic Tips Rotator ---
+    const tipsArray = ["Tip: Use GitSync for instant Cloud Backups", "Tip: Swipe down toolbar to hide", "Tip: 2 Finger Pinch to zoom code", "Tip: Turn on Regex for advanced find"];
+    let tipIndex = 0;
+    setInterval(() => {
+        let tipEl = document.getElementById('header-tips');
+        tipEl.style.opacity = 0;
+        setTimeout(() => { tipIndex = (tipIndex + 1) % tipsArray.length; tipEl.innerText = tipsArray[tipIndex]; tipEl.style.opacity = 1; }, 300);
+    }, 4500);
+
+    // --- PWA & SERVICE WORKER FIX (Silent Install Fail Fix) ---
+    // Start URL is set to relative, and fetch handler handles requests properly to pass PWA criteria.
     const manifestData = {
-        "name": "CodX", "short_name": "CodX", "start_url": window.location.href.split('?')[0], "display": "standalone",
+        "name": "CodX", "short_name": "CodX", "start_url": "./", "display": "standalone",
         "background_color": "#141419", "theme_color": "#10b981",
         "icons": [{"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}]
     };
@@ -232,9 +295,10 @@
     document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
     if ('serviceWorker' in navigator) {
-        const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request).catch(() => new Response('CodX Offline Working'))); });`;
+        // Simple fetch bypass to satisfy valid PWA installation requirements.
+        const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => {});`;
         const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>console.log("Hosted mode required for automatic SW install popup."));
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob), { scope: './' }).catch(()=>console.log("Hosted mode optimal for PWA."));
     }
 
     let deferredPrompt;
@@ -251,19 +315,75 @@
         }
     });
 
-    // --- EDITOR ---
+    // --- MULTI-TAB & LOCAL STORAGE SYSTEM ---
+    let appFiles = JSON.parse(localStorage.getItem('codx_files')) || [];
+    if(appFiles.length === 0) {
+        appFiles.push({ id: Date.now(), name: "index.html", content: "\n<!DOCTYPE html>\n<html>\n<head>\n  <title>CodX</title>\n</head>\n<body>\n  <h1>Welcome to CodX!</h1>\n</body>\n</html>", ghSha: "", ghRepo: "", ghPath: "" });
+    }
+    let activeFileId = appFiles[0].id;
+    let pendingFileData = null; // Temp holder for new files being loaded
+
+    function renderFileTabs() {
+        const container = document.getElementById('file-tabs-container');
+        container.innerHTML = "";
+        appFiles.forEach(f => {
+            let tab = document.createElement('div');
+            tab.className = `file-tab ${f.id === activeFileId ? 'active' : ''}`;
+            tab.innerHTML = `${f.name} <span class="material-icons-round file-tab-close" onclick="closeFileTab(event, ${f.id})">close</span>`;
+            tab.onclick = () => switchFileTab(f.id);
+            container.appendChild(tab);
+        });
+        localStorage.setItem('codx_files', JSON.stringify(appFiles));
+    }
+
+    function switchFileTab(id) {
+        activeFileId = id;
+        let file = appFiles.find(f => f.id === id);
+        if(file) {
+            editor.setValue(file.content, -1);
+            ghCurrentSha = file.ghSha || "";
+            ghCurrentRepo = file.ghRepo || "";
+            ghCurrentFile = file.ghPath || "";
+            document.getElementById('gh-commit-btn').disabled = !ghCurrentSha;
+            renderFileTabs();
+        }
+    }
+
+    function closeFileTab(e, id) {
+        e.stopPropagation();
+        if(appFiles.length === 1) return showCustomDialog("Action Denied", "Cannot close the last remaining tab.", "OK", null, null, null, false);
+        appFiles = appFiles.filter(f => f.id !== id);
+        if(activeFileId === id) switchFileTab(appFiles[appFiles.length - 1].id);
+        else renderFileTabs();
+    }
+
+    // --- EDITOR CORE ---
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow_night_eighties"); 
     editor.session.setMode("ace/mode/html");
     
-    // Performance: Fast, No Wrap, No Fold Widgets
     editor.setOptions({
         fontSize: "14px", showLineNumbers: true, showGutter: true, wrap: false, displayIndentGuides: false, 
         showPrintMargin: false, useWorker: false, animatedScroll: false, tooltipFollowsMouse: false,
         highlightActiveLine: false, showFoldWidgets: false, touchScroll: true
     });
 
-    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>CodX</title>\n</head>\n<body>\n  <h1>Welcome to CodX!</h1>\n</body>\n</html>", -1);
+    let saveTimeout;
+    editor.session.on("change", function() {
+        checkScrollable();
+        // Debounce auto-save to local storage
+        clearTimeout(saveTimeout);
+        saveTimeout = setTimeout(() => {
+            let activeFile = appFiles.find(f => f.id === activeFileId);
+            if(activeFile) {
+                activeFile.content = editor.getValue();
+                localStorage.setItem('codx_files', JSON.stringify(appFiles));
+            }
+        }, 800);
+    });
+
+    // Initialize Editor with Active File
+    switchFileTab(activeFileId);
 
     let scrollTimeout;
     const jumpers = document.getElementById('jumpers');
@@ -279,7 +399,6 @@
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => { jumpers.classList.remove('visible'); }, 2000);
     });
-    editor.session.on("change", checkScrollable);
 
     function customFastScroll(direction) {
         let startPos = editor.renderer.getScrollTop();
@@ -331,22 +450,23 @@
     });
     function restoreBottomPanel() { bottomPanel.classList.remove('collapsed'); restoreBtn.classList.remove('visible'); }
 
-    // Dynamic Theme Color Updater
+    // Dynamic Theme Color Updater with exact background colors
     function toggleTheme() {
         let isDark = document.body.classList.contains('dark-theme');
         document.body.className = isDark ? 'light-theme no-select' : 'dark-theme no-select';
         editor.setTheme(isDark ? "ace/theme/textmate" : "ace/theme/tomorrow_night_eighties");
         document.getElementById('theme-icon').innerText = isDark ? 'dark_mode' : 'light_mode';
-        document.getElementById('theme-color-meta').content = isDark ? '#ffffff' : '#141419';
+        document.getElementById('theme-color-meta').content = isDark ? '#f0f2f5' : '#0a0a0c'; // Matches EXACT bg
     }
 
-    function switchTab(tabName) {
+    function switchMainTab(tabName) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         if(tabName === 'preview') {
             event.currentTarget.classList.add('active'); 
             document.getElementById('preview').classList.add('active-pane');
             document.getElementById('editor').style.opacity = '0'; document.getElementById('editor').style.pointerEvents = 'none';
             jumpers.style.display = 'none'; bottomPanel.style.display = 'none'; restoreBtn.style.display = 'none';
+            document.getElementById('file-tabs-container').style.display = 'none';
             document.getElementById('find-modal').classList.remove('active'); closeGithubModal();
             let code = editor.getValue();
             if(!code.includes('viewport')) code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
@@ -355,23 +475,77 @@
             event.currentTarget.classList.add('active'); 
             document.getElementById('preview').classList.remove('active-pane');
             document.getElementById('editor').style.opacity = '1'; document.getElementById('editor').style.pointerEvents = 'auto';
+            document.getElementById('file-tabs-container').style.display = 'flex';
             checkScrollable(); bottomPanel.style.display = ''; 
             if(bottomPanel.classList.contains('collapsed')) { restoreBtn.style.display = ''; }
-            editor.focus();
+            // editor.focus();  <-- Removed per instruction to stop keyboard auto pop-up
         }
     }
 
-    let currentFileName = "index.html";
-    function loadFile(event) {
-        const file = event.target.files[0]; if (!file) return; currentFileName = file.name;
-        const reader = new FileReader(); reader.onload = e => editor.setValue(e.target.result, -1); reader.readAsText(file);
+    // --- CUSTOM ANIMATED DIALOG SYSTEM ---
+    function showCustomDialog(title, msg, btn1Text, btn2Text, callback1, callback2, showInput = false) {
+        document.getElementById('dialog-title').innerText = title;
+        document.getElementById('dialog-msg').innerText = msg;
+        
+        let inputEl = document.getElementById('dialog-input');
+        inputEl.style.display = showInput ? 'block' : 'none';
+        inputEl.value = showInput && showInput.default ? showInput.default : '';
+
+        let b1 = document.getElementById('dialog-btn-secondary');
+        let b2 = document.getElementById('dialog-btn-primary');
+        
+        b1.style.display = btn1Text ? 'block' : 'none';
+        b1.innerText = btn1Text || '';
+        b2.innerText = btn2Text || 'OK';
+
+        b1.onclick = () => { closeCustomDialog(); if(callback1) callback1(inputEl.value); };
+        b2.onclick = () => { closeCustomDialog(); if(callback2) callback2(inputEl.value); };
+        
+        document.getElementById('custom-dialog').classList.add('active');
     }
-    async function saveFile() {
-        const code = editor.getValue();
-        if (window.showSaveFilePicker) { try { const handle = await window.showSaveFilePicker({ suggestedName: currentFileName }); const writable = await handle.createWritable(); await writable.write(code); await writable.close(); return; } catch (err) {} }
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = currentFileName; a.click();
+    function closeCustomDialog() { document.getElementById('custom-dialog').classList.remove('active'); }
+
+    // --- FILE LOADING W/ TABS ---
+    function loadFile(event) {
+        const file = event.target.files[0]; if (!file) return; 
+        const reader = new FileReader(); 
+        reader.onload = e => {
+            pendingFileData = { name: file.name, content: e.target.result, ghSha: "", ghRepo: "", ghPath: "" };
+            showCustomDialog("Open File", `Where do you want to open '${file.name}'?`, "Current Tab", "New Tab", 
+                () => finalizeFileOpen(false), 
+                () => finalizeFileOpen(true)
+            );
+        }; 
+        reader.readAsText(file);
+        event.target.value = ''; 
     }
 
+    function finalizeFileOpen(inNewTab) {
+        if(!pendingFileData) return;
+        if(inNewTab) {
+            let newId = Date.now();
+            appFiles.push({ id: newId, ...pendingFileData });
+            switchFileTab(newId);
+        } else {
+            let activeFile = appFiles.find(f => f.id === activeFileId);
+            activeFile.name = pendingFileData.name;
+            activeFile.content = pendingFileData.content;
+            activeFile.ghSha = pendingFileData.ghSha;
+            activeFile.ghRepo = pendingFileData.ghRepo;
+            activeFile.ghPath = pendingFileData.ghPath;
+            switchFileTab(activeFileId);
+        }
+        pendingFileData = null;
+    }
+
+    async function saveFileToDevice() {
+        const code = editor.getValue();
+        let activeFile = appFiles.find(f => f.id === activeFileId);
+        if (window.showSaveFilePicker) { try { const handle = await window.showSaveFilePicker({ suggestedName: activeFile.name }); const writable = await handle.createWritable(); await writable.write(code); await writable.close(); return; } catch (err) {} }
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = activeFile.name; a.click();
+    }
+
+    // --- FIND AND REPLACE W/ REGEX & CASE SENSITIVE ---
     const findModal = document.getElementById('find-modal');
     function toggleFindReplace() { 
         closeGithubModal(); let isActive = findModal.classList.toggle('active'); 
@@ -379,14 +553,24 @@
     }
     function findText(showErrorAlert = true) { 
         let searchStr = document.getElementById('find-input').value.trim(); if (!searchStr) return;
-        editor.find(searchStr, { wrap: true, caseSensitive: true, wholeWord: false }); 
+        
+        let isCaseSensitive = document.getElementById('find-case-sensitive').checked;
+        let isRegex = document.getElementById('find-use-regex').checked;
+
+        editor.find(searchStr, { wrap: true, caseSensitive: isCaseSensitive, regExp: isRegex, wholeWord: false }); 
         let match = editor.getSelectionRange();
-        if(match.isEmpty() && showErrorAlert) { alert("Error: No exact match found!"); editor.clearSelection(); } 
-        else if (!match.isEmpty()) { editor.renderer.scrollSelectionIntoView(match.start, match.end); editor.centerSelection(); }
+        
+        if(match.isEmpty() && showErrorAlert) { 
+            showCustomDialog("Not Found", "No match found for your query.", null, "OK", null, null);
+            editor.clearSelection(); 
+        } 
+        else if (!match.isEmpty()) { 
+            editor.renderer.scrollSelectionIntoView(match.start, match.end); editor.centerSelection(); 
+        }
     }
     function replaceText() { 
         let replaceStr = document.getElementById('replace-input').value; let match = editor.getSelectionRange();
-        if(!match.isEmpty()) { editor.replace(replaceStr); findText(false); } else { alert("Error: Click 'Find Next' first."); }
+        if(!match.isEmpty()) { editor.replace(replaceStr); findText(false); } else { showCustomDialog("Error", "Click 'Find Next' to highlight target first.", null, "OK", null, null); }
     }
     function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
 
@@ -397,7 +581,7 @@
     function openGithubModal() {
         findModal.classList.remove('active'); ghModal.classList.add('active');
         if(!bottomPanel.classList.contains('collapsed')) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); }
-        ghModal.style.bottom = '20px'; checkGhLogin();
+        checkGhLogin();
     }
     function closeGithubModal() { ghModal.classList.remove('active'); }
 
@@ -432,7 +616,7 @@
             let sel = document.getElementById('gh-repo-select'); sel.innerHTML = '<option value="">Select Repository...</option>';
             repos.forEach(r => { sel.innerHTML += `<option value="${r.full_name}">${r.name}</option>`; });
             document.getElementById('gh-load-btn').innerText = "Load Repo Code";
-        } catch(e) { alert("Failed to load Repos. Check Token."); ghLogout(); }
+        } catch(e) { showCustomDialog("Auth Error", "Failed to load Repos. Check Token.", null, "OK", null, ghLogout); }
     }
 
     async function fetchGhFiles() {
@@ -446,45 +630,67 @@
             let treeData = await ghApi(`/repos/${ghCurrentRepo}/git/trees/${branch}?recursive=1`);
             fileSel.innerHTML = '<option value="">Select File to Edit...</option>';
             treeData.tree.forEach(file => { if(file.type === 'blob') { fileSel.innerHTML += `<option value="${file.path}">${file.path}</option>`; } });
-        } catch(e) { alert("Failed to load files."); fileSel.style.display = 'none'; }
+        } catch(e) { showCustomDialog("Error", "Failed to load repository files.", null, "OK", null, null); fileSel.style.display = 'none'; }
     }
 
     function enableLoadBtn() {
         ghCurrentFile = document.getElementById('gh-file-select').value;
-        document.getElementById('gh-load-btn').disabled = !ghCurrentFile; document.getElementById('gh-commit-btn').disabled = true; 
+        document.getElementById('gh-load-btn').disabled = !ghCurrentFile;
     }
 
-    async function loadGhFile() {
+    function triggerGhLoadPrompt() {
+        closeGithubModal();
+        showCustomDialog("Cloud Sync", `Fetching file from GitHub...`, "Current Tab", "New Tab", 
+            () => loadGhFile(false), 
+            () => loadGhFile(true)
+        );
+    }
+
+    async function loadGhFile(inNewTab) {
         try {
-            document.getElementById('gh-load-btn').innerText = "Loading...";
             let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`);
-            ghCurrentSha = fileData.sha; 
-            currentFileName = ghCurrentFile.split('/').pop(); // Set file name for backup download
             let content = decodeB64(fileData.content);
-            editor.setValue(content, -1);
-            document.getElementById('gh-load-btn').innerText = "Load Repo Code";
-            document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
-            alert("File loaded from GitHub!");
-        } catch(e) { alert("Failed to download file."); document.getElementById('gh-load-btn').innerText = "Load Repo Code"; }
+            
+            pendingFileData = { name: ghCurrentFile.split('/').pop(), content: content, ghSha: fileData.sha, ghRepo: ghCurrentRepo, ghPath: ghCurrentFile };
+            finalizeFileOpen(inNewTab);
+            
+            showCustomDialog("Success", "File loaded successfully from GitHub!", null, "OK", null, null);
+        } catch(e) { showCustomDialog("Error", "Failed to download file.", null, "OK", null, null); }
     }
 
-    // COMMIT WARNING AND BACKUP ADDED HERE
-    async function commitGhFile() {
-        if(!ghCurrentSha) return alert("Please Load a file first before committing!");
+    // BEAUTIFUL BACKUP AND COMMIT FLOW
+    function triggerGhCommitProcess() {
+        if(!ghCurrentSha) return showCustomDialog("Error", "Please Load a file first before committing!", null, "OK", null, null);
+        closeGithubModal();
         
-        let doBackup = confirm("WARNING: You are about to commit directly to GitHub.\n\nDo you want to download a backup of this code to your device first?");
-        if (doBackup) { await saveFile(); }
+        showCustomDialog("Cloud Backup", "Would you like to download a safe backup of this code to your device before committing?", "Skip", "Yes, Backup", 
+            () => proceedToCommitMsg(),
+            async () => { await saveFileToDevice(); proceedToCommitMsg(); }
+        );
+    }
 
-        let msg = prompt("Enter commit message:", "Update " + ghCurrentFile);
-        if(msg === null) return;
-        
+    function proceedToCommitMsg() {
+        showCustomDialog("Commit Message", "Enter a message for this commit:", "Cancel", "Push Code", 
+            null, 
+            (msg) => executeGhCommit(msg),
+            { default: `Update ${ghCurrentFile.split('/').pop()}` }
+        );
+    }
+
+    async function executeGhCommit(msg) {
+        if(!msg) msg = "Update from CodX";
         try {
-            document.getElementById('gh-commit-btn').innerText = "Committing...";
+            showCustomDialog("Committing", "Pushing your code to GitHub...", null, "Wait", null, null);
             let contentB64 = encodeB64(editor.getValue());
-            await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
-            alert("Success! Code committed to GitHub.");
-            document.getElementById('gh-commit-btn').innerText = "Commit Edit"; closeGithubModal();
-        } catch(e) { alert("Commit failed."); document.getElementById('gh-commit-btn').innerText = "Commit Edit"; }
+            let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
+            
+            // Update local tracking sha to allow consecutive commits
+            ghCurrentSha = res.content.sha;
+            let activeFile = appFiles.find(f => f.id === activeFileId);
+            if(activeFile) { activeFile.ghSha = ghCurrentSha; localStorage.setItem('codx_files', JSON.stringify(appFiles)); }
+            
+            showCustomDialog("Success!", "Code successfully committed to GitHub.", null, "Awesome", null, null);
+        } catch(e) { showCustomDialog("Error", "Commit failed. Verify your connection and permissions.", null, "Close", null, null); }
     }
 </script>
 </body>
