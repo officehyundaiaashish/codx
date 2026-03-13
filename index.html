@@ -4,16 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=no, viewport-fit=cover">
     <meta name="theme-color" content="#10b981">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>Afs Code Editor</title>
+    <title>Ultra-Fast Afs Editor</title>
     
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ace.js" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ext-searchbox.min.js"></script>
     
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-    <link rel="manifest" id="manifest-link">
     
     <style>
         :root {
@@ -38,14 +35,16 @@
             --accent-dim: rgba(5, 150, 105, 0.1);
         }
 
+        /* Prevent body from resizing abruptly on keyboard pop */
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; outline: none; }
+        body, html { width: 100%; height: 100%; position: fixed; overflow: hidden; font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); }
         
-        body { background-color: var(--bg-color); color: var(--text-color); height: 100vh; display: flex; flex-direction: column; overflow: hidden; font-family: 'Poppins', sans-serif; }
+        .app-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
         /* Header */
         .app-header {
-            position: relative; flex-shrink: 0; background: var(--glass-bg); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50;
+            flex-shrink: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); 
+            padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50;
         }
         .tabs { display: flex; background: rgba(0,0,0,0.2); padding: 2px; border-radius: 20px; }
         body.light-theme .tabs { background: rgba(0,0,0,0.05); }
@@ -55,22 +54,18 @@
         /* Main Container */
         .main-container { flex-grow: 1; position: relative; background-color: var(--editor-bg); overflow: hidden; }
 
-        /* STRICT MONOSPACE FOR ACCURATE HIGHLIGHTING */
-        #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 14px; font-family: 'Courier New', Courier, monospace !important; z-index: 10; transition: opacity 0.2s; }
-        
-        /* Preview with higher z-index to hide editor gutter completely */
-        #preview { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: none; background: white; visibility: hidden; opacity: 0; transition: opacity 0.2s ease; z-index: 20; }
+        /* STRICT MONOSPACE FOR ACCURACY AND SPEED */
+        #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 14px; font-family: 'Courier New', Courier, monospace !important; z-index: 10; }
+        #preview { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: none; background: white; visibility: hidden; opacity: 0; z-index: 20; }
         #preview.active-pane { visibility: visible; opacity: 1; }
 
-        /* Accurate Yellow Highlight */
         .ace_selection { background: rgba(255, 235, 59, 0.4) !important; }
         .ace_selected-word { background: rgba(255, 213, 79, 0.5) !important; border: 1px solid #ffb300 !important; border-radius: 2px; }
 
-        /* Auto-Hide Scroll Jumpers */
-        .scroll-jumpers { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 12px; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; z-index: 45; }
-        .scroll-jumpers.visible { opacity: 1; pointer-events: auto; }
-        .jumper-btn { background: var(--glass-bg); backdrop-filter: blur(10px); border: 1px solid var(--glass-border); border-radius: 50%; width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: var(--transition); cursor: pointer; }
-        .jumper-btn:active { transform: scale(0.9); }
+        /* Fast Smooth Scroll Jumpers */
+        .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: flex; flex-direction: column; gap: 15px; z-index: 45; }
+        .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.4; transition: var(--transition); cursor: pointer; }
+        .jumper-btn:active { transform: scale(0.9); opacity: 1; }
 
         /* Bottom Nav */
         .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; transform: translateY(0); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
@@ -81,7 +76,7 @@
         
         .cursor-nav { display: flex; overflow-x: auto; padding: 0 10px 5px 10px; gap: 8px; }
         .cursor-nav::-webkit-scrollbar { display: none; }
-        .icon-btn { background: rgba(128, 128, 128, 0.08); border: none; border-radius: 12px; min-width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--text-color); flex-shrink: 0; }
+        .icon-btn { background: rgba(128, 128, 128, 0.08); border: none; border-radius: 12px; min-width: 45px; height: 45px; display: flex; align-items: center; justify-content: center; color: var(--text-color); flex-shrink: 0; cursor: pointer;}
         .icon-btn:active { background: var(--accent-dim); color: var(--accent); transform: scale(0.92); }
         .icon-btn .material-icons-round { font-size: 20px; }
 
@@ -91,23 +86,23 @@
         .toolbar-btn .material-icons-round { font-size: 24px; padding: 8px; border-radius: 50%; }
         .toolbar-btn:active .material-icons-round { background: var(--accent-dim); transform: scale(0.9); }
 
-        /* Reduced Restore Button */
         .restore-btn { position: absolute; bottom: 20px; right: 20px; background: var(--accent); color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 5px 15px var(--accent-dim); border: none; z-index: 30; opacity: 0; pointer-events: none; transform: scale(0.8); transition: var(--transition); }
         .restore-btn.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
-        .restore-btn .material-icons-round { font-size: 18px; } /* Small Icon */
+        .restore-btn .material-icons-round { font-size: 18px; }
 
-        /* Modal */
-        .modal { position: absolute; bottom: -100%; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 20px; opacity: 0; z-index: 60; transition: bottom 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s; box-shadow: 0 10px 50px rgba(0,0,0,0.5); }
-        .modal.active { bottom: 20px; opacity: 1; }
-        .modal textarea { width: 100%; padding: 12px; margin-bottom: 10px; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; resize: vertical; min-height: 50px; }
+        /* Modal - MOVED TO TOP to avoid Keyboard Push */
+        .modal { position: absolute; top: -150%; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; opacity: 0; z-index: 60; transition: top 0.4s cubic-bezier(0.32, 0.72, 0, 1), opacity 0.3s; box-shadow: 0 10px 50px rgba(0,0,0,0.5); }
+        .modal.active { top: 60px; opacity: 1; }
+        .modal textarea { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; resize: none; height: 45px; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
-        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 10px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif;}
+        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px;}
         .modal-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text-color); }
         #file-input { display: none; }
     </style>
 </head>
 <body class="dark-theme">
 
+<div class="app-layout">
     <div class="app-header" id="header">
         <div class="tabs">
             <div class="tab active" onclick="switchTab('editor')">Code</div>
@@ -123,8 +118,8 @@
         <iframe id="preview"></iframe>
         
         <div class="scroll-jumpers" id="jumpers">
-            <div class="jumper-btn" onclick="editor.gotoLine(1, 0, true)"><span class="material-icons-round">keyboard_double_arrow_up</span></div>
-            <div class="jumper-btn" onclick="editor.gotoLine(editor.session.getLength(), 0, true)"><span class="material-icons-round">keyboard_double_arrow_down</span></div>
+            <div class="jumper-btn" onclick="fastScrollUp()"><span class="material-icons-round">keyboard_double_arrow_up</span></div>
+            <div class="jumper-btn" onclick="fastScrollDown()"><span class="material-icons-round">keyboard_double_arrow_down</span></div>
         </div>
     </div>
 
@@ -136,8 +131,8 @@
         <div class="bottom-area">
             <div class="drag-handle-area"><div class="drag-pill"></div></div>
             <div class="cursor-nav">
-                <button class="icon-btn" onclick="editor.gotoLine(1, 0, true)"><span class="material-icons-round">vertical_align_top</span></button>
-                <button class="icon-btn" onclick="editor.gotoLine(editor.session.getLength(), 0, true)"><span class="material-icons-round">vertical_align_bottom</span></button>
+                <button class="icon-btn" onclick="editor.gotoLine(1)"><span class="material-icons-round">vertical_align_top</span></button>
+                <button class="icon-btn" onclick="editor.gotoLine(editor.session.getLength())"><span class="material-icons-round">vertical_align_bottom</span></button>
                 <div style="width:1px; background:var(--glass-border); margin: 5px 0;"></div>
                 <button class="icon-btn" onclick="editor.navigateLineStart()"><span class="material-icons-round">first_page</span></button>
                 <button class="icon-btn" onclick="editor.navigateLineEnd()"><span class="material-icons-round">last_page</span></button>
@@ -159,56 +154,58 @@
             </div>
         </div>
     </div>
+</div>
 
-    <div class="modal" id="find-modal">
-        <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px;">
-            Find & Replace <span class="material-icons-round" onclick="toggleFindReplace()" style="opacity:0.6; cursor:pointer; font-size: 20px;">close</span>
-        </div>
-        <textarea id="find-input" placeholder="Paste exact code to find..." rows="2"></textarea>
-        <textarea id="replace-input" placeholder="Paste exact code to replace..." rows="2"></textarea>
-        <div class="modal-actions">
-            <button class="modal-btn secondary" onclick="clearFind()">Clear</button>
-            <button class="modal-btn" onclick="findText(true)">Find Next</button>
-            <button class="modal-btn" onclick="replaceText()">Replace</button>
-        </div>
+<div class="modal" id="find-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
+        Find & Replace <span class="material-icons-round" onclick="toggleFindReplace()" style="opacity:0.6; cursor:pointer; font-size: 18px;">close</span>
     </div>
+    <textarea id="find-input" placeholder="Paste exact code to find..."></textarea>
+    <textarea id="replace-input" placeholder="Paste exact code to replace..."></textarea>
+    <div class="modal-actions">
+        <button class="modal-btn secondary" onclick="clearFind()">Clear</button>
+        <button class="modal-btn" onclick="findText(true)">Find Next</button>
+        <button class="modal-btn" onclick="replaceText()">Replace</button>
+    </div>
+</div>
 
 <script>
-    // Inject PWA Manifest dynamically
-    const manifestData = {
-        "name": "Afs Editor", "short_name": "Editor", "start_url": ".", "display": "standalone",
-        "background_color": "#0a0a0c", "theme_color": "#10b981",
-        "icons": [{"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "512x512", "type": "image/svg+xml"}]
-    };
-    const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
-    document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
-
     // Initialize Ace Editor
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow_night_eighties"); 
     editor.session.setMode("ace/mode/html");
     
-    // EXTREME PERFORMANCE FIXES: wrap=false, useWorker=false stops stuttering on massive files.
+    // EXTREME PERFORMANCE MODE
     editor.setOptions({
-        fontSize: "14px", showLineNumbers: true, showGutter: true,
-        wrap: false, // Disabling wrap ensures 100x smoother scroll
-        displayIndentGuides: false, showPrintMargin: false,
-        useWorker: false, // Disabling worker stops background hang
-        animatedScroll: true, tooltipFollowsMouse: false
+        fontSize: "14px", 
+        showLineNumbers: true, 
+        showGutter: true,
+        wrap: false,                // No text wrap = max speed
+        displayIndentGuides: false, // Cuts rendering logic
+        showPrintMargin: false,
+        useWorker: false,           // Disables syntax checking thread (crucial for big files)
+        animatedScroll: false,      // Native touch scroll is faster
+        tooltipFollowsMouse: false,
+        highlightActiveLine: false, // Prevents repaint on every cursor move
+        showFoldWidgets: false      // Removes left folding arrows = massive speed boost
     });
 
-    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>Green Theme</title>\n</head>\n<body>\n  <h1>Ready for 50k lines without lag!</h1>\n</body>\n</html>", -1);
+    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>Green Theme</title>\n</head>\n<body>\n  <h1>Ready!</h1>\n  <img src='missing_image.png'>\n</body>\n</html>", -1);
 
-    // Jump Arrows
-    let scrollTimeout;
-    const jumpers = document.getElementById('jumpers');
-    editor.session.on("changeScrollTop", function() {
-        jumpers.classList.add('visible');
-        clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => { jumpers.classList.remove('visible'); }, 2000);
-    });
+    // FAST SMOOTH JUMP SCROLLING
+    function fastScrollUp() {
+        let currentScroll = editor.renderer.getScrollTop();
+        // Scrolls up 800px smoothly
+        editor.renderer.animateScrolling(Math.max(0, currentScroll - 800));
+    }
+    
+    function fastScrollDown() {
+        let currentScroll = editor.renderer.getScrollTop();
+        let maxScroll = editor.renderer.layerConfig.maxHeight;
+        // Scrolls down 800px smoothly
+        editor.renderer.animateScrolling(Math.min(maxScroll, currentScroll + 800));
+    }
 
-    // Copy Paste Logic
     async function pasteClipboard() {
         try { const text = await navigator.clipboard.readText(); editor.insert(text); } 
         catch (err) { alert("Please paste using your keyboard's paste button."); }
@@ -258,30 +255,53 @@
     });
     function restoreBottomPanel() { bottomPanel.classList.remove('collapsed'); restoreBtn.classList.remove('visible'); }
 
-    // Theme Logic
-    let isDark = true;
     function toggleTheme() {
-        isDark = !isDark; document.body.className = isDark ? 'dark-theme' : 'light-theme';
-        editor.setTheme(isDark ? "ace/theme/tomorrow_night_eighties" : "ace/theme/textmate");
-        document.getElementById('theme-icon').innerText = isDark ? 'light_mode' : 'dark_mode';
+        let isDark = document.body.classList.contains('dark-theme');
+        document.body.className = isDark ? 'light-theme' : 'dark-theme';
+        editor.setTheme(isDark ? "ace/theme/textmate" : "ace/theme/tomorrow_night_eighties");
+        document.getElementById('theme-icon').innerText = isDark ? 'dark_mode' : 'light_mode';
     }
 
-    // Tab Switching (Hide Editor properly behind Preview)
+    // Preview Logic with Smart File Catcher
     function switchTab(tabName) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         if(tabName === 'preview') {
             event.currentTarget.classList.add('active'); 
             document.getElementById('preview').classList.add('active-pane');
-            // Hide editor to prevent line number overlap
-            document.getElementById('editor').style.opacity = '0';
-            document.getElementById('editor').style.pointerEvents = 'none';
-            document.getElementById('preview').src = URL.createObjectURL(new Blob([editor.getValue()], { type: 'text/html' }));
+            document.getElementById('editor').style.opacity = '0'; document.getElementById('editor').style.pointerEvents = 'none';
+            
+            let code = editor.getValue();
+            
+            // 1. Ensure Viewport for mobile optimization
+            if(!code.includes('viewport')) {
+                code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
+            }
+            
+            // 2. Inject Smart Error Catcher for missing files
+            const errorCatcher = `
+            <script>
+                window.addEventListener('error', function(e) {
+                    let target = e.target;
+                    if(target.tagName === 'IMG' || target.tagName === 'SCRIPT' || target.tagName === 'LINK') {
+                        let url = target.src || target.href;
+                        let div = document.createElement('div');
+                        div.style = 'background:#ef4444; color:white; padding:8px 12px; font-size:12px; margin:5px; border-radius:8px; font-family:sans-serif; font-weight:bold; position:relative; z-index:9999; display:inline-block; box-shadow:0 4px 6px rgba(0,0,0,0.3);';
+                        div.innerHTML = 'File Not Found: ' + url;
+                        document.body.prepend(div);
+                    }
+                }, true);
+            <\/script>`;
+            
+            if(code.includes('<body>')) {
+                code = code.replace('<body>', '<body>' + errorCatcher);
+            } else {
+                code = errorCatcher + code;
+            }
+
+            document.getElementById('preview').src = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
         } else {
-            event.currentTarget.classList.add('active'); 
-            document.getElementById('preview').classList.remove('active-pane');
-            // Show editor
-            document.getElementById('editor').style.opacity = '1';
-            document.getElementById('editor').style.pointerEvents = 'auto';
+            event.currentTarget.classList.add('active'); document.getElementById('preview').classList.remove('active-pane');
+            document.getElementById('editor').style.opacity = '1'; document.getElementById('editor').style.pointerEvents = 'auto';
             editor.focus();
         }
     }
@@ -297,46 +317,33 @@
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = currentFileName; a.click();
     }
 
-    // FIXED EXACT FIND & REPLACE
+    // Modal at TOP logic
     const findModal = document.getElementById('find-modal');
     function toggleFindReplace() { 
         findModal.classList.toggle('active'); 
-        if (findModal.classList.contains('active')) {
-            bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); 
+        if (findModal.classList.contains('active')) { 
+            bottomPanel.classList.add('collapsed'); 
+            bottomPanel.style.transform = ''; 
+            restoreBtn.classList.add('visible'); 
         }
     }
     
     function findText(showErrorAlert = true) { 
         let searchStr = document.getElementById('find-input').value.trim();
         if (!searchStr) return;
-        
         editor.find(searchStr, { wrap: true, caseSensitive: true, wholeWord: false }); 
-        
         let match = editor.getSelectionRange();
-        if(match.isEmpty() && showErrorAlert) {
-            alert("Error: No exact match found!");
-            editor.clearSelection();
-        }
+        if(match.isEmpty() && showErrorAlert) { alert("Error: No exact match found!"); editor.clearSelection(); }
     }
     
     function replaceText() { 
         let replaceStr = document.getElementById('replace-input').value;
         let match = editor.getSelectionRange();
-        
-        if(!match.isEmpty()) {
-            editor.replace(replaceStr); 
-            // Call findText with false so it doesn't show "No match" error if it was the last replacement
-            findText(false); 
-        } else {
-            alert("Error: Please click 'Find Next' to highlight code before replacing.");
-        }
+        if(!match.isEmpty()) { editor.replace(replaceStr); findText(false); } 
+        else { alert("Error: Please click 'Find Next' to highlight code before replacing."); }
     }
     
-    function clearFind() { 
-        document.getElementById('find-input').value = ''; 
-        document.getElementById('replace-input').value = ''; 
-        editor.clearSelection(); 
-    }
+    function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
 </script>
 </body>
 </html>
