@@ -427,11 +427,14 @@
             </select>
         </div>
 
-        <div class="modal-actions" style="margin-top:12px; gap:10px;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex; align-items:center; justify-content:center; gap:5px;">
+        <div class="modal-actions" style="margin-top:12px; gap:8px; flex-wrap:wrap;">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex; align-items:center; justify-content:center; gap:5px; flex:1; min-width:100px;">
                 <span class="material-icons-round" style="font-size:16px; pointer-events:none;">download</span> Load File
             </button>
-            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444; display:flex; align-items:center; justify-content:center; gap:5px;">
+            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="display:flex; align-items:center; justify-content:center; gap:5px; flex:1; min-width:100px; border:1px solid var(--accent);">
+                <span class="material-icons-round" style="font-size:16px; pointer-events:none;">folder_zip</span> Load Repo
+            </button>
+            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444; display:flex; align-items:center; justify-content:center; gap:5px; flex:1; min-width:100px;">
                 <span class="material-icons-round" style="font-size:16px; pointer-events:none;">upload</span> Commit
             </button>
         </div>
@@ -1000,6 +1003,7 @@
         let fileSelWrap = document.getElementById('gh-file-select-wrap');
         document.getElementById('gh-commit-btn').disabled = true;
         if(!ghCurrentRepo) { fileSelWrap.style.display = 'none'; return; }
+        _enableRepoBtn();
         try {
             fileSelWrap.style.display = 'block';
             renderGhCustomSelect('gh-file-select', [{ value: '', label: 'Loading files...', icon: 'hourglass_empty' }], 'Loading...', null);
@@ -1016,7 +1020,14 @@
 
     function enableLoadBtn() {
         ghCurrentFile = document.getElementById('gh-file-select')._value || '';
-        document.getElementById('gh-load-btn').disabled = !ghCurrentFile; document.getElementById('gh-commit-btn').disabled = true; 
+        document.getElementById('gh-load-btn').disabled = !ghCurrentFile;
+        document.getElementById('gh-commit-btn').disabled = true;
+    }
+
+    // Enable Load Repo as soon as a repo is selected
+    function _enableRepoBtn() {
+        const hasRepo = !!(document.getElementById('gh-repo-select')._value || '');
+        document.getElementById('gh-load-repo-btn').disabled = !hasRepo;
     }
 
     async function loadGhFile() {
@@ -1051,6 +1062,84 @@
                     document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
                 } catch(e) { cdAlert('Error', 'Commit failed. Please try again.', 'error'); document.getElementById('gh-commit-btn').disabled = false; }
             });
+        });
+    }
+
+    // LOAD ENTIRE REPO — all files as separate tabs
+    async function loadGhRepo() {
+        if(!ghCurrentRepo) return;
+        const repoShortName = ghCurrentRepo.split('/').pop();
+        cdPrompt('Project Name', 'Name this project (used as label):', repoShortName, async (projectName) => {
+            if(projectName === null) return;
+            projectName = (projectName || repoShortName).trim();
+
+            closeGithubModal();
+
+            // Show loading toast
+            _showPerfBadge('⏳ Loading repo...');
+
+            try {
+                let repoData = await ghApi(`/repos/${ghCurrentRepo}`);
+                let branch = repoData.default_branch;
+                let treeData = await ghApi(`/repos/${ghCurrentRepo}/git/trees/${branch}?recursive=1`);
+
+                // Filter to text/code files only — skip binaries, images, large files
+                const textExts = new Set(['html','htm','css','js','ts','jsx','tsx','json','md','txt','xml','php','py','sh','yaml','yml','svg','vue','svelte','env','gitignore','lock','toml','ini','cfg','conf']);
+                let files = treeData.tree.filter(f => {
+                    if(f.type !== 'blob') return false;
+                    if(f.size > 500000) return false; // skip files >500KB
+                    const ext = f.path.split('.').pop().toLowerCase();
+                    return textExts.has(ext) || !f.path.includes('.'); // include no-extension files too
+                });
+
+                if(files.length === 0) {
+                    cdAlert('Load Repo', 'No text/code files found in this repo.', 'warn');
+                    return;
+                }
+
+                if(files.length > 30) {
+                    // Too many files — confirm
+                    await new Promise(resolve => {
+                        cdConfirm('Large Repo', `This repo has ${files.length} files. Load all?`, 'Load All', 'Cancel', (ok) => {
+                            if(!ok) { resolve(false); return; }
+                            resolve(true);
+                        });
+                    }).then(ok => { if(!ok) { files = []; } });
+                    if(files.length === 0) return;
+                }
+
+                // Fetch all files in parallel (batched to avoid rate limit)
+                const BATCH = 6;
+                let loaded = 0, failed = 0;
+                let firstTab = true;
+
+                for(let i = 0; i < files.length; i += BATCH) {
+                    const batch = files.slice(i, i + BATCH);
+                    await Promise.all(batch.map(async (f) => {
+                        try {
+                            let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${f.path}`);
+                            let content = decodeB64(fileData.content);
+                            let name = f.path.split('/').pop();
+                            // First file: optionally replace current tab, rest always new tabs
+                            openFileInTab(name, content, !firstTab);
+                            firstTab = false;
+                            loaded++;
+                            _showPerfBadge(`⏳ Loading ${loaded}/${files.length}...`);
+                        } catch(e) { failed++; }
+                    }));
+                }
+
+                // Save project name to localStorage
+                let projects = JSON.parse(localStorage.getItem('codx_projects') || '{}');
+                projects[projectName] = { repo: ghCurrentRepo, loadedAt: Date.now(), fileCount: loaded };
+                localStorage.setItem('codx_projects', JSON.stringify(projects));
+
+                _showPerfBadge(`✓ "${projectName}" — ${loaded} files loaded`);
+                if(failed > 0) cdAlert('Load Repo', `${loaded} files loaded. ${failed} files failed (may be binary or too large).`, 'info');
+
+            } catch(e) {
+                cdAlert('Load Repo', 'Failed to load repository. Check connection.', 'error');
+            }
         });
     }
 
