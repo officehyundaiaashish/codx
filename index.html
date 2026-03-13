@@ -156,36 +156,36 @@
         .find-check-label { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.8; cursor: pointer; user-select: none; }
         .find-check-label input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
 
-        /* GitHub modal — centered on screen */
+        /* GitHub modal — full screen sheet */
         #github-modal {
             position: fixed;
             top: 50%; left: 50%;
             transform: translate(-50%, -50%) scale(0.88);
             bottom: auto !important;
-            width: 88%;
-            max-width: 400px;
+            width: 92%;
+            max-width: 440px;
+            max-height: 88vh;
+            overflow-y: auto;
             background: var(--glass-bg);
             border: 1px solid var(--glass-border);
             border-radius: 20px;
-            padding: 20px;
+            padding: 18px;
             z-index: 110;
             box-shadow: none;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.2s ease, transform 0.2s ease;
         }
+        #github-modal::-webkit-scrollbar { display: none; }
         #github-modal.active {
             opacity: 1;
             pointer-events: auto;
             transform: translate(-50%, -50%) scale(1);
         }
-        /* GitHub modal overlay */
         #gh-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 105; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         #gh-overlay.active { opacity: 1; pointer-events: auto; }
-
-        /* GitHub modal custom select wrapper */
         .gh-select-wrap { position: relative; margin-bottom: 8px; }
         .gh-select-wrap select {
             width: 100%; padding: 11px 36px 11px 12px; border-radius: 10px;
@@ -197,8 +197,94 @@
         .gh-select-wrap select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); outline: none; }
         #github-modal input { font-family: 'Poppins', sans-serif; border-radius: 10px; padding: 11px 12px; transition: border-color 0.15s; }
         #github-modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); outline: none; }
-        .gh-section-anim {  }
-         to { opacity: 1; transform: translateY(0); } }
+        .gh-section-anim {}
+
+        /* GitHub file tree */
+        #gh-file-tree { margin-top: 8px; max-height: 260px; overflow-y: auto; border-radius: 10px; background: rgba(0,0,0,0.15); border: 1px solid var(--glass-border); }
+        #gh-file-tree::-webkit-scrollbar { display: none; }
+        .gh-tree-item {
+            display: flex; align-items: center; gap: 8px; padding: 9px 12px;
+            border-bottom: 1px solid var(--glass-border); cursor: pointer;
+            transition: background 0.15s; position: relative;
+        }
+        .gh-tree-item:last-child { border-bottom: none; }
+        .gh-tree-item:active { background: var(--accent-dim); }
+        .gh-tree-item.selected { background: var(--accent-dim); }
+        .gh-tree-item .gh-item-icon { font-size: 16px; color: var(--accent); flex-shrink: 0; }
+        .gh-tree-item .gh-item-name { flex: 1; font-size: 12px; font-weight: 600; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .gh-tree-item .gh-item-actions { display: flex; gap: 4px; opacity: 0; transition: opacity 0.15s; flex-shrink: 0; }
+        .gh-tree-item:hover .gh-item-actions, .gh-tree-item.selected .gh-item-actions { opacity: 1; }
+        .gh-item-action-btn { width: 26px; height: 26px; border-radius: 6px; border: none; background: rgba(128,128,128,0.15); color: var(--text-color); display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; }
+        .gh-item-action-btn:active { background: var(--accent-dim); color: var(--accent); transform: scale(0.9); }
+        .gh-item-action-btn .material-icons-round { font-size: 14px; pointer-events: none; }
+        .gh-breadcrumb { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; margin-bottom: 8px; padding: 6px 10px; background: rgba(0,0,0,0.15); border-radius: 8px; }
+        .gh-crumb { font-size: 11px; font-weight: 600; color: var(--accent); cursor: pointer; }
+        .gh-crumb-sep { font-size: 11px; opacity: 0.3; }
+        .gh-tree-loading { text-align: center; padding: 20px; font-size: 11px; opacity: 0.5; }
+
+        /* ===== LOCAL EXPLORER ===== */
+        #local-explorer-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+            display: flex; align-items: flex-end; justify-content: center;
+        }
+        #local-explorer-overlay.active { opacity: 1; pointer-events: auto; }
+        #local-explorer-modal {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 24px 24px 0 0; width: 100%; max-width: 480px;
+            max-height: 82vh; display: flex; flex-direction: column;
+            transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.34,1.2,0.64,1);
+            overflow: hidden;
+        }
+        #local-explorer-overlay.active #local-explorer-modal { transform: translateY(0); }
+        #local-explorer-header {
+            display: flex; align-items: center; gap: 10px; padding: 16px 16px 10px;
+            border-bottom: 1px solid var(--glass-border); flex-shrink: 0;
+        }
+        #local-explorer-breadcrumb {
+            display: flex; align-items: center; gap: 4px; flex: 1; overflow-x: auto; flex-wrap: nowrap;
+        }
+        #local-explorer-breadcrumb::-webkit-scrollbar { display: none; }
+        .le-crumb { font-size: 12px; font-weight: 700; color: var(--accent); cursor: pointer; white-space: nowrap; flex-shrink: 0; }
+        .le-crumb-sep { font-size: 12px; opacity: 0.3; flex-shrink: 0; }
+        #local-explorer-list { flex: 1; overflow-y: auto; padding: 8px; }
+        #local-explorer-list::-webkit-scrollbar { display: none; }
+        .le-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+            border-radius: 12px; margin-bottom: 4px; cursor: pointer;
+            transition: background 0.15s, transform 0.1s;
+            animation: leItemIn 0.2s ease both;
+        }
+        @keyframes leItemIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+        .le-item:active { background: var(--accent-dim); transform: scale(0.98); }
+        .le-item-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .le-item-icon.folder { background: rgba(16,185,129,0.15); }
+        .le-item-icon.file { background: rgba(128,128,128,0.1); }
+        .le-item-icon .material-icons-round { font-size: 20px; }
+        .le-item-icon.folder .material-icons-round { color: var(--accent); }
+        .le-item-icon.file .material-icons-round { color: var(--text-color); opacity: 0.6; }
+        .le-item-info { flex: 1; min-width: 0; }
+        .le-item-name { font-size: 13px; font-weight: 600; color: var(--text-color); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .le-item-meta { font-size: 10px; opacity: 0.45; margin-top: 1px; }
+        .le-item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+        .le-action-btn { width: 30px; height: 30px; border-radius: 8px; border: none; background: rgba(128,128,128,0.1); color: var(--text-color); display: flex; align-items: center; justify-content: center; cursor: pointer; pointer-events: auto; transition: transform 0.1s, background 0.15s; }
+        .le-action-btn:active { transform: scale(0.88); background: var(--accent-dim); color: var(--accent); }
+        .le-action-btn .material-icons-round { font-size: 15px; pointer-events: none; }
+        #local-explorer-fab {
+            position: absolute; bottom: 20px; right: 20px;
+            display: flex; flex-direction: column; gap: 8px; align-items: flex-end;
+        }
+        .le-fab-btn {
+            display: flex; align-items: center; gap: 8px;
+            background: var(--accent); color: white; border: none; border-radius: 20px;
+            padding: 10px 16px; font-family: 'Poppins',sans-serif; font-size: 12px; font-weight: 600;
+            cursor: pointer; transition: transform 0.15s, opacity 0.15s;
+            box-shadow: 0 4px 12px rgba(16,185,129,0.3);
+        }
+        .le-fab-btn:active { transform: scale(0.95); }
+        .le-fab-btn .material-icons-round { font-size: 16px; pointer-events: none; }
+        .le-empty { text-align: center; padding: 40px 20px; opacity: 0.4; }
+        .le-empty .material-icons-round { font-size: 40px; display: block; margin-bottom: 8px; }
+        .le-empty-text { font-size: 12px; }
 
         /* File Tabs Bar */
         .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
@@ -632,6 +718,7 @@
                     <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span>Open</button>
                     <button class="toolbar-btn" onclick="saveFile()"><span class="material-icons-round">save</span>Save</button>
                     <button class="toolbar-btn" onclick="saveFileToRepo()"><span class="material-icons-round">cloud_upload</span>Commit</button>
+                    <button class="toolbar-btn" onclick="openLocalExplorer()"><span class="material-icons-round">phone_android</span>Device</button>
                     <button class="toolbar-btn" onclick="closeAllTabs()"><span class="material-icons-round">playlist_remove</span>Close All</button>
                     <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">hub</span>GitHub</button>
                 </div>
@@ -671,12 +758,12 @@
 <div id="gh-overlay" onclick="closeGithubModal()"></div>
 
 <div class="no-select" id="github-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
         <div style="display:flex; align-items:center; gap:8px;">
             <span class="material-icons-round" style="color:var(--accent); font-size:20px;">cloud_sync</span>
-            <span style="color:var(--text-color); font-weight:600; font-size:15px; font-family:'Poppins',sans-serif;">CodX GitHub Sync</span>
+            <span style="color:var(--text-color); font-weight:700; font-size:15px; font-family:'Poppins',sans-serif;">GitSync</span>
         </div>
-        <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">close</span>
+        <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
     </div>
     
     <div id="gh-login-section">
@@ -687,33 +774,80 @@
 
     <div id="gh-repo-section" style="display:none;" class="gh-section-anim">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="font-size:11px; color:var(--accent); font-family:'Poppins',sans-serif; font-weight:600;">Connected</div>
-            <div style="font-size:11px; color:var(--text-color); opacity:0.5; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; gap:3px;" onclick="ghLogout()">
+            <div style="font-size:11px; color:var(--accent); font-weight:700;">● Connected</div>
+            <div style="font-size:11px; color:var(--text-color); opacity:0.5; cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="ghLogout()">
                 <span class="material-icons-round" style="font-size:13px;">logout</span> Logout
             </div>
         </div>
         
+        <!-- Repo selector -->
         <div class="gh-select-wrap">
             <select id="gh-repo-select" onchange="fetchGhFiles()">
                 <option value="">Select Repository...</option>
             </select>
         </div>
-        
-        <div class="gh-select-wrap" style="display:none;" id="gh-file-select-wrap">
-            <select id="gh-file-select" onchange="enableLoadBtn()">
-                <option value="">Select File...</option>
-            </select>
+
+        <!-- Breadcrumb path -->
+        <div class="gh-breadcrumb" id="gh-breadcrumb" style="display:none;"></div>
+
+        <!-- File tree -->
+        <div id="gh-file-tree" style="display:none;">
+            <div class="gh-tree-loading">Loading files...</div>
         </div>
 
-        <div class="modal-actions" style="margin-top:12px; gap:8px; flex-wrap:wrap;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex; align-items:center; justify-content:center; gap:5px; flex:1; min-width:100px;">
-                <span class="material-icons-round" style="font-size:16px; pointer-events:none;">download</span> Load File
+        <!-- Action bar -->
+        <div id="gh-action-bar" style="display:none; gap:6px; margin-top:10px; flex-wrap:wrap;">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">edit</span> Open
             </button>
-            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="display:flex; align-items:center; justify-content:center; gap:5px; flex:1; min-width:100px; border:1px solid var(--accent);">
-                <span class="material-icons-round" style="font-size:16px; pointer-events:none;">folder_zip</span> Load Repo
+            <button class="modal-btn secondary" id="gh-dl-btn" onclick="downloadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">download</span> Download
             </button>
-            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444; display:flex; align-items:center; justify-content:center; gap:5px; flex:1; min-width:100px;">
-                <span class="material-icons-round" style="font-size:16px; pointer-events:none;">upload</span> Commit
+            <button class="modal-btn secondary" id="gh-rename-btn" onclick="renameGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">drive_file_rename_outline</span> Rename
+            </button>
+            <button class="modal-btn secondary" id="gh-delete-btn" onclick="deleteGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">delete</span> Delete
+            </button>
+        </div>
+
+        <!-- Create bar -->
+        <div style="display:flex;gap:6px;margin-top:8px;" id="gh-create-bar" style="display:none;">
+            <button class="modal-btn secondary" onclick="createGhFile()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;" id="gh-new-file-btn">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add</span> New File
+            </button>
+            <button class="modal-btn secondary" onclick="createGhFolder()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">create_new_folder</span> New Folder
+            </button>
+            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;border-color:var(--accent);">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">folder_zip</span> Load All
+            </button>
+        </div>
+
+        <!-- Commit bar -->
+        <div style="margin-top:8px;">
+            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:10px;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">upload</span> Commit Current File
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Local Explorer Modal -->
+<div id="local-explorer-overlay" onclick="if(event.target===this)closeLocalExplorer()">
+    <div id="local-explorer-modal">
+        <div id="local-explorer-header">
+            <span class="material-icons-round" style="color:var(--accent);font-size:20px;flex-shrink:0;">phone_android</span>
+            <div id="local-explorer-breadcrumb"></div>
+            <span class="material-icons-round" onclick="closeLocalExplorer()" style="font-size:20px;opacity:0.4;cursor:pointer;pointer-events:auto;flex-shrink:0;">close</span>
+        </div>
+        <div id="local-explorer-list"></div>
+        <div style="position:relative;padding:10px 16px 20px;display:flex;gap:8px;flex-wrap:wrap;border-top:1px solid var(--glass-border);flex-shrink:0;">
+            <button class="le-fab-btn" onclick="leNewFile()" style="flex:1;">
+                <span class="material-icons-round">add</span> New File
+            </button>
+            <button class="le-fab-btn" onclick="leNewFolder()" style="flex:1;background:rgba(128,128,128,0.15);color:var(--text-color);box-shadow:none;">
+                <span class="material-icons-round">create_new_folder</span> New Folder
             </button>
         </div>
     </div>
@@ -1581,6 +1715,10 @@
     }
 
     let _ghReposLoaded = false;
+    let _ghTree = [];         // full flat tree from GitHub
+    let _ghCurrentPath = '';  // current folder path being browsed
+    let _ghSelectedItem = null; // selected file/folder item
+
     function checkGhLogin() {
         let token = localStorage.getItem('gh_token');
         let loginSec = document.getElementById('gh-login-section');
@@ -1590,7 +1728,6 @@
             if(!_ghReposLoaded) { _ghReposLoaded = true; fetchGhRepos(); }
         } else {
             loginSec.style.display = 'block'; repoSec.style.display = 'none';
-            document.getElementById('gh-file-select-wrap').style.display = 'none';
             _ghReposLoaded = false;
         }
     }
@@ -1612,9 +1749,10 @@
     async function fetchGhRepos() {
         try {
             let repos = await ghApi('/user/repos?sort=updated&per_page=100');
-            let sel = document.getElementById('gh-repo-select');
             renderGhCustomSelect('gh-repo-select', repos.map(r => ({ value: r.full_name, label: r.name, icon: 'folder' })), 'Select Repository...', (val) => {
                 document.getElementById('gh-repo-select')._value = val;
+                ghCurrentRepo = val;
+                _ghTree = []; _ghCurrentPath = ''; _ghSelectedItem = null;
                 fetchGhFiles();
             });
         } catch(e) { cdAlert('GitHub', 'Failed to load repos. Check your token.', 'error'); ghLogout(); }
@@ -1622,57 +1760,238 @@
 
     async function fetchGhFiles() {
         ghCurrentRepo = document.getElementById('gh-repo-select')._value || '';
-        let fileSelWrap = document.getElementById('gh-file-select-wrap');
-        document.getElementById('gh-commit-btn').disabled = true;
-        if(!ghCurrentRepo) { fileSelWrap.style.display = 'none'; return; }
-        _enableRepoBtn();
+        if(!ghCurrentRepo) return;
+        const tree = document.getElementById('gh-file-tree');
+        const breadcrumb = document.getElementById('gh-breadcrumb');
+        const actionBar = document.getElementById('gh-action-bar');
+        const createBar = document.getElementById('gh-create-bar');
+        tree.style.display = 'block';
+        tree.innerHTML = '<div class="gh-tree-loading">Loading repository...</div>';
+        breadcrumb.style.display = 'flex';
+        actionBar.style.display = 'flex';
+        createBar.style.display = 'flex';
+        document.getElementById('gh-load-repo-btn').disabled = false;
+        _ghSelectedItem = null;
+        _ghDisableFileActions();
         try {
-            fileSelWrap.style.display = 'block';
-            renderGhCustomSelect('gh-file-select', [{ value: '', label: 'Loading files...', icon: 'hourglass_empty' }], 'Loading...', null);
             let repoData = await ghApi(`/repos/${ghCurrentRepo}`);
             let branch = repoData.default_branch;
             let treeData = await ghApi(`/repos/${ghCurrentRepo}/git/trees/${branch}?recursive=1`);
-            let files = treeData.tree.filter(f => f.type === 'blob').map(f => ({ value: f.path, label: f.path, icon: 'insert_drive_file' }));
-            renderGhCustomSelect('gh-file-select', files, 'Select File to Edit...', (val) => {
-                document.getElementById('gh-file-select')._value = val;
-                enableLoadBtn();
+            _ghTree = treeData.tree;
+            _ghCurrentPath = '';
+            _ghRenderTree();
+        } catch(e) { tree.innerHTML = '<div class="gh-tree-loading">Failed to load files.</div>'; }
+    }
+
+    function _ghRenderTree() {
+        const tree = document.getElementById('gh-file-tree');
+        const breadcrumb = document.getElementById('gh-breadcrumb');
+
+        // Breadcrumb
+        breadcrumb.innerHTML = '';
+        const parts = _ghCurrentPath ? _ghCurrentPath.split('/') : [];
+        const rootCrumb = document.createElement('span');
+        rootCrumb.className = 'gh-crumb';
+        rootCrumb.textContent = ghCurrentRepo.split('/').pop();
+        rootCrumb.onclick = () => { _ghCurrentPath = ''; _ghSelectedItem = null; _ghDisableFileActions(); _ghRenderTree(); };
+        breadcrumb.appendChild(rootCrumb);
+        parts.forEach((part, i) => {
+            const sep = document.createElement('span'); sep.className = 'gh-crumb-sep'; sep.textContent = '/';
+            breadcrumb.appendChild(sep);
+            const crumb = document.createElement('span'); crumb.className = 'gh-crumb'; crumb.textContent = part;
+            const pathUpTo = parts.slice(0, i+1).join('/');
+            crumb.onclick = () => { _ghCurrentPath = pathUpTo; _ghSelectedItem = null; _ghDisableFileActions(); _ghRenderTree(); };
+            breadcrumb.appendChild(crumb);
+        });
+
+        // Filter items at current path level
+        const prefix = _ghCurrentPath ? _ghCurrentPath + '/' : '';
+        const seen = new Set();
+        const items = [];
+
+        _ghTree.forEach(node => {
+            if(!node.path.startsWith(prefix)) return;
+            const rel = node.path.slice(prefix.length);
+            if(!rel) return;
+            const firstSeg = rel.split('/')[0];
+            if(seen.has(firstSeg)) return;
+            seen.add(firstSeg);
+            const isDir = rel.includes('/') || node.type === 'tree';
+            items.push({ name: firstSeg, path: prefix + firstSeg, type: isDir ? 'tree' : 'blob', sha: node.sha });
+        });
+
+        // Sort: folders first
+        items.sort((a,b) => { if(a.type === b.type) return a.name.localeCompare(b.name); return a.type === 'tree' ? -1 : 1; });
+
+        tree.innerHTML = '';
+        if(items.length === 0) { tree.innerHTML = '<div class="gh-tree-loading">Empty folder</div>'; return; }
+
+        items.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'gh-tree-item';
+            const icon = item.type === 'tree' ? 'folder' : _ghFileIcon(item.name);
+            row.innerHTML = `
+                <span class="material-icons-round gh-item-icon">${icon}</span>
+                <span class="gh-item-name">${item.name}</span>
+                <div class="gh-item-actions">
+                    ${item.type === 'blob' ? `<button class="gh-item-action-btn" title="Open" onclick="event.stopPropagation();_ghQuickOpen('${item.path}')"><span class="material-icons-round">edit</span></button>` : ''}
+                    ${item.type === 'blob' ? `<button class="gh-item-action-btn" title="Download" onclick="event.stopPropagation();_ghQuickDownload('${item.path}','${item.name}')"><span class="material-icons-round">download</span></button>` : ''}
+                    <button class="gh-item-action-btn" title="Rename" onclick="event.stopPropagation();_ghSelectItem(this.closest('.gh-tree-item'),'${item.path}','${item.name}','${item.type}','${item.sha||''}');renameGhFile()"><span class="material-icons-round">drive_file_rename_outline</span></button>
+                    <button class="gh-item-action-btn" title="Delete" style="color:#ef4444" onclick="event.stopPropagation();_ghSelectItem(this.closest('.gh-tree-item'),'${item.path}','${item.name}','${item.type}','${item.sha||''}');deleteGhFile()"><span class="material-icons-round">delete</span></button>
+                </div>
+            `;
+            row.onclick = () => {
+                if(item.type === 'tree') {
+                    _ghCurrentPath = item.path; _ghSelectedItem = null; _ghDisableFileActions(); _ghRenderTree();
+                } else {
+                    _ghSelectItem(row, item.path, item.name, item.type, item.sha || '');
+                }
+            };
+            tree.appendChild(row);
+        });
+    }
+
+    function _ghFileIcon(name) {
+        const ext = name.split('.').pop().toLowerCase();
+        const map = { html:'html',htm:'html',js:'javascript',ts:'code',css:'palette',json:'data_object',md:'description',py:'code',txt:'article',svg:'image',png:'image',jpg:'image',gif:'image' };
+        return map[ext] ? 'insert_drive_file' : 'insert_drive_file';
+    }
+
+    function _ghSelectItem(rowEl, path, name, type, sha) {
+        document.querySelectorAll('.gh-tree-item.selected').forEach(r => r.classList.remove('selected'));
+        rowEl.classList.add('selected');
+        _ghSelectedItem = { path, name, type, sha };
+        ghCurrentFile = path;
+        // Enable/disable action buttons
+        document.getElementById('gh-load-btn').disabled = type !== 'blob';
+        document.getElementById('gh-dl-btn').disabled = type !== 'blob';
+        document.getElementById('gh-rename-btn').disabled = false;
+        document.getElementById('gh-delete-btn').disabled = false;
+    }
+
+    function _ghDisableFileActions() {
+        ['gh-load-btn','gh-dl-btn','gh-rename-btn','gh-delete-btn'].forEach(id => {
+            const el = document.getElementById(id); if(el) el.disabled = true;
+        });
+    }
+
+    function enableLoadBtn() { /* compat shim */ }
+    function _enableRepoBtn() { document.getElementById('gh-load-repo-btn').disabled = false; }
+
+    async function _ghQuickOpen(path) {
+        try {
+            let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${path}`);
+            ghCurrentSha = fileData.sha; ghCurrentFile = path;
+            let name = path.split('/').pop();
+            let content = decodeB64(fileData.content);
+            closeGithubModal();
+            cdConfirm('Open File', `Open "${name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
+                openFileInTab(name, content, useNew);
+                document.getElementById('gh-commit-btn').disabled = false;
             });
-        } catch(e) { cdAlert('GitHub', 'Failed to load files.', 'error'); fileSelWrap.style.display = 'none'; }
+        } catch(e) { cdAlert('GitHub', 'Failed to open file.', 'error'); }
     }
 
-    function enableLoadBtn() {
-        ghCurrentFile = document.getElementById('gh-file-select')._value || '';
-        document.getElementById('gh-load-btn').disabled = !ghCurrentFile;
-        document.getElementById('gh-commit-btn').disabled = true;
-    }
-
-    // Enable Load Repo as soon as a repo is selected
-    function _enableRepoBtn() {
-        const hasRepo = !!(document.getElementById('gh-repo-select')._value || '');
-        document.getElementById('gh-load-repo-btn').disabled = !hasRepo;
+    async function _ghQuickDownload(path, name) {
+        try {
+            let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${path}`);
+            let content = decodeB64(fileData.content);
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(new Blob([content], {type:'text/plain'}));
+            a.download = name; a.click();
+        } catch(e) { cdAlert('GitHub', 'Failed to download.', 'error'); }
     }
 
     async function loadGhFile() {
-        try {
-            document.getElementById('gh-load-btn').disabled = true;
-            let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`);
-            ghCurrentSha = fileData.sha; 
-            let name = ghCurrentFile.split('/').pop();
-            let content = decodeB64(fileData.content);
-            closeGithubModal();
-            // Ask new tab with custom dialog
-            cdConfirm('Open File', `Open "${name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
-                openFileInTab(name, content, useNew);
-                document.getElementById('gh-load-btn').disabled = false;
-                document.getElementById('gh-commit-btn').disabled = false;
-            });
-        } catch(e) { cdAlert('GitHub', 'Failed to download file.', 'error'); document.getElementById('gh-load-btn').disabled = false; }
+        if(!_ghSelectedItem || _ghSelectedItem.type !== 'blob') return;
+        await _ghQuickOpen(_ghSelectedItem.path);
+    }
+
+    async function downloadGhFile() {
+        if(!_ghSelectedItem || _ghSelectedItem.type !== 'blob') return;
+        await _ghQuickDownload(_ghSelectedItem.path, _ghSelectedItem.name);
+    }
+
+    async function renameGhFile() {
+        if(!_ghSelectedItem) return;
+        const item = _ghSelectedItem;
+        cdPrompt('Rename', `New name for "${item.name}":`, item.name, async (newName) => {
+            if(!newName || newName === item.name) return;
+            const newPath = item.path.replace(/[^/]+$/, newName);
+            try {
+                if(item.type === 'blob') {
+                    // Get file content first
+                    let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${item.path}`);
+                    let content = fileData.content.replace(/\n/g,'');
+                    // Create at new path
+                    await ghApi(`/repos/${ghCurrentRepo}/contents/${newPath}`, 'PUT', { message: `Rename ${item.name} to ${newName}`, content, sha: undefined });
+                    // Delete old
+                    await ghApi(`/repos/${ghCurrentRepo}/contents/${item.path}`, 'DELETE', { message: `Remove old ${item.name}`, sha: fileData.sha });
+                    cdAlert('Renamed', `"${item.name}" → "${newName}"`, 'success');
+                } else {
+                    cdAlert('Rename Folder', 'GitHub does not support direct folder rename. Please rename files individually.', 'info');
+                }
+                _ghTree = []; await fetchGhFiles();
+            } catch(e) { cdAlert('Rename Failed', 'Could not rename. Check permissions.', 'error'); }
+        });
+    }
+
+    async function deleteGhFile() {
+        if(!_ghSelectedItem) return;
+        const item = _ghSelectedItem;
+        cdConfirm('Delete', `Delete "${item.name}" permanently from GitHub?`, 'Delete', 'Cancel', async (ok) => {
+            if(!ok) return;
+            try {
+                if(item.type === 'blob') {
+                    let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${item.path}`);
+                    await ghApi(`/repos/${ghCurrentRepo}/contents/${item.path}`, 'DELETE', { message: `Delete ${item.name}`, sha: fileData.sha });
+                    cdAlert('Deleted', `"${item.name}" deleted.`, 'success');
+                } else {
+                    // Delete all files in folder
+                    const folderFiles = _ghTree.filter(n => n.type === 'blob' && n.path.startsWith(item.path + '/'));
+                    for(const f of folderFiles) {
+                        let fd = await ghApi(`/repos/${ghCurrentRepo}/contents/${f.path}`);
+                        await ghApi(`/repos/${ghCurrentRepo}/contents/${f.path}`, 'DELETE', { message: `Delete ${f.path}`, sha: fd.sha });
+                    }
+                    cdAlert('Deleted', `Folder "${item.name}" deleted.`, 'success');
+                }
+                _ghSelectedItem = null; _ghDisableFileActions();
+                _ghTree = []; await fetchGhFiles();
+            } catch(e) { cdAlert('Delete Failed', 'Could not delete. Check permissions.', 'error'); }
+        });
+    }
+
+    async function createGhFile() {
+        if(!ghCurrentRepo) return;
+        cdPrompt('New File', 'File name (e.g. index.html):', 'newfile.html', async (name) => {
+            if(!name) return;
+            const path = _ghCurrentPath ? `${_ghCurrentPath}/${name}` : name;
+            try {
+                const blankContent = encodeB64(_getBlankContentForFile(name));
+                await ghApi(`/repos/${ghCurrentRepo}/contents/${path}`, 'PUT', { message: `Create ${name}`, content: blankContent });
+                cdAlert('Created', `"${name}" created.`, 'success');
+                _ghTree = []; await fetchGhFiles();
+            } catch(e) { cdAlert('Failed', 'Could not create file.', 'error'); }
+        });
+    }
+
+    async function createGhFolder() {
+        if(!ghCurrentRepo) return;
+        cdPrompt('New Folder', 'Folder name:', 'new-folder', async (name) => {
+            if(!name) return;
+            const path = _ghCurrentPath ? `${_ghCurrentPath}/${name}/.gitkeep` : `${name}/.gitkeep`;
+            try {
+                await ghApi(`/repos/${ghCurrentRepo}/contents/${path}`, 'PUT', { message: `Create folder ${name}`, content: btoa('') });
+                cdAlert('Created', `Folder "${name}" created.`, 'success');
+                _ghTree = []; await fetchGhFiles();
+            } catch(e) { cdAlert('Failed', 'Could not create folder.', 'error'); }
+        });
     }
 
     // COMMIT WARNING AND BACKUP
     async function commitGhFile() {
-        if(!ghCurrentSha) return cdAlert('GitHub', 'Please load a file first before committing.', 'warn');
-        cdConfirm('Backup First?', 'You are about to commit to GitHub. Download a backup first? (Optional)', 'Download Backup', 'Skip', async (doBackup) => {
+        if(!ghCurrentSha) return cdAlert('GitHub', 'Please open a file first before committing.', 'warn');
+        cdConfirm('Backup First?', 'Download a backup before committing?', 'Download Backup', 'Skip', async (doBackup) => {
             if(doBackup) await saveFile();
             cdPrompt('Commit Message', 'Enter a commit message:', 'Update ' + ghCurrentFile, async (msg) => {
                 if(msg === null) return;
@@ -1680,64 +1999,41 @@
                     document.getElementById('gh-commit-btn').disabled = true;
                     let contentB64 = encodeB64(editor.getValue());
                     await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
-                    cdAlert('Success', 'Code committed to GitHub successfully!', 'success');
+                    cdAlert('Success', 'Committed to GitHub!', 'success');
                     document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
-                } catch(e) { cdAlert('Error', 'Commit failed. Please try again.', 'error'); document.getElementById('gh-commit-btn').disabled = false; }
+                } catch(e) { cdAlert('Error', 'Commit failed.', 'error'); document.getElementById('gh-commit-btn').disabled = false; }
             });
         });
     }
 
-    // LOAD ENTIRE REPO — all files as separate tabs
+    // LOAD ENTIRE REPO
     async function loadGhRepo() {
         if(!ghCurrentRepo) return;
         const repoShortName = ghCurrentRepo.split('/').pop();
-        cdPrompt('Project Name', 'Name this project (used as label):', repoShortName, async (projectName) => {
+        cdPrompt('Project Name', 'Name this project:', repoShortName, async (projectName) => {
             if(projectName === null) return;
             projectName = (projectName || repoShortName).trim();
-
             closeGithubModal();
-
-            // Show animated progress bar
             _showRepoProgress('Fetching repository tree...', 0, 1);
-
             try {
                 let repoData = await ghApi(`/repos/${ghCurrentRepo}`);
                 let branch = repoData.default_branch;
                 let treeData = await ghApi(`/repos/${ghCurrentRepo}/git/trees/${branch}?recursive=1`);
-
-                // Filter to text/code files only — skip binaries, images, large files
                 const textExts = new Set(['html','htm','css','js','ts','jsx','tsx','json','md','txt','xml','php','py','sh','yaml','yml','svg','vue','svelte','env','gitignore','lock','toml','ini','cfg','conf']);
                 let files = treeData.tree.filter(f => {
                     if(f.type !== 'blob') return false;
-                    if(f.size > 500000) return false; // skip files >500KB
+                    if(f.size > 500000) return false;
                     const ext = f.path.split('.').pop().toLowerCase();
-                    return textExts.has(ext) || !f.path.includes('.'); // include no-extension files too
+                    return textExts.has(ext) || !f.path.includes('.');
                 });
-
-                if(files.length === 0) {
-                    _hideRepoProgress();
-                    cdAlert('Load Repo', 'No text/code files found in this repo.', 'warn');
-                    return;
-                }
-
+                if(files.length === 0) { _hideRepoProgress(); cdAlert('Load Repo', 'No text files found.', 'warn'); return; }
                 if(files.length > 30) {
                     _hideRepoProgress();
-                    // Too many files — confirm
-                    await new Promise(resolve => {
-                        cdConfirm('Large Repo', `This repo has ${files.length} files. Load all?`, 'Load All', 'Cancel', (ok) => {
-                            if(!ok) { resolve(false); return; }
-                            resolve(true);
-                        });
-                    }).then(ok => { if(!ok) { files = []; } });
+                    await new Promise(resolve => { cdConfirm('Large Repo', `${files.length} files. Load all?`, 'Load All', 'Cancel', (ok) => { if(!ok){files=[];}resolve(); }); });
                     if(files.length === 0) return;
                     _showRepoProgress('Loading files...', 0, files.length);
                 }
-
-                // Fetch all files in parallel (batched to avoid rate limit)
-                const BATCH = 6;
-                let loaded = 0, failed = 0;
-                let firstTab = true;
-
+                const BATCH = 6; let loaded = 0, failed = 0, firstTab = true;
                 for(let i = 0; i < files.length; i += BATCH) {
                     const batch = files.slice(i, i + BATCH);
                     await Promise.all(batch.map(async (f) => {
@@ -1745,27 +2041,188 @@
                             let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${f.path}`);
                             let content = decodeB64(fileData.content);
                             let name = f.path.split('/').pop();
-                            openFileInTab(name, content, !firstTab);
-                            firstTab = false;
-                            loaded++;
+                            openFileInTab(name, content, !firstTab); firstTab = false; loaded++;
                             _showRepoProgress(`Loading "${f.path.split('/').pop()}"...`, loaded, files.length);
                         } catch(e) { failed++; }
                     }));
                 }
-
-                // Save project name to localStorage
                 let projects = await CodXStore.get('codx_projects', {});
                 projects[projectName] = { repo: ghCurrentRepo, loadedAt: Date.now(), fileCount: loaded };
                 await CodXStore.set('codx_projects', projects);
-
                 _hideRepoProgress();
                 _showPerfBadge(`✓ "${projectName}" — ${loaded} files loaded`);
-                if(failed > 0) cdAlert('Load Repo', `${loaded} files loaded. ${failed} files failed (may be binary or too large).`, 'info');
+                if(failed > 0) cdAlert('Load Repo', `${loaded} loaded, ${failed} failed.`, 'info');
+            } catch(e) { _hideRepoProgress(); cdAlert('Load Repo', 'Failed to load repository.', 'error'); }
+        });
+    }
 
-            } catch(e) {
-                _hideRepoProgress();
-                cdAlert('Load Repo', 'Failed to load repository. Check connection.', 'error');
+    // ===== LOCAL EXPLORER =====
+    // Stores: { path: { name, type:'file'|'folder', content?, created, modified } }
+    const LE_KEY = 'codx_local_fs';
+
+    function _leLoadFS() {
+        try { return JSON.parse(localStorage.getItem(LE_KEY) || '{}'); } catch(e) { return {}; }
+    }
+    function _leSaveFS(fs) {
+        localStorage.setItem(LE_KEY, JSON.stringify(fs));
+    }
+
+    let _lePath = '/'; // current folder
+
+    function openLocalExplorer() {
+        _lePath = '/';
+        document.getElementById('local-explorer-overlay').classList.add('active');
+        _leRender();
+    }
+    function closeLocalExplorer() {
+        document.getElementById('local-explorer-overlay').classList.remove('active');
+    }
+
+    function _leRender() {
+        const fs = _leLoadFS();
+        const list = document.getElementById('local-explorer-list');
+        const bc = document.getElementById('local-explorer-breadcrumb');
+
+        // Breadcrumb
+        bc.innerHTML = '';
+        const parts = _lePath === '/' ? [] : _lePath.replace(/^\//, '').split('/').filter(Boolean);
+        const rootEl = document.createElement('span'); rootEl.className = 'le-crumb'; rootEl.textContent = 'Device';
+        rootEl.onclick = () => { _lePath = '/'; _leRender(); };
+        bc.appendChild(rootEl);
+        parts.forEach((part, i) => {
+            const sep = document.createElement('span'); sep.className = 'le-crumb-sep'; sep.textContent = '/'; bc.appendChild(sep);
+            const c = document.createElement('span'); c.className = 'le-crumb'; c.textContent = part;
+            const p = '/' + parts.slice(0, i+1).join('/');
+            c.onclick = () => { _lePath = p; _leRender(); };
+            bc.appendChild(c);
+        });
+
+        // Get items at current path
+        const prefix = _lePath === '/' ? '/' : _lePath + '/';
+        const items = [];
+        Object.entries(fs).forEach(([path, node]) => {
+            if(_lePath === '/') {
+                // Root: show top-level items (no slash after first /)
+                const rel = path.replace(/^\//, '');
+                if(!rel.includes('/')) items.push({ path, ...node });
+            } else {
+                if(path.startsWith(prefix)) {
+                    const rel = path.slice(prefix.length);
+                    if(rel && !rel.includes('/')) items.push({ path, ...node });
+                }
             }
+        });
+        items.sort((a,b) => { if(a.type === b.type) return a.name.localeCompare(b.name); return a.type === 'folder' ? -1 : 1; });
+
+        list.innerHTML = '';
+        if(items.length === 0) {
+            list.innerHTML = `<div class="le-empty"><span class="material-icons-round">folder_open</span><div class="le-empty-text">Empty — create a file or folder</div></div>`;
+        } else {
+            items.forEach((item, idx) => {
+                const el = document.createElement('div');
+                el.className = 'le-item';
+                el.style.animationDelay = (idx * 0.04) + 's';
+                const isFolder = item.type === 'folder';
+                const ext = item.name.split('.').pop().toLowerCase();
+                const fileIconMap = { html:'html',js:'javascript',css:'palette',json:'data_object',md:'description',txt:'article' };
+                const fileIcon = fileIconMap[ext] || 'insert_drive_file';
+                el.innerHTML = `
+                    <div class="le-item-icon ${isFolder ? 'folder' : 'file'}">
+                        <span class="material-icons-round">${isFolder ? 'folder' : fileIcon}</span>
+                    </div>
+                    <div class="le-item-info">
+                        <div class="le-item-name">${item.name}</div>
+                        <div class="le-item-meta">${isFolder ? 'Folder' : _leFileSize(item.content)}</div>
+                    </div>
+                    <div class="le-item-actions">
+                        ${!isFolder ? `<button class="le-action-btn" title="Open in Editor" onclick="event.stopPropagation();leOpenFile('${item.path}')"><span class="material-icons-round">edit</span></button>` : ''}
+                        ${!isFolder ? `<button class="le-action-btn" title="Download" onclick="event.stopPropagation();leDownload('${item.path}')"><span class="material-icons-round">download</span></button>` : ''}
+                        <button class="le-action-btn" title="Rename" onclick="event.stopPropagation();leRename('${item.path}')"><span class="material-icons-round">drive_file_rename_outline</span></button>
+                        <button class="le-action-btn" title="Delete" style="color:#ef4444" onclick="event.stopPropagation();leDelete('${item.path}')"><span class="material-icons-round">delete</span></button>
+                    </div>
+                `;
+                el.onclick = () => { if(isFolder) { _lePath = item.path; _leRender(); } else leOpenFile(item.path); };
+                list.appendChild(el);
+            });
+        }
+    }
+
+    function _leFileSize(content) {
+        if(!content) return '0 B';
+        const b = new Blob([content]).size;
+        if(b < 1024) return b + ' B';
+        if(b < 1024*1024) return (b/1024).toFixed(1) + ' KB';
+        return (b/1024/1024).toFixed(1) + ' MB';
+    }
+
+    function leNewFile() {
+        cdPrompt('New File', 'File name:', 'index.html', (name) => {
+            if(!name) return;
+            const fs = _leLoadFS();
+            const path = (_lePath === '/' ? '/' : _lePath + '/') + name;
+            if(fs[path]) { cdAlert('Exists', 'A file with that name already exists.', 'warn'); return; }
+            fs[path] = { name, type: 'file', content: _getBlankContentForFile(name), created: Date.now(), modified: Date.now() };
+            _leSaveFS(fs); _leRender();
+        });
+    }
+
+    function leNewFolder() {
+        cdPrompt('New Folder', 'Folder name:', 'my-project', (name) => {
+            if(!name) return;
+            const fs = _leLoadFS();
+            const path = (_lePath === '/' ? '/' : _lePath + '/') + name;
+            if(fs[path]) { cdAlert('Exists', 'Already exists.', 'warn'); return; }
+            fs[path] = { name, type: 'folder', created: Date.now(), modified: Date.now() };
+            _leSaveFS(fs); _leRender();
+        });
+    }
+
+    function leOpenFile(path) {
+        const fs = _leLoadFS();
+        const node = fs[path]; if(!node) return;
+        closeLocalExplorer();
+        cdConfirm('Open File', `Open "${node.name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
+            openFileInTab(node.name, node.content || '', useNew);
+            // Auto-save back to local FS on editor change
+            _leCurrentPath = path;
+        });
+    }
+
+    let _leCurrentPath = null;
+    // Hook: save to local FS when file is saved
+    const _origSaveFile = saveFile;
+
+    function leDownload(path) {
+        const fs = _leLoadFS(); const node = fs[path]; if(!node) return;
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([node.content || ''], {type:'text/plain'}));
+        a.download = node.name; a.click();
+    }
+
+    function leRename(path) {
+        const fs = _leLoadFS(); const node = fs[path]; if(!node) return;
+        cdPrompt('Rename', 'New name:', node.name, (newName) => {
+            if(!newName || newName === node.name) return;
+            const dir = path.substring(0, path.lastIndexOf('/')) || '/';
+            const newPath = (dir === '/' ? '/' : dir + '/') + newName;
+            // Rename all children too (for folders)
+            const toRename = Object.keys(fs).filter(k => k === path || k.startsWith(path + '/'));
+            toRename.forEach(k => {
+                const newK = newPath + k.slice(path.length);
+                fs[newK] = { ...fs[k], name: k === path ? newName : fs[k].name };
+                delete fs[k];
+            });
+            _leSaveFS(fs); _leRender();
+        });
+    }
+
+    function leDelete(path) {
+        const fs = _leLoadFS(); const node = fs[path]; if(!node) return;
+        cdConfirm('Delete', `Delete "${node.name}"? This cannot be undone.`, 'Delete', 'Cancel', (ok) => {
+            if(!ok) return;
+            // Delete item and all children
+            Object.keys(fs).filter(k => k === path || k.startsWith(path + '/')).forEach(k => delete fs[k]);
+            _leSaveFS(fs); _leRender();
         });
     }
 
