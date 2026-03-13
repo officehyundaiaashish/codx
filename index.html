@@ -2463,7 +2463,11 @@
                     let contentB64 = encodeB64(editor.getValue());
                     await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
                     cdAlert('Success', 'Committed to GitHub!', 'success');
-                    document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
+                    document.getElementById('gh-commit-btn').disabled = false;
+                    // Auto-refresh file list after commit
+                    _ghTree = [];
+                    await fetchGhFiles();
+                    closeGithubModal();
                 } catch(e) { cdAlert('Error', 'Commit failed.', 'error'); document.getElementById('gh-commit-btn').disabled = false; }
             });
         });
@@ -3683,8 +3687,9 @@ OUTPUT:
             if (addLicense) payload.license_template = 'mit';
             const result = await ghApi('/user/repos', 'POST', payload);
             closeNewProjectModal();
-            // Invalidate repo cache so GitSync reloads
+            // Invalidate repo cache and refresh repo list
             _ghReposLoaded = false;
+            await fetchGhRepos(); // Auto-refresh dropdown
             // Show repo link with copy button
             _showRepoCreatedLink(result.full_name, result.html_url);
         } catch (e) {
