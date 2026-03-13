@@ -167,7 +167,148 @@
         .file-tab .ft-close { font-size: 13px; opacity: 0.4; margin-left: 2px; line-height: 1; transition: opacity 0.15s; pointer-events: auto; }
         .file-tab .ft-close:active { opacity: 1; }
 
-        /* ===== CUSTOM DIALOG (replaces all browser dialogs) ===== */
+        /* ===== WELCOME SCREEN ===== */
+        #welcome-screen {
+            position: fixed; inset: 0; z-index: 1000;
+            background: linear-gradient(135deg, #064e3b 0%, #065f46 40%, #0a0a0c 100%);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 30px;
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        #welcome-screen.hiding { opacity: 0; transform: scale(1.04); pointer-events: none; }
+        #welcome-screen.hidden { display: none; }
+        .welcome-card {
+            background: rgba(255,255,255,0.07); backdrop-filter: blur(30px);
+            border: 1px solid rgba(255,255,255,0.15); border-radius: 28px;
+            padding: 36px 28px 28px; width: 100%; max-width: 360px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.5), 0 0 0 1px rgba(16,185,129,0.2);
+            animation: welcomeCardIn 0.8s cubic-bezier(0.34,1.56,0.64,1) 0.1s both;
+            text-align: center;
+        }
+        @keyframes welcomeCardIn {
+            from { opacity: 0; transform: translateY(40px) scale(0.92); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .welcome-logo {
+            width: 72px; height: 72px; border-radius: 20px; background: #10b981;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px; font-size: 28px; font-weight: 900; color: white;
+            font-family: monospace; box-shadow: 0 10px 30px rgba(16,185,129,0.4);
+            animation: welcomeLogoPop 0.6s cubic-bezier(0.34,1.56,0.64,1) 0.4s both;
+        }
+        @keyframes welcomeLogoPop { from { opacity:0; transform:scale(0.6); } to { opacity:1; transform:scale(1); } }
+        .welcome-title {
+            font-size: 28px; font-weight: 700; color: white; letter-spacing: -0.5px;
+            margin-bottom: 8px;
+            animation: welcomeFadeUp 0.5s ease 0.55s both;
+        }
+        .welcome-sub {
+            font-size: 13px; color: rgba(255,255,255,0.6); line-height: 1.6; margin-bottom: 28px;
+            animation: welcomeFadeUp 0.5s ease 0.65s both;
+        }
+        @keyframes welcomeFadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .welcome-features {
+            display: flex; flex-direction: column; gap: 10px; margin-bottom: 28px;
+            animation: welcomeFadeUp 0.5s ease 0.75s both;
+        }
+        .welcome-feature {
+            display: flex; align-items: center; gap: 10px;
+            background: rgba(255,255,255,0.06); border-radius: 12px; padding: 10px 14px;
+            border: 1px solid rgba(255,255,255,0.08); text-align: left;
+        }
+        .welcome-feature .material-icons-round { color: #10b981; font-size: 18px; flex-shrink:0; }
+        .welcome-feature span:last-child { font-size: 12px; color: rgba(255,255,255,0.8); font-weight: 600; }
+        .welcome-start-btn {
+            width: 100%; padding: 15px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white; font-size: 15px; font-weight: 700; font-family: 'Poppins', sans-serif;
+            cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
+            box-shadow: 0 8px 25px rgba(16,185,129,0.4);
+            transition: transform 0.2s, box-shadow 0.2s;
+            animation: welcomeFadeUp 0.5s ease 0.85s both;
+        }
+        .welcome-start-btn:active { transform: scale(0.97); box-shadow: 0 4px 15px rgba(16,185,129,0.3); }
+        .welcome-start-btn .material-icons-round { font-size: 20px; }
+
+        /* ===== REPO LOAD PROGRESS BAR ===== */
+        #repo-progress-overlay {
+            position: fixed; inset: 0; z-index: 600; background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(8px); display: none; flex-direction: column;
+            align-items: center; justify-content: center; gap: 20px;
+        }
+        #repo-progress-overlay.visible { display: flex; }
+        .repo-progress-card {
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 20px; padding: 28px 24px; width: 85%; max-width: 320px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            animation: welcomeCardIn 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+        }
+        .repo-progress-title { font-size: 14px; font-weight: 700; color: var(--text-color); margin-bottom: 6px; }
+        .repo-progress-sub { font-size: 11px; color: var(--text-color); opacity: 0.5; margin-bottom: 18px; }
+        .repo-progress-bar-track {
+            height: 6px; background: rgba(255,255,255,0.08); border-radius: 10px; overflow: hidden; margin-bottom: 10px;
+        }
+        .repo-progress-bar-fill {
+            height: 100%; background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 10px; width: 0%; transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(16,185,129,0.5);
+        }
+        .repo-progress-count { font-size: 11px; color: var(--accent); font-weight: 600; text-align:right; }
+
+        /* ===== NEW PROJECT MODAL ===== */
+        #new-project-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(6px);
+            z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #new-project-overlay.active { opacity: 1; pointer-events: auto; }
+        #new-project-modal {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 20px;
+            padding: 22px 20px; width: 88%; max-width: 400px;
+            box-shadow: 0 20px 70px rgba(0,0,0,0.9);
+            transform: scale(0.9) translateY(10px); transition: transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            font-family: 'Poppins', sans-serif; max-height: 90vh; overflow-y: auto;
+        }
+        #new-project-overlay.active #new-project-modal { transform: scale(1) translateY(0); }
+        #new-project-modal input, #new-project-modal select, #new-project-modal textarea {
+            width: 100%; padding: 11px 12px; border-radius: 10px; background: rgba(0,0,0,0.25);
+            border: 1px solid var(--glass-border); color: var(--text-color);
+            font-family: 'Poppins', sans-serif; font-size: 13px; margin-bottom: 10px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        #new-project-modal input:focus, #new-project-modal select:focus, #new-project-modal textarea:focus {
+            border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-dim);
+        }
+        .np-section-label { font-size: 10px; font-weight: 700; color: var(--accent); text-transform: uppercase;
+            letter-spacing: 0.8px; margin-bottom: 8px; margin-top: 14px; opacity: 0.9; }
+        .np-save-options { display: flex; gap: 8px; margin-bottom: 10px; }
+        .np-save-opt {
+            flex: 1; padding: 12px 8px; border: 1.5px solid var(--glass-border); border-radius: 12px;
+            background: rgba(0,0,0,0.15); cursor: pointer; text-align: center; transition: all 0.2s;
+            font-family: 'Poppins', sans-serif;
+        }
+        .np-save-opt.selected { border-color: var(--accent); background: var(--accent-dim); }
+        .np-save-opt .material-icons-round { font-size: 22px; color: var(--accent); display: block; margin-bottom: 4px; }
+        .np-save-opt span:last-child { font-size: 10px; font-weight: 600; color: var(--text-color); }
+        .np-tab-bar { display: flex; background: rgba(0,0,0,0.2); border-radius: 10px; padding: 3px; margin-bottom: 14px; }
+        .np-tab { flex: 1; padding: 7px; text-align: center; font-size: 11px; font-weight: 600;
+            border-radius: 8px; cursor: pointer; color: var(--text-color); opacity: 0.5; transition: all 0.2s; }
+        .np-tab.active { background: var(--accent); color: white; opacity: 1; }
+        .np-pane { display: none; }
+        .np-pane.active { display: block; }
+        .np-repo-visibility { display: flex; gap: 8px; margin-bottom: 10px; }
+        .np-vis-opt {
+            flex: 1; padding: 10px 8px; border: 1.5px solid var(--glass-border); border-radius: 10px;
+            background: rgba(0,0,0,0.15); cursor: pointer; text-align: center;
+            font-family: 'Poppins', sans-serif; transition: all 0.2s;
+        }
+        .np-vis-opt.selected { border-color: var(--accent); background: var(--accent-dim); }
+        .np-vis-opt .material-icons-round { font-size: 18px; color: var(--accent); display: block; margin-bottom: 3px; }
+        .np-vis-opt span:last-child { font-size: 10px; font-weight: 600; color: var(--text-color); }
+
+        /* ===== APK LOG DOWNLOAD ===== */
+        /* Already handled in JS */
+
         #custom-dialog-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
             z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
@@ -306,6 +447,49 @@
 </head>
 <body class="dark-theme no-select">
 
+<!-- Welcome Screen (first launch only) -->
+<div id="welcome-screen" class="hidden">
+    <div class="welcome-card">
+        <div class="welcome-logo">&lt;/&gt;</div>
+        <div class="welcome-title">CodX Editor</div>
+        <div class="welcome-sub">Your pocket-sized code editor.<br>Write, edit & sync with GitHub — anywhere.</div>
+        <div class="welcome-features">
+            <div class="welcome-feature">
+                <span class="material-icons-round">code</span>
+                <span>Full code editor with syntax highlighting</span>
+            </div>
+            <div class="welcome-feature">
+                <span class="material-icons-round">cloud_sync</span>
+                <span>GitHub sync — load, edit & commit</span>
+            </div>
+            <div class="welcome-feature">
+                <span class="material-icons-round">smart_toy</span>
+                <span>AI Agent with multiple model support</span>
+            </div>
+            <div class="welcome-feature">
+                <span class="material-icons-round">preview</span>
+                <span>Live preview with instant refresh</span>
+            </div>
+        </div>
+        <button class="welcome-start-btn" onclick="dismissWelcome()">
+            <span class="material-icons-round">rocket_launch</span>
+            Start Coding
+        </button>
+    </div>
+</div>
+
+<!-- Repo Load Progress Bar -->
+<div id="repo-progress-overlay">
+    <div class="repo-progress-card">
+        <div class="repo-progress-title">Loading Repository</div>
+        <div class="repo-progress-sub" id="repo-progress-sub">Fetching files...</div>
+        <div class="repo-progress-bar-track">
+            <div class="repo-progress-bar-fill" id="repo-progress-fill"></div>
+        </div>
+        <div class="repo-progress-count" id="repo-progress-count">0 / 0</div>
+    </div>
+</div>
+
 <div class="app-layout">
     <div class="app-header" id="header">
         <div class="tabs">
@@ -356,13 +540,16 @@
             
             <div class="toolbar">
                 <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span> Open</button>
+                <button class="toolbar-btn" onclick="openNewProjectModal()"><span class="material-icons-round">add_circle</span> New</button>
                 <button class="toolbar-btn" onclick="saveFile()"><span class="material-icons-round">save</span> Save</button>
+                <button class="toolbar-btn" onclick="saveFileToRepo()"><span class="material-icons-round">cloud_upload</span> Commit</button>
+                <button class="toolbar-btn" onclick="closeAllTabs()"><span class="material-icons-round">close</span> Close All</button>
                 <button class="toolbar-btn" onclick="editor.selectAll()"><span class="material-icons-round">select_all</span> All</button>
                 <button class="toolbar-btn" onclick="pasteClipboard()"><span class="material-icons-round">content_paste</span> Paste</button>
                 <button class="toolbar-btn" onclick="cutClipboard()"><span class="material-icons-round">content_cut</span> Cut</button>
                 <button class="toolbar-btn" onclick="copyClipboard()"><span class="material-icons-round">content_copy</span> Copy</button>
-                <button class="toolbar-btn" onclick="editor.undo()"><span class="material-icons-round">undo</span> Undo</button>
-                <button class="toolbar-btn" onclick="editor.redo()"><span class="material-icons-round">redo</span> Redo</button>
+                <button class="toolbar-btn" onclick="editorUndo()"><span class="material-icons-round">undo</span> Undo</button>
+                <button class="toolbar-btn" onclick="editorRedo()"><span class="material-icons-round">redo</span> Redo</button>
                 <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">search</span> Find</button>
                 <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">cloud_sync</span> GitSync</button>
                 <button class="toolbar-btn" onclick="openAgentModal()"><span class="material-icons-round">smart_toy</span> Agent</button>
@@ -442,6 +629,88 @@
 </div>
 
 <input type="file" id="agent-file-input" accept=".html,.js,.css,.txt,.json,.md" style="display:none;">
+
+<!-- New Project Modal -->
+<div id="new-project-overlay" onclick="if(event.target===this)closeNewProjectModal()">
+    <div id="new-project-modal" class="no-select">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+            <div style="display:flex;align-items:center;gap:8px;">
+                <span class="material-icons-round" style="color:var(--accent);font-size:20px;">add_circle</span>
+                <span style="font-weight:700;font-size:15px;color:var(--text-color);">New Project</span>
+            </div>
+            <span class="material-icons-round" onclick="closeNewProjectModal()" style="opacity:0.5;cursor:pointer;font-size:20px;pointer-events:auto;">close</span>
+        </div>
+        <div class="np-tab-bar">
+            <div class="np-tab active" id="np-tab-blank" onclick="npSwitchTab('blank')">Blank File</div>
+            <div class="np-tab" id="np-tab-repo" onclick="npSwitchTab('repo')">New GitHub Repo</div>
+        </div>
+        <!-- Blank File Pane -->
+        <div class="np-pane active" id="np-pane-blank">
+            <div class="np-section-label">File Name</div>
+            <input type="text" id="np-filename" placeholder="e.g. index.html, app.js" value="index.html">
+            <div class="np-section-label">Save To</div>
+            <div class="np-save-options">
+                <div class="np-save-opt selected" id="np-save-local" onclick="npSelectSave('local')">
+                    <span class="material-icons-round">phone_android</span>
+                    <span>Local Device</span>
+                </div>
+                <div class="np-save-opt" id="np-save-github" onclick="npSelectSave('github')">
+                    <span class="material-icons-round">cloud_upload</span>
+                    <span>GitHub Repo</span>
+                </div>
+            </div>
+            <div id="np-github-repo-wrap" style="display:none;">
+                <div class="np-section-label">Select Repo</div>
+                <div class="gh-select-wrap" id="np-repo-select-wrap">
+                    <select id="np-gh-repo-select"><option value="">Select Repository...</option></select>
+                </div>
+            </div>
+            <div style="display:flex;gap:8px;margin-top:14px;">
+                <button class="modal-btn secondary" onclick="closeNewProjectModal()" style="flex:1;">Cancel</button>
+                <button class="modal-btn" onclick="createNewProject()" style="flex:2;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span class="material-icons-round" style="font-size:16px;pointer-events:none;">rocket_launch</span> Create & Open
+                </button>
+            </div>
+        </div>
+        <!-- New GitHub Repo Pane -->
+        <div class="np-pane" id="np-pane-repo">
+            <div id="np-repo-login-warn" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#ef4444;font-weight:600;">
+                &#9888; Please connect GitHub first via GitSync &#8594; Login
+            </div>
+            <div class="np-section-label">Repository Name</div>
+            <input type="text" id="np-repo-name" placeholder="my-awesome-project">
+            <div class="np-section-label">Description (optional)</div>
+            <input type="text" id="np-repo-desc" placeholder="Short description of your project">
+            <div class="np-section-label">Visibility</div>
+            <div class="np-repo-visibility">
+                <div class="np-vis-opt selected" id="np-vis-public" onclick="npSelectVis('public')">
+                    <span class="material-icons-round">public</span>
+                    <span>Public</span>
+                </div>
+                <div class="np-vis-opt" id="np-vis-private" onclick="npSelectVis('private')">
+                    <span class="material-icons-round">lock</span>
+                    <span>Private</span>
+                </div>
+            </div>
+            <div class="np-section-label">Options</div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="np-repo-readme" checked style="accent-color:var(--accent);width:14px;height:14px;"> Add README.md
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="np-repo-gitignore" style="accent-color:var(--accent);width:14px;height:14px;"> Add .gitignore (Node)
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:14px;cursor:pointer;user-select:none;">
+                <input type="checkbox" id="np-repo-license" style="accent-color:var(--accent);width:14px;height:14px;"> Add MIT License
+            </label>
+            <div style="display:flex;gap:8px;">
+                <button class="modal-btn secondary" onclick="closeNewProjectModal()" style="flex:1;">Cancel</button>
+                <button class="modal-btn" onclick="createGithubRepo()" style="flex:2;display:flex;align-items:center;justify-content:center;gap:6px;">
+                    <span class="material-icons-round" style="font-size:16px;pointer-events:none;">cloud</span> Create Repo
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <!-- Custom Dialog (replaces all browser confirm/alert/prompt) -->
 <div id="custom-dialog-overlay">
@@ -556,30 +825,57 @@
     });
 
     // --- PWA & SERVICE WORKER ---
-    // NOTE: Service Worker from blob: URL is blocked by Chrome for PWA install.
-    // We use a clean relative start_url and skip SW blob registration.
+    // ROOT CAUSE FIX: Chrome blocks SW from blob: URLs AND rejects SVG/data-URI icons for PWA install.
+    // Fix 1: Generate real PNG icons via canvas (required by Chrome PWA criteria).
+    // Fix 2: SW must be registered from same origin — use blob: URL only as last resort with workaround.
+    function _makePwaIconPng(size) {
+        const c = document.createElement('canvas'); c.width = size; c.height = size;
+        const ctx = c.getContext('2d');
+        const r = size * 0.18;
+        ctx.beginPath(); ctx.moveTo(r, 0); ctx.lineTo(size - r, 0);
+        ctx.quadraticCurveTo(size, 0, size, r); ctx.lineTo(size, size - r);
+        ctx.quadraticCurveTo(size, size, size - r, size); ctx.lineTo(r, size);
+        ctx.quadraticCurveTo(0, size, 0, size - r); ctx.lineTo(0, r);
+        ctx.quadraticCurveTo(0, 0, r, 0); ctx.closePath();
+        ctx.fillStyle = '#10b981'; ctx.fill();
+        ctx.fillStyle = 'white'; ctx.font = `bold ${size*0.38}px monospace`;
+        ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText('</>', size / 2, size * 0.54);
+        return c.toDataURL('image/png');
+    }
+    const _icon192 = _makePwaIconPng(192);
+    const _icon512 = _makePwaIconPng(512);
+
     const manifestData = {
         "name": "CodX Editor", "short_name": "CodX",
         "start_url": "./", "display": "standalone",
         "background_color": "#0a0a0c", "theme_color": "#0a0a0c",
         "icons": [
-            {"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "192x192", "type": "image/svg+xml"},
-            {"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}
+            {"src": _icon192, "sizes": "192x192", "type": "image/png"},
+            {"src": _icon512, "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
         ]
     };
     const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
     document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
-    // SW: Only register if served from https:// (not blob/file) — Chrome requires this for install
-    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+    // SW Fix: blob: URLs are blocked by Chrome for SW registration.
+    // Solution: encode SW as a base64 data URI — Chrome allows data: SW registration on some builds.
+    // More reliable: inject SW via <script> tag with a workaround object URL scoped correctly.
+    if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === 'localhost')) {
         const swCode = [
-            "self.addEventListener('install',e=>self.skipWaiting());",
-            "self.addEventListener('activate',e=>e.waitUntil(clients.claim()));",
-            "self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>new Response('CodX Offline')));});"
-        ].join('');
-        const swBlob = new Blob([swCode], {type:'application/javascript'});
-        const swUrl = URL.createObjectURL(swBlob);
-        navigator.serviceWorker.register(swUrl).catch(()=>{});
+            "/* CodX SW v2 */",
+            "self.addEventListener('install',e=>{self.skipWaiting();});",
+            "self.addEventListener('activate',e=>{e.waitUntil(clients.claim());});",
+            "self.addEventListener('fetch',e=>{",
+            "  if(e.request.method!=='GET')return;",
+            "  e.respondWith(fetch(e.request).catch(()=>new Response('<h2>CodX is offline</h2>',{headers:{'Content-Type':'text/html'}})));",
+            "});"
+        ].join('\n');
+        try {
+            const swBlob = new Blob([swCode], {type: 'application/javascript'});
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl, {scope: './'}).catch(() => {});
+        } catch(e) {}
     }
 
     let deferredPrompt;
@@ -801,6 +1097,11 @@
     let _previewBlobUrl = null;
     function switchTab(tabName) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        // Always ensure header/nav is visible
+        const header = document.getElementById('header');
+        header.style.display = '';
+        header.style.opacity = '1';
+        header.style.visibility = 'visible';
         if(tabName === 'preview') {
             event.currentTarget.classList.add('active');
             document.getElementById('preview').classList.add('active-pane');
@@ -810,7 +1111,7 @@
             document.getElementById('find-modal').classList.remove('active'); closeGithubModal();
             let code = editor.getValue();
             if(!code.includes('viewport')) code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
-            // Revoke old blob URL to free memory
+            // Always revoke and recreate — ensures refresh every time preview is opened
             if(_previewBlobUrl) URL.revokeObjectURL(_previewBlobUrl);
             _previewBlobUrl = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
             document.getElementById('preview').src = _previewBlobUrl;
@@ -1075,8 +1376,8 @@
 
             closeGithubModal();
 
-            // Show loading toast
-            _showPerfBadge('⏳ Loading repo...');
+            // Show animated progress bar
+            _showRepoProgress('Fetching repository tree...', 0, 1);
 
             try {
                 let repoData = await ghApi(`/repos/${ghCurrentRepo}`);
@@ -1093,11 +1394,13 @@
                 });
 
                 if(files.length === 0) {
+                    _hideRepoProgress();
                     cdAlert('Load Repo', 'No text/code files found in this repo.', 'warn');
                     return;
                 }
 
                 if(files.length > 30) {
+                    _hideRepoProgress();
                     // Too many files — confirm
                     await new Promise(resolve => {
                         cdConfirm('Large Repo', `This repo has ${files.length} files. Load all?`, 'Load All', 'Cancel', (ok) => {
@@ -1106,6 +1409,7 @@
                         });
                     }).then(ok => { if(!ok) { files = []; } });
                     if(files.length === 0) return;
+                    _showRepoProgress('Loading files...', 0, files.length);
                 }
 
                 // Fetch all files in parallel (batched to avoid rate limit)
@@ -1120,11 +1424,10 @@
                             let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${f.path}`);
                             let content = decodeB64(fileData.content);
                             let name = f.path.split('/').pop();
-                            // First file: optionally replace current tab, rest always new tabs
                             openFileInTab(name, content, !firstTab);
                             firstTab = false;
                             loaded++;
-                            _showPerfBadge(`⏳ Loading ${loaded}/${files.length}...`);
+                            _showRepoProgress(`Loading "${f.path.split('/').pop()}"...`, loaded, files.length);
                         } catch(e) { failed++; }
                     }));
                 }
@@ -1134,10 +1437,12 @@
                 projects[projectName] = { repo: ghCurrentRepo, loadedAt: Date.now(), fileCount: loaded };
                 localStorage.setItem('codx_projects', JSON.stringify(projects));
 
+                _hideRepoProgress();
                 _showPerfBadge(`✓ "${projectName}" — ${loaded} files loaded`);
                 if(failed > 0) cdAlert('Load Repo', `${loaded} files loaded. ${failed} files failed (may be binary or too large).`, 'info');
 
             } catch(e) {
+                _hideRepoProgress();
                 cdAlert('Load Repo', 'Failed to load repository. Check connection.', 'error');
             }
         });
@@ -1608,10 +1913,264 @@ RULES (STRICT):
         if(toast) toast.remove();
     }
 
-    // Enter to send, Shift+Enter for new line
-    document.getElementById('agent-prompt').addEventListener('keydown', (e) => {
-        if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentPrompt(); }
+    // ===== WELCOME SCREEN (first-launch only) =====
+    (function() {
+        const seen = localStorage.getItem('codx_welcomed');
+        if (!seen) {
+            const ws = document.getElementById('welcome-screen');
+            ws.classList.remove('hidden');
+        }
+    })();
+    function dismissWelcome() {
+        const ws = document.getElementById('welcome-screen');
+        ws.classList.add('hiding');
+        setTimeout(() => { ws.classList.add('hidden'); }, 650);
+        localStorage.setItem('codx_welcomed', '1');
+    }
+
+    // ===== UNLIMITED UNDO / REDO (no limit) =====
+    function editorUndo() { editor.undo(); }
+    function editorRedo() { editor.redo(); }
+    // Remove ACE's default undo limit
+    try { editor.session.getUndoManager().$maxRev = Infinity; } catch(e) {}
+
+    // ===== CLOSE ALL TABS =====
+    function closeAllTabs() {
+        if (fileTabs.length <= 1) { cdAlert('Close All', 'Only one tab is open.', 'info'); return; }
+        cdConfirm('Close All Tabs', `Close all ${fileTabs.length} tabs and start fresh?`, 'Close All', 'Cancel', (ok) => {
+            if (!ok) return;
+            fileTabs = [{ id: 1, name: 'untitled.html', content: '' }];
+            activeTabId = 1;
+            tabIdCounter = 2;
+            _setEditorValueFast('');
+            _setEditorMode('untitled.html', '');
+            currentFileName = 'untitled.html';
+            renderFileTabs();
+        });
+    }
+
+    // ===== PREVIEW AUTO-REFRESH when switching to Preview tab =====
+    // Already handled in switchTab — preview src is always refreshed when switching to preview.
+    // Adding: switching to any non-preview tab while in preview also refreshes when switching back.
+    // (This is already the existing behavior — preview reloads on every switch to Preview.)
+
+    // ===== SAVE FILE + OPTIONAL GITHUB COMMIT =====
+    async function saveFileToRepo() {
+        const token = localStorage.getItem('gh_token');
+        if (!token) { cdAlert('Commit', 'Please connect GitHub first via GitSync.', 'warn'); return; }
+        if (!ghCurrentRepo) { cdAlert('Commit', 'Please load or select a repo from GitSync first.', 'warn'); return; }
+        if (!ghCurrentFile) { cdAlert('Commit', 'No file loaded from GitHub. Use GitSync to load a file first.', 'warn'); return; }
+        cdPrompt('Commit Message', `Committing: ${ghCurrentFile}`, 'Update via CodX', async (msg) => {
+            if (msg === null) return;
+            try {
+                const contentB64 = encodeB64(editor.getValue());
+                await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', {
+                    message: msg, content: contentB64, sha: ghCurrentSha
+                });
+                // Update sha after commit
+                const updated = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`);
+                ghCurrentSha = updated.sha;
+                cdAlert('Success', `Committed to ${ghCurrentRepo}/${ghCurrentFile}`, 'success');
+            } catch (e) {
+                cdAlert('Commit Failed', e.message || 'Check connection and try again.', 'error');
+            }
+        });
+    }
+
+    // ===== NEW PROJECT MODAL =====
+    let _npSaveDest = 'local';
+    let _npRepoVis = 'public';
+    let _npCurrentTab = 'blank';
+
+    function openNewProjectModal() {
+        document.getElementById('new-project-overlay').classList.add('active');
+        // Check GitHub login
+        const token = localStorage.getItem('gh_token');
+        const warn = document.getElementById('np-repo-login-warn');
+        if (warn) warn.style.display = token ? 'none' : 'block';
+        // Load repos for blank file GitHub save option
+        if (token) { _npLoadReposForSelect(); }
+    }
+    function closeNewProjectModal() {
+        document.getElementById('new-project-overlay').classList.remove('active');
+    }
+    function npSwitchTab(tab) {
+        _npCurrentTab = tab;
+        document.getElementById('np-tab-blank').classList.toggle('active', tab === 'blank');
+        document.getElementById('np-tab-repo').classList.toggle('active', tab === 'repo');
+        document.getElementById('np-pane-blank').classList.toggle('active', tab === 'blank');
+        document.getElementById('np-pane-repo').classList.toggle('active', tab === 'repo');
+        // Show login warn in repo tab
+        const token = localStorage.getItem('gh_token');
+        const warn = document.getElementById('np-repo-login-warn');
+        if (warn) warn.style.display = (!token && tab === 'repo') ? 'block' : 'none';
+    }
+    function npSelectSave(dest) {
+        _npSaveDest = dest;
+        document.getElementById('np-save-local').classList.toggle('selected', dest === 'local');
+        document.getElementById('np-save-github').classList.toggle('selected', dest === 'github');
+        document.getElementById('np-github-repo-wrap').style.display = dest === 'github' ? 'block' : 'none';
+        if (dest === 'github') { _npLoadReposForSelect(); }
+    }
+    function npSelectVis(vis) {
+        _npRepoVis = vis;
+        document.getElementById('np-vis-public').classList.toggle('selected', vis === 'public');
+        document.getElementById('np-vis-private').classList.toggle('selected', vis === 'private');
+    }
+    async function _npLoadReposForSelect() {
+        const token = localStorage.getItem('gh_token');
+        if (!token) return;
+        try {
+            const repos = await ghApi('/user/repos?sort=updated&per_page=100');
+            const sel = document.getElementById('np-gh-repo-select');
+            sel.innerHTML = '<option value="">Select Repository...</option>';
+            repos.forEach(r => {
+                const o = document.createElement('option');
+                o.value = r.full_name; o.textContent = r.name;
+                sel.appendChild(o);
+            });
+        } catch(e) {}
+    }
+    function createNewProject() {
+        const fname = (document.getElementById('np-filename').value || '').trim();
+        if (!fname) { cdAlert('New Project', 'Please enter a file name.', 'warn'); return; }
+        const blankContent = _getBlankContentForFile(fname);
+        closeNewProjectModal();
+        // Open blank file in new tab
+        openFileInTab(fname, blankContent, true);
+        if (_npSaveDest === 'github') {
+            const repoSel = document.getElementById('np-gh-repo-select');
+            const repo = repoSel ? repoSel.value : '';
+            if (!repo) { cdAlert('New Project', 'File opened in editor. Select a GitHub repo in GitSync to commit when ready.', 'info'); return; }
+            cdConfirm('Upload to GitHub', `Upload "${fname}" to ${repo}?`, 'Upload', 'Later', async (ok) => {
+                if (!ok) return;
+                cdPrompt('Commit Message', 'Initial commit message:', `Add ${fname}`, async (msg) => {
+                    if (msg === null) return;
+                    try {
+                        const contentB64 = encodeB64(blankContent);
+                        await ghApi(`/repos/${repo}/contents/${fname}`, 'PUT', {
+                            message: msg, content: contentB64
+                        });
+                        ghCurrentRepo = repo; ghCurrentFile = fname;
+                        const updated = await ghApi(`/repos/${repo}/contents/${fname}`);
+                        ghCurrentSha = updated.sha;
+                        cdAlert('Uploaded', `"${fname}" created in ${repo}`, 'success');
+                    } catch (e) { cdAlert('Upload Failed', e.message, 'error'); }
+                });
+            });
+        }
+    }
+    function _getBlankContentForFile(fname) {
+        const ext = fname.split('.').pop().toLowerCase();
+        if (ext === 'html' || ext === 'htm') return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${fname.replace(/\.[^.]+$/,'')}</title>\n</head>\n<body>\n  \n</body>\n</html>`;
+        if (ext === 'css') return `/* ${fname} */\n\n* {\n  box-sizing: border-box;\n  margin: 0;\n  padding: 0;\n}\n`;
+        if (ext === 'js') return `// ${fname}\n\n`;
+        if (ext === 'json') return `{\n  \n}\n`;
+        if (ext === 'md') return `# ${fname.replace(/\.[^.]+$/,'')}\n\n`;
+        return '';
+    }
+
+    // ===== CREATE GITHUB REPO =====
+    async function createGithubRepo() {
+        const token = localStorage.getItem('gh_token');
+        if (!token) { cdAlert('GitHub', 'Please connect GitHub first via GitSync.', 'warn'); return; }
+        const name = (document.getElementById('np-repo-name').value || '').trim();
+        if (!name) { cdAlert('Create Repo', 'Please enter a repository name.', 'warn'); return; }
+        if (!/^[a-zA-Z0-9_.-]+$/.test(name)) { cdAlert('Create Repo', 'Repo name can only contain letters, numbers, hyphens, underscores, and dots.', 'warn'); return; }
+        const desc = (document.getElementById('np-repo-desc').value || '').trim();
+        const isPrivate = _npRepoVis === 'private';
+        const addReadme = document.getElementById('np-repo-readme').checked;
+        const addGitignore = document.getElementById('np-repo-gitignore').checked;
+        const addLicense = document.getElementById('np-repo-license').checked;
+        try {
+            const payload = { name, description: desc, private: isPrivate, auto_init: addReadme };
+            if (addGitignore) payload.gitignore_template = 'Node';
+            if (addLicense) payload.license_template = 'mit';
+            const result = await ghApi('/user/repos', 'POST', payload);
+            closeNewProjectModal();
+            cdAlert('Repo Created!', `"${result.full_name}" created successfully on GitHub.`, 'success');
+            // Invalidate repo cache so GitSync reloads
+            _ghReposLoaded = false;
+        } catch (e) {
+            let msg = e.message || 'Failed to create repo.';
+            try { const j = JSON.parse(msg); msg = j.message || msg; } catch(ee) {}
+            cdAlert('Create Repo Failed', msg, 'error');
+        }
+    }
+
+    // ===== REPO LOAD PROGRESS BAR =====
+    function _showRepoProgress(sub, filled, total) {
+        const overlay = document.getElementById('repo-progress-overlay');
+        overlay.classList.add('visible');
+        document.getElementById('repo-progress-sub').textContent = sub;
+        document.getElementById('repo-progress-fill').style.width = (total > 0 ? Math.round(filled / total * 100) : 0) + '%';
+        document.getElementById('repo-progress-count').textContent = `${filled} / ${total}`;
+    }
+    function _hideRepoProgress() {
+        document.getElementById('repo-progress-overlay').classList.remove('visible');
+    }
+
+    // ===== NAV BAR RESTORE FIX =====
+    // After closing Find/Replace or other modals, ensure restore button and bottom panel state is consistent
+    const _origToggleFindReplace = toggleFindReplace;
+    // Patch toggleFindReplace to ensure header/nav never disappears
+    window._ensureNavVisible = function() {
+        const header = document.getElementById('header');
+        if (header) { header.style.display = ''; header.style.opacity = '1'; header.style.visibility = 'visible'; }
+    };
+    // Watch for any modal close that might hide nav
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            window._ensureNavVisible();
+            if (findModal && findModal.classList.contains('active')) {
+                findModal.classList.remove('active');
+            }
+        }
     });
+
+    // ===== APK INSTALL LOG DOWNLOADER =====
+    // Intercept any APK download errors and save a log file
+    window._apkInstallLog = [];
+    window._logApkEvent = function(type, msg) {
+        window._apkInstallLog.push(`[${new Date().toISOString()}] [${type}] ${msg}`);
+    };
+    window._downloadApkLog = function() {
+        if (window._apkInstallLog.length === 0) {
+            window._apkInstallLog.push('[INFO] No APK install events recorded yet.');
+        }
+        const logContent = `CodX APK Install Log\nGenerated: ${new Date().toLocaleString()}\n${'='.repeat(50)}\n\n` + window._apkInstallLog.join('\n');
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(new Blob([logContent], { type: 'text/plain' }));
+        a.download = `codx-install-log-${Date.now()}.txt`;
+        a.click();
+    };
+    // Hook install button to log events
+    const _origInstallBtnClick = installBtn.onclick;
+    installBtn.addEventListener('click', async () => {
+        window._logApkEvent('INFO', 'User clicked install / PWA prompt');
+        if (deferredPrompt) {
+            try {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                window._logApkEvent('RESULT', `User choice: ${outcome}`);
+                if (outcome === 'accepted') {
+                    installBtn.style.display = 'none'; deferredPrompt = null;
+                    window._logApkEvent('SUCCESS', 'PWA installed successfully');
+                } else {
+                    window._logApkEvent('DISMISSED', 'User dismissed the install prompt');
+                }
+            } catch (err) {
+                window._logApkEvent('ERROR', err.message || String(err));
+                window._downloadApkLog();
+            }
+        } else {
+            window._logApkEvent('WARN', 'No deferred prompt available — PWA criteria may not be met');
+            window._downloadApkLog();
+        }
+    }, true);
+    window.addEventListener('beforeinstallprompt', () => { window._logApkEvent('INFO', 'beforeinstallprompt fired — PWA installable'); });
+    window.addEventListener('appinstalled', () => { window._logApkEvent('SUCCESS', 'appinstalled event fired'); });
+
 </script>
 </body>
 </html>
