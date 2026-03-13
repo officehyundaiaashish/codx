@@ -460,7 +460,7 @@
             border-bottom: 1px solid var(--glass-border);
             background: var(--glass-bg);
         }
-        #agent-bar.visible { display: flex; }
+        #agent-bar.connected { display: flex; }
         #agent-compact-row {
             display: flex; align-items: center; gap: 6px;
             padding: 6px 10px;
@@ -496,13 +496,41 @@
         .agent-dots span:nth-child(3) { animation-delay: 0.4s; }
         @keyframes agentBounce { 0%,80%,100%{ transform:translateY(0); opacity:0.6; } 40%{ transform:translateY(-4px); opacity:1; } }
         @keyframes agentBubbleIn { from { opacity:0; transform:translateY(6px) scale(0.98); } to { opacity:1; transform:translateY(0) scale(1); } }
-        #agent-file-selector { padding: 0 10px 5px; }
-        #agent-file-select {
-            width:100%; padding:5px 8px; border-radius:7px;
-            background:rgba(0,0,0,0.25); border:1px solid var(--glass-border);
-            color:var(--text-color); font-family:Poppins,sans-serif; font-size:10px;
-            font-weight:600; appearance:none; -webkit-appearance:none; cursor:pointer;
+        #agent-file-selector { border-bottom: 1px solid var(--glass-border); }
+        #agent-tab-picker::-webkit-scrollbar { display: none; }
+        .atp-pill {
+            display: flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 600;
+            white-space: nowrap; cursor: pointer; flex-shrink: 0; pointer-events: auto;
+            border: 1px solid var(--glass-border); background: rgba(128,128,128,0.08);
+            color: var(--text-color); opacity: 0.6; transition: all 0.15s;
+            -webkit-tap-highlight-color: transparent;
         }
+        .atp-pill.active { background: var(--accent-dim); border-color: var(--accent); color: var(--accent); opacity: 1; }
+        .atp-pill:active { transform: scale(0.95); }
+        .atp-pill .material-icons-round { font-size: 11px; pointer-events: none; }
+        .atp-pill-close { font-size: 11px; opacity: 0.4; pointer-events: auto; margin-left: 1px; transition: opacity 0.15s; }
+        .atp-pill-close:active { opacity: 1; }
+        /* Custom dropdown list */
+        #agent-tab-dropdown {
+            position: fixed; z-index: 500;
+            background: var(--glass-bg); border: 1px solid var(--glass-border);
+            border-radius: 14px; padding: 6px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+            min-width: 200px; max-width: 280px;
+            animation: agentBubbleIn 0.18s cubic-bezier(0.34,1.2,0.64,1) both;
+        }
+        .atd-item {
+            display: flex; align-items: center; gap: 8px;
+            padding: 9px 12px; border-radius: 9px; cursor: pointer;
+            font-size: 12px; font-weight: 600; color: var(--text-color);
+            transition: background 0.12s; pointer-events: auto;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .atd-item:active { background: var(--accent-dim); color: var(--accent); }
+        .atd-item.active { background: var(--accent-dim); color: var(--accent); }
+        .atd-item .material-icons-round { font-size: 15px; pointer-events: none; flex-shrink: 0; }
+        .atd-sep { height: 1px; background: var(--glass-border); margin: 4px 0; }
     </style>
 </head>
 <body class="dark-theme no-select">
@@ -613,9 +641,9 @@
             <!-- AGENT BAR — compact strip, sits at top of nav panel -->
             <div id="agent-bar">
                 <div id="agent-file-selector" style="display:none;">
-                    <div style="display:flex;align-items:center;gap:6px;">
-                        <select id="agent-file-select" onchange="agentSelectFile(this.value)" style="flex:1;"></select>
-                        <button id="agent-restore-btn" onclick="showAgentRestoreMenu()" title="Restore from history" style="width:28px;height:28px;border-radius:7px;border:none;background:rgba(128,128,128,0.12);color:var(--text-color);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;pointer-events:auto;">
+                    <div style="display:flex;align-items:center;gap:0;">
+                        <div id="agent-tab-picker" style="flex:1;min-width:0;overflow-x:auto;display:flex;align-items:center;gap:4px;padding:4px 10px 4px;scrollbar-width:none;-webkit-overflow-scrolling:touch;"></div>
+                        <button id="agent-restore-btn" onclick="showAgentRestoreMenu()" title="Restore" style="width:30px;height:30px;border-radius:8px;border:none;background:rgba(128,128,128,0.1);color:var(--text-color);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;pointer-events:auto;margin-right:8px;">
                             <span class="material-icons-round" style="font-size:15px;pointer-events:none;">history</span>
                         </button>
                     </div>
@@ -630,7 +658,6 @@
                     <button id="agent-send-btn" onclick="sendAgentPrompt()">
                         <span class="material-icons-round">send</span>
                     </button>
-                    <span class="material-icons-round" id="agent-close-btn" onclick="closeAgentBar()">close</span>
                 </div>
                 <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
             </div>
@@ -1502,6 +1529,8 @@
     function renderFileTabs() {
         const bar = document.getElementById('file-tabs-bar');
         bar.innerHTML = '';
+        // Re-add agent nav tab first if connected
+        if(_activeAgent()) _addAgentNavTab();
         fileTabs.forEach(tab => {
             const el = document.createElement('div');
             el.className = 'file-tab' + (tab.id === activeTabId ? ' active' : '');
@@ -1509,6 +1538,8 @@
             el.onclick = (e) => { if(!e.target.classList.contains('ft-close')) switchFileTab(tab.id); };
             bar.appendChild(el);
         });
+        // Sync agent pills
+        if(document.getElementById('agent-tab-picker')) _renderAgentPills();
     }
 
     function switchFileTab(id) {
@@ -1569,6 +1600,8 @@
     }
 
     renderFileTabs();
+    // Auto-show agent bar if already connected from previous session
+    if(_activeAgent()) { openAgentBar(); }
     let currentFileName = "index.html";
     function loadFile(event) {
         const file = event.target.files[0]; if (!file) return;
@@ -2176,6 +2209,8 @@
         document.getElementById('agent-detect-badge').style.display = 'none';
         document.getElementById('agent-api-key').style.borderColor = '';
         _renderConnectedAgents();
+        closeAgentModal();
+        openAgentBar();
     }
 
     function _renderConnectedAgents() {
@@ -2263,28 +2298,136 @@
 
     function agentSelectFile(val) {
         _agentTargetTabId = val === 'all' ? 'all' : (parseInt(val) || null);
+        _renderAgentPills();
+    }
+
+    function _renderAgentPills() {
+        const picker = document.getElementById('agent-tab-picker');
+        if(!picker) return;
+        picker.innerHTML = '';
+
+        // Custom tab pills — all open tabs
+        fileTabs.forEach(t => {
+            const pill = document.createElement('div');
+            pill.className = 'atp-pill' + (_agentTargetTabId === t.id ? ' active' : '');
+            const ext = t.name.split('.').pop().toLowerCase();
+            const iconMap = { html:'html', js:'javascript', css:'palette', json:'data_object', md:'description', ts:'code' };
+            const icon = iconMap[ext] || 'insert_drive_file';
+            pill.innerHTML = `<span class="material-icons-round">${icon}</span>${t.name}`;
+            pill.onclick = () => { agentSelectFile(t.id); };
+            picker.appendChild(pill);
+        });
+
+        // All Files pill
+        if(fileTabs.length > 1) {
+            const allPill = document.createElement('div');
+            allPill.className = 'atp-pill' + (_agentTargetTabId === 'all' ? ' active' : '');
+            allPill.innerHTML = `<span class="material-icons-round">bolt</span>All Files`;
+            allPill.onclick = () => { agentSelectFile('all'); };
+            picker.appendChild(allPill);
+        }
+
+        // + Add Tab button — opens dropdown
+        const addBtn = document.createElement('div');
+        addBtn.className = 'atp-pill';
+        addBtn.style.cssText += 'border-style:dashed;';
+        addBtn.innerHTML = `<span class="material-icons-round">add</span>New Tab`;
+        addBtn.onclick = (e) => { e.stopPropagation(); _showAddTabDropdown(addBtn); };
+        picker.appendChild(addBtn);
+
+        // Scroll active pill into view
+        const active = picker.querySelector('.atp-pill.active');
+        if(active) active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' });
+    }
+
+    function _showAddTabDropdown(anchor) {
+        // Close if already open
+        document.getElementById('agent-tab-dropdown')?.remove();
+        document.removeEventListener('click', _closeTabDropdown);
+
+        const dropdown = document.createElement('div');
+        dropdown.id = 'agent-tab-dropdown';
+
+        const rect = anchor.getBoundingClientRect();
+        dropdown.style.top = (rect.bottom + 6) + 'px';
+        dropdown.style.left = Math.max(8, rect.left - 40) + 'px';
+
+        // New blank file options
+        const templates = [
+            { icon: 'html', label: 'HTML file', name: 'untitled.html' },
+            { icon: 'palette', label: 'CSS file', name: 'untitled.css' },
+            { icon: 'javascript', label: 'JS file', name: 'untitled.js' },
+            { icon: 'data_object', label: 'JSON file', name: 'untitled.json' },
+            { icon: 'description', label: 'Markdown file', name: 'untitled.md' },
+            { icon: 'text_snippet', label: 'Text file', name: 'untitled.txt' },
+        ];
+
+        const header = document.createElement('div');
+        header.style.cssText = 'font-size:9px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;padding:4px 12px 2px;opacity:0.8;';
+        header.textContent = 'Add Tab';
+        dropdown.appendChild(header);
+
+        templates.forEach(tmpl => {
+            const item = document.createElement('div');
+            item.className = 'atd-item';
+            item.innerHTML = `<span class="material-icons-round">${tmpl.icon}</span>${tmpl.label}`;
+            item.onclick = (e) => {
+                e.stopPropagation();
+                dropdown.remove();
+                document.removeEventListener('click', _closeTabDropdown);
+                // Ask for name then create
+                cdPrompt('New Tab', 'File name:', tmpl.name, (name) => {
+                    if(!name) return;
+                    const content = _getBlankContentForFile(name);
+                    openFileInTab(name, content, true);
+                    _updateAgentFileSelector();
+                    // Auto-select the new tab
+                    const newTab = fileTabs[fileTabs.length - 1];
+                    if(newTab) agentSelectFile(newTab.id);
+                });
+            };
+            dropdown.appendChild(item);
+        });
+
+        // Separator + custom name option
+        const sep = document.createElement('div'); sep.className = 'atd-sep';
+        dropdown.appendChild(sep);
+
+        const custom = document.createElement('div');
+        custom.className = 'atd-item';
+        custom.innerHTML = `<span class="material-icons-round">edit</span>Custom name...`;
+        custom.onclick = (e) => {
+            e.stopPropagation();
+            dropdown.remove();
+            document.removeEventListener('click', _closeTabDropdown);
+            cdPrompt('New Tab', 'File name (e.g. app.js):', 'untitled.html', (name) => {
+                if(!name) return;
+                openFileInTab(name, _getBlankContentForFile(name), true);
+                _updateAgentFileSelector();
+                const newTab = fileTabs[fileTabs.length - 1];
+                if(newTab) agentSelectFile(newTab.id);
+            });
+        };
+        dropdown.appendChild(custom);
+
+        document.body.appendChild(dropdown);
+        setTimeout(() => document.addEventListener('click', _closeTabDropdown), 10);
+    }
+
+    function _closeTabDropdown() {
+        document.getElementById('agent-tab-dropdown')?.remove();
+        document.removeEventListener('click', _closeTabDropdown);
     }
 
     function _updateAgentFileSelector() {
-        const sel = document.getElementById('agent-file-select');
         const wrap = document.getElementById('agent-file-selector');
-        if(!sel || !wrap) return;
+        if(!wrap) return;
         wrap.style.display = 'block';
-        sel.innerHTML = '';
-        fileTabs.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t.id;
-            opt.textContent = t.name;
-            if(t.id === activeTabId) opt.selected = true;
-            sel.appendChild(opt);
-        });
-        if(fileTabs.length > 1) {
-            const allOpt = document.createElement('option');
-            allOpt.value = 'all';
-            allOpt.textContent = '⚡ All Files (Project Mode)';
-            sel.appendChild(allOpt);
+        // Default to active tab
+        if(!_agentTargetTabId || (_agentTargetTabId !== 'all' && !fileTabs.find(t => t.id === _agentTargetTabId))) {
+            _agentTargetTabId = activeTabId;
         }
-        _agentTargetTabId = activeTabId;
+        _renderAgentPills();
     }
 
     function showAgentRestoreMenu() {
@@ -2327,29 +2470,35 @@
     }
 
     function openAgentBar() {
-        closeAgentModal();
         if(!_activeAgent()) { openAgentModal(); return; }
-        const bar = document.getElementById('agent-bar');
-        bar.classList.add('visible');
+        document.getElementById('agent-bar').classList.add('connected');
         _updateAgentBarLabel();
         _updateAgentFileSelector();
-        _expandNav();
         _addAgentNavTab();
+        _pingAgentModel();
         setTimeout(() => document.getElementById('agent-prompt').focus(), 250);
     }
 
     function _addAgentNavTab() {
         const bar = document.getElementById('file-tabs-bar');
-        if(document.getElementById('agent-nav-tab')) return;
+        if(document.getElementById('agent-nav-tab')) {
+            // Update label if already exists
+            const lbl = document.querySelector('#agent-nav-tab .agent-nav-label');
+            if(lbl) lbl.textContent = _activeAgent()?.providerName||'AI';
+            return;
+        }
         const tab = document.createElement('div');
         tab.id = 'agent-nav-tab';
         tab.className = 'file-tab';
-        tab.style.cssText = 'color:var(--accent);border-bottom-color:var(--accent);opacity:1;gap:4px;';
-        tab.innerHTML = `<span class="material-icons-round" style="font-size:14px;pointer-events:none">smart_toy</span><span style="pointer-events:none">${_activeAgent()?.providerName||'AI'}</span><span id="agent-nav-status" style="width:7px;height:7px;border-radius:50%;background:#6b7280;display:inline-block;margin-left:2px;flex-shrink:0;" title="Checking..."></span><span class="material-icons-round ft-close" onclick="closeAgentBar();_removeAgentNavTab();" style="font-size:13px;opacity:0.5;pointer-events:auto;">close</span>`;
-        tab.onclick = (e) => { if(!e.target.classList.contains('ft-close')) openAgentBar(); };
-        bar.appendChild(tab);
+        tab.style.cssText = 'color:var(--accent);border-bottom-color:var(--accent);opacity:1;gap:4px;cursor:pointer;';
+        tab.innerHTML = `<span class="material-icons-round" style="font-size:13px;pointer-events:none">smart_toy</span><span class="agent-nav-label" style="pointer-events:none;font-size:11px;">${_activeAgent()?.providerName||'AI'}</span><span id="agent-nav-status" style="width:6px;height:6px;border-radius:50%;background:#10b981;display:inline-block;margin-left:1px;flex-shrink:0;"></span>`;
+        tab.onclick = () => {
+            _expandNav();
+            document.getElementById('agent-prompt').focus();
+        };
+        bar.insertBefore(tab, bar.firstChild); // agent tab always first
     }
-    function _removeAgentNavTab() { const t = document.getElementById('agent-nav-tab'); if(t) t.remove(); }
+    function _removeAgentNavTab() { document.getElementById('agent-nav-tab')?.remove(); }
 
     async function _pingAgentModel() {
         const dot = document.getElementById('agent-nav-status');
@@ -2358,7 +2507,7 @@
         if(barDot) barDot.style.background = '#10b981';
     }
     function closeAgentBar() {
-        document.getElementById('agent-bar').classList.remove('visible');
+        document.getElementById('agent-bar').classList.remove('connected');
         _cancelPendingEdits();
         _removeAgentNavTab();
     }
@@ -2557,28 +2706,82 @@ No markdown.`;
     }
 
     // Show split file review panel — each file with open-in-tab + download
+    async function _callAgentAPI(systemPrompt, userMsg) {
+        const cfg = _activeAgent();
+        if(!cfg) throw new Error('No agent connected.');
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 45000);
+        try {
+            let res, d;
+            if(cfg.provider === 'anthropic') {
+                res = await fetch(cfg.url, { method:'POST', signal:controller.signal,
+                    headers:{'Content-Type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01'},
+                    body:JSON.stringify({ model:cfg.model, max_tokens:3000, system:systemPrompt, messages:[{role:'user',content:userMsg}] }) });
+                d = await res.json();
+                if(!res.ok) throw new Error(d.error?.message||`HTTP ${res.status}`);
+                return d.content[0].text.trim();
+            } else if(cfg.provider === 'gemini') {
+                res = await fetch(cfg.url+'?key='+cfg.key, { method:'POST', signal:controller.signal,
+                    headers:{'Content-Type':'application/json'},
+                    body:JSON.stringify({ contents:[{parts:[{text:systemPrompt+'\n\n'+userMsg}]}], generationConfig:{maxOutputTokens:3000,temperature:0.2} }) });
+                d = await res.json();
+                if(!res.ok) throw new Error(d.error?.message||`HTTP ${res.status}`);
+                if(!d.candidates?.[0]) throw new Error('Gemini returned no candidates.');
+                return (d.candidates[0].content?.parts?.[0]?.text||'').trim();
+            } else {
+                // OpenAI-compatible: Groq, OpenRouter, OpenAI
+                const headers = {'Content-Type':'application/json','Authorization':'Bearer '+cfg.key};
+                if(cfg.provider==='openrouter') { headers['HTTP-Referer']='https://codx.app'; headers['X-Title']='CodX'; }
+                res = await fetch(cfg.url, { method:'POST', signal:controller.signal, headers,
+                    body:JSON.stringify({ model:cfg.model, max_tokens:3000, messages:[{role:'system',content:systemPrompt},{role:'user',content:userMsg}] }) });
+                d = await res.json();
+                if(!res.ok) throw new Error(d.error?.message||`HTTP ${res.status}`);
+                return d.choices[0].message.content.trim();
+            }
+        } catch(e) {
+            if(e.name==='AbortError') throw new Error('Request timed out. Check internet.');
+            throw e;
+        } finally { clearTimeout(timeoutId); }
+    }
+
     function _showAgentChatReply(question, reply) {
         const bar = document.getElementById('agent-bar');
         const inputRow = document.getElementById('agent-compact-row');
-        // Remove old chat replies older than 3 — keep UI clean
-        const old = bar.querySelectorAll('.agent-chat-bubble');
-        if(old.length >= 3) old[0].remove();
+        // Keep max 4 chat bubbles
+        const existing = bar.querySelectorAll('.agent-chat-bubble');
+        if(existing.length >= 4) existing[0].remove();
 
-        const bubble = document.createElement('div');
-        bubble.className = 'agent-chat-bubble';
-        bubble.style.cssText = 'margin:5px 10px;border-radius:12px;background:rgba(255,255,255,0.04);border:1px solid var(--glass-border);overflow:hidden;animation:agentBubbleIn 0.2s ease both;';
-        bubble.innerHTML = `
-            <div style="padding:8px 10px 4px;display:flex;justify-content:space-between;align-items:center;">
-                <div style="font-size:10px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:4px;">
-                    <span class="material-icons-round" style="font-size:12px;">smart_toy</span>${_activeAgent()?.providerName||'AI'}
-                </div>
-                <span class="material-icons-round" style="font-size:14px;opacity:0.3;cursor:pointer;pointer-events:auto;" onclick="this.closest('.agent-chat-bubble').remove()">close</span>
-            </div>
-            <div style="padding:0 10px 4px;font-size:10px;color:var(--text-color);opacity:0.45;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${question.slice(0,60)}${question.length>60?'…':''}</div>
-            <div style="padding:4px 10px 10px;font-size:12px;color:var(--text-color);line-height:1.6;white-space:pre-wrap;word-break:break-word;max-height:200px;overflow-y:auto;">${reply.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>
-        `;
-        bar.insertBefore(bubble, inputRow);
-        bubble.querySelector('div:last-child').scrollTop = 0;
+        const wrap = document.createElement('div');
+        wrap.className = 'agent-chat-bubble';
+        wrap.style.cssText = 'margin:4px 8px 0;animation:agentBubbleIn 0.22s cubic-bezier(0.34,1.2,0.64,1) both;';
+
+        // User message
+        const userBubble = document.createElement('div');
+        userBubble.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:4px;';
+        userBubble.innerHTML = `<div style="max-width:80%;background:var(--accent);color:white;border-radius:14px 14px 4px 14px;padding:7px 11px;font-size:11px;font-weight:500;line-height:1.5;word-break:break-word;">${question.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</div>`;
+
+        // AI reply
+        const aiBubble = document.createElement('div');
+        aiBubble.style.cssText = 'display:flex;align-items:flex-end;gap:6px;margin-bottom:2px;';
+        const avatar = `<div style="width:22px;height:22px;border-radius:50%;background:var(--accent-dim);border:1px solid var(--accent);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-bottom:2px;"><span class="material-icons-round" style="font-size:12px;color:var(--accent);pointer-events:none;">smart_toy</span></div>`;
+        // Format reply: code blocks, line breaks
+        const formatted = reply
+            .replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            .replace(/`([^`]+)`/g,'<code style="background:rgba(0,0,0,0.3);border-radius:4px;padding:1px 5px;font-family:monospace;font-size:10px;">$1</code>')
+            .replace(/\n/g,'<br>');
+        aiBubble.innerHTML = `${avatar}<div style="max-width:calc(100% - 30px);background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:4px 14px 14px 14px;padding:7px 11px;font-size:11px;line-height:1.6;word-break:break-word;color:var(--text-color);">${formatted}</div>`;
+
+        // Dismiss button
+        const dismiss = document.createElement('div');
+        dismiss.style.cssText = 'display:flex;justify-content:flex-end;margin-bottom:6px;';
+        dismiss.innerHTML = `<span style="font-size:9px;opacity:0.3;cursor:pointer;pointer-events:auto;padding:2px 4px;" onclick="this.closest('.agent-chat-bubble').remove()">dismiss</span>`;
+
+        wrap.appendChild(userBubble);
+        wrap.appendChild(aiBubble);
+        wrap.appendChild(dismiss);
+        bar.insertBefore(wrap, inputRow);
+        // Scroll bar into view
+        wrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
 
     function _showSplitFileReview(files) {
