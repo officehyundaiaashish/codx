@@ -47,7 +47,8 @@
         body, html { width: 100vw; position: fixed; overflow: hidden; font-family: 'Poppins', sans-serif; background-color: var(--bg-color); color: var(--text-color); }
         .app-layout { display: flex; flex-direction: column; height: 100%; width: 100%; }
 
-        .app-header { flex-shrink: 0; background: var(--glass-bg); backdrop-filter: blur(20px); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50; }
+        /* ── GPU PERF: Reduce backdrop-filter cost on mobile ── */
+        .app-header { flex-shrink: 0; background: var(--glass-bg); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50; will-change: transform; }
         .tabs { display: flex; background: rgba(0,0,0,0.2); padding: 2px; border-radius: 20px; }
         body.light-theme .tabs { background: rgba(0,0,0,0.05); }
         .tab { padding: 4px 14px; border-radius: 18px; font-weight: 600; font-size: 12px; color: var(--text-color); opacity: 0.7; transition: var(--transition); cursor: pointer; }
@@ -56,7 +57,7 @@
         .main-container { flex-grow: 1; position: relative; background-color: var(--editor-bg); overflow: hidden; }
 
         /* FASTEST MONOSPACE FOR EDITOR ONLY */
-        #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 14px; font-family: 'Courier New', Courier, monospace !important; z-index: 10; }
+        #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 14px; font-family: 'Courier New', Courier, monospace !important; z-index: 10; contain: strict; }
         #preview { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: none; background: white; visibility: hidden; opacity: 0; z-index: 20; }
         #preview.active-pane { visibility: visible; opacity: 1; }
 
@@ -69,9 +70,10 @@
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: 0 4px 12px rgba(0,0,0,0.3); opacity: 0.5; transition: var(--transition); cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
 
-        .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; transform: translateY(0); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; }
+        /* will-change: transform → own GPU layer, no repaint on slide */
+        .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; transform: translateY(0); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); will-change: transform; contain: layout style; }
         .bottom-wrapper.collapsed { transform: translateY(100%); }
-        .bottom-area { background: var(--glass-bg); backdrop-filter: blur(25px); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -5px 25px rgba(0,0,0,0.3); }
+        .bottom-area { background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -5px 25px rgba(0,0,0,0.3); }
         .drag-handle-area { width: 100%; height: 20px; display: flex; justify-content: center; align-items: center; }
         .drag-pill { width: 30px; height: 4px; background: var(--text-color); opacity: 0.25; border-radius: 10px; }
         
@@ -93,7 +95,7 @@
 
         /* Shared Modal CSS */
         .modal { 
-            position: fixed; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); 
+            position: fixed; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(15px); -webkit-backdrop-filter: blur(15px);
             border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; z-index: 100; 
             box-shadow: 0 10px 50px rgba(0,0,0,0.8); transition: opacity 0.3s ease, transform 0.3s ease;
             bottom: -150%; opacity: 0; pointer-events: none; transform: scale(0.96);
@@ -152,11 +154,6 @@
             transition: border-color 0.2s, box-shadow 0.2s;
         }
         .gh-select-wrap select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); outline: none; }
-        .gh-select-wrap::after {
-            content: 'expand_more'; font-family: 'Material Icons Round'; font-size: 18px;
-            color: var(--accent); position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-            pointer-events: none;
-        }
         #github-modal input { font-family: 'Poppins', sans-serif; border-radius: 10px; padding: 11px 12px; transition: border-color 0.2s, box-shadow 0.2s; }
         #github-modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); outline: none; }
         .gh-section-anim { animation: ghSlideIn 0.3s cubic-bezier(0.25,0.8,0.25,1); }
@@ -246,7 +243,8 @@
             font-family: 'Poppins', sans-serif;
         }
         #agent-modal.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
-        .agent-provider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .agent-provider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; margin-bottom: 12px; max-height: 200px; overflow-y: auto; padding-right: 2px; }
+        .agent-provider-grid::-webkit-scrollbar { display: none; }
         .agent-provider-btn {
             padding: 10px 8px; border-radius: 10px; border: 1px solid var(--glass-border);
             background: rgba(0,0,0,0.2); color: var(--text-color); font-family: 'Poppins', sans-serif;
@@ -464,22 +462,49 @@
         <span class="material-icons-round" onclick="closeAgentModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
     </div>
     <div id="agent-setup-section">
-        <div style="font-size:11px; opacity:0.5; margin-bottom:10px;">Choose AI Provider</div>
+        <div style="font-size:11px; opacity:0.5; margin-bottom:10px; font-family:'Poppins',sans-serif;">Choose AI Provider & Model</div>
         <div class="agent-provider-grid" id="agent-provider-grid">
-            <div class="agent-provider-btn" data-provider="openai" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o-mini" onclick="selectProvider(this)">
-                OpenAI <span class="provider-tag">GPT-4o-mini • Paid</span>
+            <div class="agent-provider-btn" data-provider="gemini" data-url="https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent" data-model="gemini-2.0-flash" onclick="selectProvider(this)">
+                Gemini 2.0 Flash <span class="provider-tag">Google • Free</span>
             </div>
-            <div class="agent-provider-btn" data-provider="anthropic" data-url="https://api.anthropic.com/v1/messages" data-model="claude-3-haiku-20240307" onclick="selectProvider(this)">
-                Anthropic <span class="provider-tag">Claude Haiku • Paid</span>
-            </div>
-            <div class="agent-provider-btn" data-provider="groq" data-url="https://api.groq.com/openai/v1/chat/completions" data-model="llama3-8b-8192" onclick="selectProvider(this)">
-                Groq <span class="provider-tag">Llama3 • Free</span>
+            <div class="agent-provider-btn" data-provider="gemini" data-url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent" data-model="gemini-1.5-pro" onclick="selectProvider(this)">
+                Gemini 1.5 Pro <span class="provider-tag">Google • Free tier</span>
             </div>
             <div class="agent-provider-btn" data-provider="gemini" data-url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent" data-model="gemini-1.5-flash" onclick="selectProvider(this)">
-                Gemini <span class="provider-tag">Flash 1.5 • Free</span>
+                Gemini 1.5 Flash <span class="provider-tag">Google • Free</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="gemini" data-url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-8b:generateContent" data-model="gemini-1.5-flash-8b" onclick="selectProvider(this)">
+                Gemini Flash 8B <span class="provider-tag">Google • Free</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="groq" data-url="https://api.groq.com/openai/v1/chat/completions" data-model="llama-3.3-70b-versatile" onclick="selectProvider(this)">
+                Llama 3.3 70B <span class="provider-tag">Groq • Free</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="groq" data-url="https://api.groq.com/openai/v1/chat/completions" data-model="llama3-8b-8192" onclick="selectProvider(this)">
+                Llama 3 8B <span class="provider-tag">Groq • Free</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="groq" data-url="https://api.groq.com/openai/v1/chat/completions" data-model="mixtral-8x7b-32768" onclick="selectProvider(this)">
+                Mixtral 8x7B <span class="provider-tag">Groq • Free</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="openai" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o-mini" onclick="selectProvider(this)">
+                GPT-4o mini <span class="provider-tag">OpenAI • Paid</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="openai" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o" onclick="selectProvider(this)">
+                GPT-4o <span class="provider-tag">OpenAI • Paid</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="anthropic" data-url="https://api.anthropic.com/v1/messages" data-model="claude-3-haiku-20240307" onclick="selectProvider(this)">
+                Claude Haiku <span class="provider-tag">Anthropic • Paid</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="anthropic" data-url="https://api.anthropic.com/v1/messages" data-model="claude-3-5-sonnet-20241022" onclick="selectProvider(this)">
+                Claude Sonnet <span class="provider-tag">Anthropic • Paid</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="openrouter" data-url="https://openrouter.ai/api/v1/chat/completions" data-model="mistralai/mistral-7b-instruct:free" onclick="selectProvider(this)">
+                Mistral 7B <span class="provider-tag">OpenRouter • Free</span>
             </div>
         </div>
         <input type="text" id="agent-api-key" placeholder="Paste API Key here..." style="width:100%; padding:11px 12px; border-radius:10px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); color:var(--text-color); font-family:'Poppins',sans-serif; font-size:13px; margin-bottom:10px; user-select:text; -webkit-user-select:text; transition:border-color 0.2s, box-shadow 0.2s;">
+        <div style="font-size:10px; opacity:0.4; margin-bottom:10px; font-family:'Poppins',sans-serif; line-height:1.4;">
+            Free models: Get Gemini key at <b>aistudio.google.com</b> · Groq key at <b>console.groq.com</b> · OpenRouter key at <b>openrouter.ai</b>
+        </div>
         <button class="modal-btn" onclick="connectAgent()" style="width:100%;">Connect Agent</button>
     </div>
     <div id="agent-connected-section" style="display:none;">
@@ -527,19 +552,31 @@
         if (activeModal) { activeModal.style.bottom = kbHeight > 0 ? (kbHeight + 10) + 'px' : '20px'; }
     });
 
-    // --- PWA & SERVICE WORKER DEEP FIX ---
+    // --- PWA & SERVICE WORKER ---
+    // NOTE: Service Worker from blob: URL is blocked by Chrome for PWA install.
+    // We use a clean relative start_url and skip SW blob registration.
     const manifestData = {
-        "name": "CodX", "short_name": "CodX", "start_url": window.location.href.split('?')[0], "display": "standalone",
+        "name": "CodX Editor", "short_name": "CodX",
+        "start_url": "./", "display": "standalone",
         "background_color": "#0a0a0c", "theme_color": "#0a0a0c",
-        "icons": [{"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}]
+        "icons": [
+            {"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "192x192", "type": "image/svg+xml"},
+            {"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}
+        ]
     };
     const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
     document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
-    if ('serviceWorker' in navigator) {
-        const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request).catch(() => new Response('CodX Offline Working'))); });`;
-        const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>console.log("Hosted mode required for automatic SW install popup."));
+    // SW: Only register if served from https:// (not blob/file) — Chrome requires this for install
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+        const swCode = [
+            "self.addEventListener('install',e=>self.skipWaiting());",
+            "self.addEventListener('activate',e=>e.waitUntil(clients.claim()));",
+            "self.addEventListener('fetch',e=>{e.respondWith(fetch(e.request).catch(()=>new Response('CodX Offline')));});"
+        ].join('');
+        const swBlob = new Blob([swCode], {type:'application/javascript'});
+        const swUrl = URL.createObjectURL(swBlob);
+        navigator.serviceWorker.register(swUrl).catch(()=>{});
     }
 
     let deferredPrompt;
@@ -559,35 +596,146 @@
         }
     });
 
-    // --- EDITOR ---
+    // ════════════════════════════════════════════════
+    //  EDITOR — GAME ENGINE VIEWPORT APPROACH
+    //  Rule: Only render what's visible. Everything
+    //  else is culled — exactly like a game world.
+    // ════════════════════════════════════════════════
     var editor = ace.edit("editor");
-    editor.setTheme("ace/theme/tomorrow_night_eighties"); 
-    editor.session.setMode("ace/mode/html");
-    
-    // Performance: Fast, No Wrap, No Fold Widgets
+
+    // ── STEP 1: Kill every expensive feature upfront ──
     editor.setOptions({
-        fontSize: "14px", showLineNumbers: true, showGutter: true, wrap: false, displayIndentGuides: false, 
-        showPrintMargin: false, useWorker: false, animatedScroll: false, tooltipFollowsMouse: false,
-        highlightActiveLine: false, showFoldWidgets: false, touchScroll: true
+        fontSize: "14px",
+        showLineNumbers: true,
+        showGutter: true,
+        wrap: false,
+        displayIndentGuides: false,
+        showPrintMargin: false,
+        useWorker: false,
+        animatedScroll: false,
+        tooltipFollowsMouse: false,
+        highlightActiveLine: false,
+        showFoldWidgets: false,
+        highlightGutterLine: false,
+        fadeFoldWidgets: false,
+        showInvisibles: false,
+        useSoftTabs: true,
+        tabSize: 2,
+        fixedWidthGutter: true,
     });
 
-    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>CodX</title>\n</head>\n<body>\n  <h1>Welcome to CodX!</h1>\n</body>\n</html>", -1);
+    // These must be set via setOption individually — they come from ext-language_tools
+    editor.setOption('enableBasicAutocompletion', false);
+    editor.setOption('enableLiveAutocompletion', false);
+    editor.setOption('enableSnippets', false);
 
-    let scrollTimeout;
-    const jumpers = document.getElementById('jumpers');
-    function checkScrollable() {
-        let isScrollable = editor.renderer.layerConfig.maxHeight > editor.renderer.$size.scrollerHeight;
-        jumpers.style.display = isScrollable ? 'flex' : 'none';
-        return isScrollable;
+    // ── STEP 2: Renderer micro-tuning ──
+    editor.renderer.setScrollMargin(0, 0, 0, 0);
+    editor.renderer.setPadding(6);
+    try { editor.renderer.$printMarginLayer.element.style.display = 'none'; } catch(e){}
+
+    // ── STEP 3: Theme ──
+    editor.setTheme("ace/theme/tomorrow_night_eighties");
+
+    // ── STEP 4: Smart syntax mode ──
+    // Large files (>200KB) → plain text. Syntax tokenizer is the #1 hang cause.
+    const _modeMap = {
+        html:'html', htm:'html', js:'javascript', ts:'typescript',
+        css:'css', json:'json', md:'markdown', py:'python',
+        txt:'text', xml:'xml', php:'php', jsx:'jsx', tsx:'tsx',
+        vue:'html', svelte:'html', sh:'sh', yaml:'yaml', yml:'yaml',
+    };
+    function _setEditorMode(filename, content) {
+        const ext = (filename||'').split('.').pop().toLowerCase();
+        const size = (content||editor.getValue()).length;
+        // >200KB or >5000 lines → force plain text to prevent tokenizer hang
+        const lines = editor.session.getLength();
+        if(size > 200000 || lines > 5000) {
+            editor.session.setMode('ace/mode/text');
+            _showPerfBadge('⚡ Plain text mode (large file)');
+            return;
+        }
+        const mode = _modeMap[ext] || 'text';
+        const cur = (editor.session.getMode().$id || '');
+        if(!cur.endsWith(mode)) editor.session.setMode('ace/mode/' + mode);
     }
 
+    // Small perf badge shown when mode is downgraded
+    function _showPerfBadge(msg) {
+        let b = document.getElementById('_perf_badge');
+        if(!b) {
+            b = document.createElement('div');
+            b.id = '_perf_badge';
+            b.style.cssText = 'position:fixed;top:50px;left:50%;transform:translateX(-50%);background:rgba(16,185,129,0.15);border:1px solid rgba(16,185,129,0.4);color:#10b981;font-size:10px;font-family:Poppins,sans-serif;padding:4px 10px;border-radius:20px;z-index:999;pointer-events:none;transition:opacity 0.5s;';
+            document.body.appendChild(b);
+        }
+        b.textContent = msg; b.style.opacity = '1';
+        setTimeout(() => { b.style.opacity = '0'; }, 2500);
+    }
+
+    // ── STEP 5: Fast value setter — freeze renderer during large loads ──
+    function _setEditorValueFast(content) {
+        if(!content && content !== '') return;
+        const big = content.length > 80000;
+        if(big) {
+            editor.renderer.freeze();
+            // Suspend tokenizer during set
+            const oldMode = editor.session.$mode;
+            editor.session.setMode('ace/mode/text');
+            editor.setValue(content, -1);
+            requestAnimationFrame(() => {
+                editor.renderer.unfreeze();
+                editor.renderer.updateFull(true);
+                // Now check if we can restore syntax
+                _setEditorMode(currentFileName, content);
+            });
+        } else {
+            editor.setValue(content, -1);
+        }
+    }
+
+    // ── STEP 6: Scroll → rAF throttle (no mid-frame scroll jank) ──
+    let _scrollRaf = null;
+    const _origScrollToY = editor.renderer.scrollToY.bind(editor.renderer);
+    editor.renderer.scrollToY = function(top) {
+        if(_scrollRaf) cancelAnimationFrame(_scrollRaf);
+        _scrollRaf = requestAnimationFrame(() => { _origScrollToY(top); _scrollRaf = null; });
+    };
+
+    // ── STEP 7: Font size → rAF throttle ──
+    let _zoomRaf = null;
+    const _origSetFontSize = editor.setFontSize.bind(editor);
+    editor.setFontSize = function(size) {
+        if(_zoomRaf) cancelAnimationFrame(_zoomRaf);
+        _zoomRaf = requestAnimationFrame(() => { _origSetFontSize(size); _zoomRaf = null; });
+    };
+
+    // ── STEP 8: Change event → debounced (not every keystroke) ──
+    let _changeDebounce = null;
+    let scrollTimeout;
+    const jumpers = document.getElementById('jumpers');
+
+    function checkScrollable() {
+        try {
+            const s = editor.renderer.layerConfig.maxHeight > editor.renderer.$size.scrollerHeight;
+            jumpers.style.display = s ? 'flex' : 'none';
+            return s;
+        } catch(e) { return false; }
+    }
     editor.session.on("changeScrollTop", function() {
         if(!checkScrollable()) return;
         jumpers.classList.add('visible');
         clearTimeout(scrollTimeout);
-        scrollTimeout = setTimeout(() => { jumpers.classList.remove('visible'); }, 2000);
+        scrollTimeout = setTimeout(() => jumpers.classList.remove('visible'), 2000);
     });
-    editor.session.on("change", checkScrollable);
+    editor.session.on("change", function() {
+        if(_changeDebounce) return;
+        _changeDebounce = setTimeout(() => { checkScrollable(); _changeDebounce = null; }, 400);
+    });
+
+    // ── STEP 9: Initial content ──
+    _setEditorValueFast("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>CodX</title>\n</head>\n<body>\n  <h1>Welcome to CodX!</h1>\n</body>\n</html>");
+    _setEditorMode('index.html');
 
     function customFastScroll(direction) {
         let startPos = editor.renderer.getScrollTop();
@@ -612,19 +760,17 @@
     async function cutClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); editor.insert(''); } else { cdAlert('Cut', 'Double-tap text to select it first.', 'info'); } } catch (err) { cdAlert('Cut', 'Cut failed.', 'error'); } }
 
     const editorWrapper = document.getElementById('editor');
-    let initialDistance = null, initialFontSize = 14, zoomReq;
+    let initialDistance = null, initialFontSize = 14;
     editorWrapper.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) { initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY); initialFontSize = parseInt(editor.getOption("fontSize")); }
     });
     editorWrapper.addEventListener('touchmove', (e) => {
         if (e.touches.length === 2 && initialDistance) {
-            e.preventDefault(); 
-            const currentDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-            let currentScale = currentDistance / initialDistance;
-            let newSize = Math.round(initialFontSize * currentScale);
-            if(newSize > 40) newSize = 40; if(newSize < 10) newSize = 10;
-            if(zoomReq) cancelAnimationFrame(zoomReq);
-            zoomReq = requestAnimationFrame(() => { editor.setFontSize(newSize + "px"); });
+            e.preventDefault();
+            const d = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            let s = Math.round(initialFontSize * d / initialDistance);
+            s = Math.max(10, Math.min(40, s));
+            editor.setFontSize(s + "px"); // already rAF-throttled above
         }
     }, {passive: false});
     editorWrapper.addEventListener('touchend', (e) => { if (e.touches.length < 2) initialDistance = null; });
@@ -649,22 +795,28 @@
         document.getElementById('theme-color-meta').content = isDark ? '#f0f2f5' : '#0a0a0c';
     }
 
+    let _previewBlobUrl = null;
     function switchTab(tabName) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         if(tabName === 'preview') {
-            event.currentTarget.classList.add('active'); 
+            event.currentTarget.classList.add('active');
             document.getElementById('preview').classList.add('active-pane');
-            document.getElementById('editor').style.opacity = '0'; document.getElementById('editor').style.pointerEvents = 'none';
+            document.getElementById('editor').style.opacity = '0';
+            document.getElementById('editor').style.pointerEvents = 'none';
             jumpers.style.display = 'none'; bottomPanel.style.display = 'none'; restoreBtn.style.display = 'none';
             document.getElementById('find-modal').classList.remove('active'); closeGithubModal();
             let code = editor.getValue();
             if(!code.includes('viewport')) code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
-            document.getElementById('preview').src = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
+            // Revoke old blob URL to free memory
+            if(_previewBlobUrl) URL.revokeObjectURL(_previewBlobUrl);
+            _previewBlobUrl = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
+            document.getElementById('preview').src = _previewBlobUrl;
         } else {
-            event.currentTarget.classList.add('active'); 
+            event.currentTarget.classList.add('active');
             document.getElementById('preview').classList.remove('active-pane');
-            document.getElementById('editor').style.opacity = '1'; document.getElementById('editor').style.pointerEvents = 'auto';
-            checkScrollable(); bottomPanel.style.display = ''; 
+            document.getElementById('editor').style.opacity = '1';
+            document.getElementById('editor').style.pointerEvents = 'auto';
+            checkScrollable(); bottomPanel.style.display = '';
             if(bottomPanel.classList.contains('collapsed')) { restoreBtn.style.display = ''; }
             editor.blur();
         }
@@ -688,12 +840,15 @@
     }
 
     function switchFileTab(id) {
-        // Save current tab content
         let cur = fileTabs.find(t => t.id === activeTabId);
         if(cur) cur.content = editor.getValue();
         activeTabId = id;
         let tab = fileTabs.find(t => t.id === id);
-        if(tab) { editor.setValue(tab.content, -1); currentFileName = tab.name; }
+        if(tab) {
+            _setEditorValueFast(tab.content);
+            _setEditorMode(tab.name, tab.content);
+            currentFileName = tab.name;
+        }
         renderFileTabs();
     }
 
@@ -705,25 +860,25 @@
         if(activeTabId === id) {
             let newTab = fileTabs[Math.max(0, idx - 1)];
             activeTabId = newTab.id;
-            editor.setValue(newTab.content, -1); currentFileName = newTab.name;
+            _setEditorValueFast(newTab.content);
+            _setEditorMode(newTab.name, newTab.content);
+            currentFileName = newTab.name;
         }
         renderFileTabs();
     }
 
     function openFileInTab(name, content, forceNew) {
-        // Save current tab
         let cur = fileTabs.find(t => t.id === activeTabId);
         if(cur) cur.content = editor.getValue();
-
         if(forceNew) {
-            let newTab = { id: tabIdCounter++, name: name, content: content };
-            fileTabs.push(newTab);
-            activeTabId = newTab.id;
+            let newTab = { id: tabIdCounter++, name, content };
+            fileTabs.push(newTab); activeTabId = newTab.id;
         } else {
             let cur2 = fileTabs.find(t => t.id === activeTabId);
             if(cur2) { cur2.name = name; cur2.content = content; }
         }
-        editor.setValue(content, -1);
+        _setEditorValueFast(content);
+        _setEditorMode(name, content);
         currentFileName = name;
         renderFileTabs();
     }
@@ -900,9 +1055,9 @@
     }
 
     // ===== CUSTOM DIALOG ENGINE =====
-    const _cdOverlay = document.getElementById('custom-dialog-overlay');
     let _cdResolve = null;
     function _showDialog(icon, title, msg, inputDef, buttons) {
+        const _cdOverlay = document.getElementById('custom-dialog-overlay');
         document.getElementById('custom-dialog-icon').innerHTML = icon;
         document.getElementById('custom-dialog-title').textContent = title;
         document.getElementById('custom-dialog-msg').textContent = msg;
@@ -920,7 +1075,7 @@
         });
         _cdOverlay.classList.add('active');
     }
-    function _hideDialog() { _cdOverlay.classList.remove('active'); }
+    function _hideDialog() { document.getElementById('custom-dialog-overlay').classList.remove('active'); }
     function cdAlert(title, msg, type) {
         const icons = { success:'<span class="material-icons-round" style="color:#10b981">check_circle</span>', error:'<span class="material-icons-round" style="color:#ef4444">error</span>', warn:'<span class="material-icons-round" style="color:#f59e0b">warning</span>', info:'<span class="material-icons-round" style="color:var(--accent)">info</span>' };
         return new Promise(r => { _cdResolve = r; _showDialog(icons[type]||icons.info, title, msg, null, [{label:'OK',cls:'primary',value:true}]); });
@@ -984,13 +1139,6 @@
 
     // Init GitHub selects when modal opens (called from openGithubModal -> checkGhLogin -> fetchGhRepos)
     // The select wrappers in HTML will be used as containers
-
-    // ===== EDITOR PERFORMANCE: Gaming-level =====
-    editor.renderer.setScrollMargin(0,0,0,0);
-    editor.renderer.setPadding(6);
-    editor.setOption('enableBasicAutocompletion', false);
-    editor.setOption('enableLiveAutocompletion', false);
-    editor.setOption('enableSnippets', false);
 
     // ===== AGENT SYSTEM =====
     let agentConfig = null;
@@ -1078,16 +1226,18 @@
     async function _callAgentAPI(systemPrompt, userMsg) {
         const cfg = agentConfig;
         if(cfg.provider === 'anthropic') {
-            const res = await fetch(cfg.url, { method:'POST', headers:{'Content-Type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01'}, body:JSON.stringify({ model:cfg.model, max_tokens:2000, system:systemPrompt, messages:[{role:'user',content:userMsg}] }) });
+            const res = await fetch(cfg.url, { method:'POST', headers:{'Content-Type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01'}, body:JSON.stringify({ model:cfg.model, max_tokens:3000, system:systemPrompt, messages:[{role:'user',content:userMsg}] }) });
             const d = await res.json(); if(!res.ok) throw new Error(d.error?.message||'API Error');
             return d.content[0].text.trim();
         } else if(cfg.provider === 'gemini') {
-            const res = await fetch(cfg.url+'?key='+cfg.key, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts:[{text:systemPrompt+'\n\n'+userMsg}]}], generationConfig:{maxOutputTokens:2000} }) });
+            const res = await fetch(cfg.url+'?key='+cfg.key, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts:[{text:systemPrompt+'\n\n'+userMsg}]}], generationConfig:{maxOutputTokens:3000} }) });
             const d = await res.json(); if(!res.ok) throw new Error(d.error?.message||'API Error');
             return d.candidates[0].content.parts[0].text.trim();
         } else {
-            // OpenAI-compatible (OpenAI, Groq)
-            const res = await fetch(cfg.url, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key}, body:JSON.stringify({ model:cfg.model, max_tokens:2000, messages:[{role:'system',content:systemPrompt},{role:'user',content:userMsg}] }) });
+            // OpenAI-compatible: OpenAI, Groq, OpenRouter
+            const headers = {'Content-Type':'application/json','Authorization':'Bearer '+cfg.key};
+            if(cfg.provider === 'openrouter') { headers['HTTP-Referer'] = 'https://codx.app'; headers['X-Title'] = 'CodX Editor'; }
+            const res = await fetch(cfg.url, { method:'POST', headers, body:JSON.stringify({ model:cfg.model, max_tokens:3000, messages:[{role:'system',content:systemPrompt},{role:'user',content:userMsg}] }) });
             const d = await res.json(); if(!res.ok) throw new Error(d.error?.message||'API Error');
             return d.choices[0].message.content.trim();
         }
@@ -1106,7 +1256,43 @@
         const code = editor.getValue();
         _agentOriginalCode = code;
 
-        const systemPrompt = `You are CodX AI Agent — a precise surgical code editor. You receive code and a user request.
+        // Detect split intent
+        const splitKeywords = /\b(split|divide|separate|extract|break\s*up|break\s*into|multiple\s*files?|alag|vibhajit|tod|tod\s*do|file\s*mein|files\s*mein|parts?)\b/i;
+        const isSplitIntent = splitKeywords.test(userRequest);
+
+        let attachCtx = agentAttachment ? `\n\nAttached file (${agentAttachment.name}):\n${agentAttachment.content.slice(0,3000)}` : '';
+
+        try {
+            if(isSplitIntent) {
+                // SPLIT MODE — agent returns multiple files
+                const splitSystemPrompt = `You are CodX AI Agent. The user wants to split their code into multiple separate files.
+
+Analyse the code and split it logically into separate files (e.g. HTML, CSS, JS — or by component/module).
+
+Return ONLY a JSON array of file objects. Each object:
+{"filename": "name.ext", "content": "full file content here", "reason": "brief reason"}
+
+Rules:
+- filename must have a correct extension (.html, .css, .js, .json, etc.)
+- content must be the COMPLETE file content — nothing truncated
+- Split by type/concern: CSS into .css, JS into .js, HTML into .html, etc.
+- Link them correctly (e.g. <link rel="stylesheet"> in HTML, <script src="..."> in HTML)
+- Return ONLY the JSON array. No markdown, no backticks, no explanation outside the array.`;
+
+                const userMsg = `Code to split:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
+
+                let raw = await _callAgentAPI(splitSystemPrompt, userMsg);
+                raw = raw.replace(/```json|```/g,'').trim();
+                const files = JSON.parse(raw);
+
+                if(!Array.isArray(files) || files.length === 0) {
+                    cdAlert('Agent', 'Agent could not split the code. Try a more specific request.', 'warn');
+                } else {
+                    _showSplitFileReview(files);
+                }
+            } else {
+                // EDIT MODE — surgical edits
+                const systemPrompt = `You are CodX AI Agent — a precise surgical code editor. You receive code and a user request.
 
 RULES (STRICT):
 1. Analyse the ENTIRE code first before making any changes.
@@ -1117,27 +1303,26 @@ RULES (STRICT):
 6. If nothing needs changing: return [].
 7. Return ONLY the JSON array. No markdown, no backticks, no explanation outside the array.`;
 
-        let attachCtx = agentAttachment ? `\n\nAttached file (${agentAttachment.name}):\n${agentAttachment.content.slice(0,3000)}` : '';
-        const userMsg = `Code:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
+                const userMsg = `Code:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
 
-        try {
-            let raw = await _callAgentAPI(systemPrompt, userMsg);
-            raw = raw.replace(/```json|```/g,'').trim();
-            const edits = JSON.parse(raw);
+                let raw = await _callAgentAPI(systemPrompt, userMsg);
+                raw = raw.replace(/```json|```/g,'').trim();
+                const edits = JSON.parse(raw);
 
-            if(!Array.isArray(edits) || edits.length === 0) {
-                cdAlert('Agent', 'No changes needed for this request.', 'info');
-            } else {
-                // Validate edits — check all finds exist
-                const valid = edits.filter(e => e.find && code.includes(e.find));
-                const invalid = edits.length - valid.length;
-                if(valid.length === 0) {
-                    cdAlert('Agent', 'Could not locate the code sections to edit. Try a more specific request.', 'warn');
+                if(!Array.isArray(edits) || edits.length === 0) {
+                    cdAlert('Agent', 'No changes needed for this request.', 'info');
                 } else {
-                    _agentPendingEdits = valid;
-                    _showAgentDiffReview(valid, invalid);
+                    const valid = edits.filter(e => e.find && code.includes(e.find));
+                    const invalid = edits.length - valid.length;
+                    if(valid.length === 0) {
+                        cdAlert('Agent', 'Could not locate the code sections to edit. Try a more specific request.', 'warn');
+                    } else {
+                        _agentPendingEdits = valid;
+                        _showAgentDiffReview(valid, invalid);
+                    }
                 }
             }
+
             // Clear input
             document.getElementById('agent-prompt').value = '';
             document.getElementById('agent-prompt').style.height = 'auto';
@@ -1148,6 +1333,87 @@ RULES (STRICT):
             cdAlert('Agent Error', err.message || 'Something went wrong. Check API key.', 'error');
         }
         thinking.classList.remove('visible'); sendBtn.disabled = false;
+    }
+
+    // Show split file review panel — each file with open-in-tab + download
+    function _showSplitFileReview(files) {
+        const bar = document.getElementById('agent-bar');
+        const oldReview = document.getElementById('agent-diff-review');
+        if(oldReview) oldReview.remove();
+
+        const review = document.createElement('div');
+        review.id = 'agent-diff-review';
+        review.style.cssText = 'background:rgba(0,0,0,0.2);border-radius:10px;padding:10px;font-family:Poppins,sans-serif;max-height:260px;overflow-y:auto;';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'font-size:11px;font-weight:600;color:var(--accent);margin-bottom:8px;display:flex;align-items:center;gap:6px;';
+        header.innerHTML = `<span class="material-icons-round" style="font-size:14px;">folder_open</span> ${files.length} files ready`;
+        review.appendChild(header);
+
+        files.forEach((file) => {
+            const extIcon = { html:'code', css:'palette', js:'javascript', json:'data_object', md:'description' };
+            const ext = file.filename.split('.').pop().toLowerCase();
+            const icon = extIcon[ext] || 'insert_drive_file';
+
+            const card = document.createElement('div');
+            card.style.cssText = 'background:rgba(0,0,0,0.18);border:1px solid var(--glass-border);border-radius:8px;padding:8px 10px;margin-bottom:6px;display:flex;align-items:center;justify-content:space-between;gap:8px;';
+
+            const info = document.createElement('div');
+            info.style.cssText = 'display:flex;align-items:center;gap:7px;flex:1;min-width:0;';
+            info.innerHTML = `<span class="material-icons-round" style="font-size:16px;color:var(--accent);flex-shrink:0">${icon}</span><div style="min-width:0"><div style="font-size:12px;font-weight:600;color:var(--text-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${file.filename}</div><div style="font-size:10px;opacity:0.5;margin-top:1px">${file.reason||''}</div></div>`;
+
+            const btns = document.createElement('div');
+            btns.style.cssText = 'display:flex;gap:6px;flex-shrink:0;';
+
+            // Open in tab button
+            const tabBtn = document.createElement('button');
+            tabBtn.style.cssText = 'background:var(--accent-dim);border:none;border-radius:6px;padding:5px 7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s;';
+            tabBtn.innerHTML = `<span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none">tab</span>`;
+            tabBtn.title = 'Open in new tab';
+            tabBtn.onclick = () => {
+                openFileInTab(file.filename, file.content, true);
+                tabBtn.style.background = 'var(--accent)';
+                tabBtn.querySelector('span').style.color = 'white';
+            };
+
+            // Download button
+            const dlBtn = document.createElement('button');
+            dlBtn.style.cssText = 'background:rgba(128,128,128,0.12);border:none;border-radius:6px;padding:5px 7px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform 0.15s;';
+            dlBtn.innerHTML = `<span class="material-icons-round" style="font-size:14px;color:var(--text-color);pointer-events:none">download</span>`;
+            dlBtn.title = 'Download file';
+            dlBtn.onclick = () => {
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(new Blob([file.content], { type: 'text/plain' }));
+                a.download = file.filename; a.click();
+            };
+
+            btns.appendChild(tabBtn); btns.appendChild(dlBtn);
+            card.appendChild(info); card.appendChild(btns);
+            review.appendChild(card);
+        });
+
+        // Open All + Dismiss buttons
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
+
+        const dismissBtn = document.createElement('button');
+        dismissBtn.className = 'modal-btn secondary'; dismissBtn.style.cssText = 'flex:1;padding:9px;font-size:12px;border-radius:8px;';
+        dismissBtn.textContent = 'Dismiss';
+        dismissBtn.onclick = () => { review.remove(); };
+
+        const openAllBtn = document.createElement('button');
+        openAllBtn.className = 'modal-btn'; openAllBtn.style.cssText = 'flex:1;padding:9px;font-size:12px;border-radius:8px;';
+        openAllBtn.textContent = 'Open All Tabs';
+        openAllBtn.onclick = () => {
+            files.forEach(f => openFileInTab(f.filename, f.content, true));
+            review.remove();
+        };
+
+        actions.appendChild(dismissBtn); actions.appendChild(openAllBtn);
+        review.appendChild(actions);
+
+        const inputRow = bar.querySelector('.agent-input-row');
+        bar.insertBefore(review, inputRow);
     }
 
     // Show accept/reject diff review inside agent bar
@@ -1200,7 +1466,6 @@ RULES (STRICT):
 
     function _acceptPendingEdits() {
         if(_agentPendingEdits.length === 0) return;
-        // Push to undo stack before applying
         _agentUndoStack.push(editor.getValue());
         if(_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
 
@@ -1209,15 +1474,13 @@ RULES (STRICT):
         _agentPendingEdits.forEach(edit => {
             if(code.includes(edit.find)) { code = code.split(edit.find).join(edit.replace); applied++; }
         });
-        editor.setValue(code, -1);
-        // Sync active tab
+        _setEditorValueFast(code);
         const cur = fileTabs.find(t => t.id === activeTabId);
         if(cur) cur.content = code;
 
         _agentPendingEdits = [];
         const rev = document.getElementById('agent-diff-review');
         if(rev) rev.remove();
-        // Show undo option briefly
         _showAgentUndoToast(applied);
     }
 
@@ -1249,7 +1512,7 @@ RULES (STRICT):
     function _agentUndo() {
         if(_agentUndoStack.length === 0) { cdAlert('Undo', 'Nothing to undo.', 'info'); return; }
         const prev = _agentUndoStack.pop();
-        editor.setValue(prev, -1);
+        _setEditorValueFast(prev);
         const cur = fileTabs.find(t => t.id === activeTabId);
         if(cur) cur.content = prev;
         const toast = document.getElementById('agent-undo-toast');
