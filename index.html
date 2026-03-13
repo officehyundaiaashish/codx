@@ -716,10 +716,15 @@
         </div>
         
         <!-- Repo selector -->
-        <div class="gh-select-wrap">
-            <select id="gh-repo-select" onchange="fetchGhFiles()">
-                <option value="">Select Repository...</option>
-            </select>
+        <div style="display:flex; gap:8px; margin-bottom:8px;">
+            <div class="gh-select-wrap" style="flex:1; margin-bottom:0;">
+                <select id="gh-repo-select" onchange="fetchGhFiles()">
+                    <option value="">Select Repository...</option>
+                </select>
+            </div>
+            <button class="modal-btn secondary" onclick="fetchGhFiles()" style="flex:none; width:42px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:10px;" title="Sync Repo">
+                <span class="material-icons-round" style="font-size:20px; pointer-events:none;">sync</span>
+            </button>
         </div>
 
         <!-- Breadcrumb path -->
@@ -1365,24 +1370,14 @@
     }, {passive: true});
     bottomPanel.addEventListener('touchend', (e) => {
         _swipeRaf = null;
-        bottomPanel.style.transition = 'transform 0.25s ease';
-        
         if (isSwipingDown && e.changedTouches[0].clientY - startY > 40) {
-            // Animate smoothly from the exact drag point to the bottom
-            bottomPanel.style.transform = 'translateY(100%)'; 
-            
-            // Wait for the slide to finish before applying the CSS class
-            setTimeout(() => { 
-                _collapseNav(); 
-                bottomPanel.style.transition = ''; 
-            }, 250); 
+            bottomPanel.style.transition = 'transform 0.25s cubic-bezier(0.34,1.56,0.64,1)';
+            bottomPanel.style.transform = '';
+            _collapseNav();
         } else {
-            // Snap back up if they didn't swipe far enough
+            bottomPanel.style.transition = 'transform 0.2s ease';
             bottomPanel.style.transform = 'translateY(0)';
-            setTimeout(() => { 
-                bottomPanel.style.transition = ''; 
-                bottomPanel.style.transform = ''; 
-            }, 250);
+            setTimeout(() => { bottomPanel.style.transition = ''; }, 200);
         }
     }, {passive: true});
 
@@ -1632,7 +1627,11 @@
     }
 
     function saveGhToken() { let tk = document.getElementById('gh-token').value.trim(); if(tk) { localStorage.setItem('gh_token', tk); checkGhLogin(); } }
-    function ghLogout() { localStorage.removeItem('gh_token'); _ghReposLoaded = false; checkGhLogin(); }
+    function ghLogout() { 
+        cdConfirm('Logout', 'Disconnect GitHub and remove your token from this device?', 'Logout', 'Cancel', (ok) => {
+            if (ok) { localStorage.removeItem('gh_token'); _ghReposLoaded = false; checkGhLogin(); }
+        });
+    }
 
     async function ghApi(endpoint, method='GET', body=null) {
         let token = localStorage.getItem('gh_token');
@@ -1889,21 +1888,33 @@
 
     // COMMIT WARNING AND BACKUP
     async function commitGhFile() {
-        if(!ghCurrentSha) return cdAlert('GitHub', 'Please open a file first before committing.', 'warn');
+        if(!ghCurrentFile) return cdAlert('GitHub', 'Please open a file first before committing.', 'warn');
         cdConfirm('Backup First?', 'Download a backup before committing?', 'Download Backup', 'Skip', async (doBackup) => {
             if(doBackup) await saveFile();
             cdPrompt('Commit Message', 'Enter a commit message:', 'Update ' + ghCurrentFile, async (msg) => {
                 if(msg === null) return;
                 try {
                     document.getElementById('gh-commit-btn').disabled = true;
+                    
+                    let latestSha; // Fetch absolute latest SHA right before committing
+                    try { let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`); latestSha = fileData.sha; } 
+                    catch(err) { latestSha = ghCurrentSha; }
+
                     let contentB64 = encodeB64(editor.getValue());
-                    let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
-                    ghCurrentSha = res.content.sha; // Fix: Save new SHA so future commits don't fail
-                    _ghTree = []; // Force cache clear
-                    fetchGhFiles(); // Fix: Trigger realtime refresh in modal
+                    let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: latestSha });
+                    
+                    ghCurrentSha = res.content.sha;
+                    _ghTree = []; // Clear tree cache
+                    if(document.getElementById('gh-repo-select').value) fetchGhFiles(); // Realtime visual refresh
+                    
                     cdAlert('Success', 'Committed to GitHub!', 'success');
                     document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
-                } catch(e) { cdAlert('Error', 'Commit failed.', 'error'); document.getElementById('gh-commit-btn').disabled = false; }
+                } catch(e) { 
+                    let errStr = e.message || 'Commit failed.';
+                    try { let j = JSON.parse(errStr); if(j.message) errStr = j.message; } catch(ex){} // Clean JSON error UI
+                    cdAlert('Commit Failed', errStr, 'error'); 
+                    document.getElementById('gh-commit-btn').disabled = false; 
+                }
             });
         });
     }
@@ -2292,8 +2303,17 @@
         if(barDot) barDot.style.background = '#10b981';
     }
     function closeAgentBar() {
+        if (_agentPendingEdits && _agentPendingEdits.length > 0) {
+            cdConfirm('Close Agent', 'Discard pending AI edits and close?', 'Discard & Close', 'Cancel', (ok) => {
+                if (ok) {
+                    _cancelPendingEdits(true);
+                    document.getElementById('agent-bar').classList.remove('visible');
+                    _removeAgentNavTab();
+                }
+            });
+            return;
+        }
         document.getElementById('agent-bar').classList.remove('visible');
-        _cancelPendingEdits();
         _removeAgentNavTab();
     }
 
@@ -2648,7 +2668,13 @@ RULES (STRICT):
         _showAgentUndoToast(applied);
     }
 
-    function _cancelPendingEdits() {
+    function _cancelPendingEdits(skipConfirm) {
+        if (skipConfirm !== true && _agentPendingEdits && _agentPendingEdits.length > 0) {
+            cdConfirm('Reject Edits', 'Are you sure you want to discard these AI edits?', 'Reject All', 'Cancel', (ok) => {
+                if (ok) { _agentPendingEdits = []; const rev = document.getElementById('agent-diff-review'); if(rev) rev.remove(); }
+            });
+            return;
+        }
         _agentPendingEdits = [];
         const rev = document.getElementById('agent-diff-review');
         if(rev) rev.remove();
@@ -2725,20 +2751,25 @@ RULES (STRICT):
     async function saveFileToRepo() {
         const token = localStorage.getItem('gh_token');
         if (!token) { cdAlert('Commit', 'Please connect GitHub first via GitSync.', 'warn'); return; }
-        if (!ghCurrentRepo) { cdAlert('Commit', 'Please load or select a repo from GitSync first.', 'warn'); return; }
-        if (!ghCurrentFile) { cdAlert('Commit', 'No file loaded from GitHub. Use GitSync to load a file first.', 'warn'); return; }
+        if (!ghCurrentRepo || !ghCurrentFile) { cdAlert('Commit', 'Please open a file from GitSync first.', 'warn'); return; }
         cdPrompt('Commit Message', `Committing: ${ghCurrentFile}`, 'Update via CodX', async (msg) => {
             if (msg === null) return;
             try {
+                let latestSha; // Fetch absolute latest SHA right before committing to prevent 409 errors
+                try { let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`); latestSha = fileData.sha; } 
+                catch(err) { latestSha = ghCurrentSha; }
+                
                 const contentB64 = encodeB64(editor.getValue());
                 let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', {
-                    message: msg, content: contentB64, sha: ghCurrentSha
+                    message: msg, content: contentB64, sha: latestSha
                 });
-                ghCurrentSha = res.content.sha; // Fix: Get SHA instantly without 2nd API call
-                _ghTree = []; // Clear tree cache so GitSync modal refreshes 
+                ghCurrentSha = res.content.sha;
+                _ghTree = []; // Clear tree cache
                 cdAlert('Success', `Committed to ${ghCurrentRepo}/${ghCurrentFile}`, 'success');
             } catch (e) {
-                cdAlert('Commit Failed', e.message || 'Check connection and try again.', 'error');
+                let errStr = e.message || 'Check connection and try again.';
+                try { let j = JSON.parse(errStr); if(j.message) errStr = j.message; } catch(ex){} // Clean JSON error UI
+                cdAlert('Commit Failed', errStr, 'error');
             }
         });
     }
