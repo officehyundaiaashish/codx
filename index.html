@@ -2179,18 +2179,35 @@ RULES (STRICT):
             document.getElementById('agent-attach-btn').style.background = '';
             document.getElementById('agent-attach-btn').style.color = '';
         } catch(err) {
-            // Show error inline in agent bar so user sees exactly what failed
-            const errMsg = err.message || 'Something went wrong.';
+            const raw = err.message || 'Something went wrong.';
+            // Smart error classification — show short friendly message
+            let errMsg, errHint;
+            if(/quota|rate.?limit|limit.*0|exceeded/i.test(raw)) {
+                errMsg = 'Quota exceeded';
+                errHint = 'Free tier limit hit. Wait a bit or use a different API key.';
+            } else if(/timeout|abort|timed out/i.test(raw)) {
+                errMsg = 'Request timed out';
+                errHint = 'Check your internet and try again.';
+            } else if(/401|403|invalid.*key|api.?key/i.test(raw)) {
+                errMsg = 'Invalid API key';
+                errHint = 'Reconnect agent with a valid key.';
+            } else if(/network|fetch|failed to fetch/i.test(raw)) {
+                errMsg = 'Network error';
+                errHint = 'Check your internet connection.';
+            } else {
+                errMsg = 'Agent error';
+                errHint = raw.slice(0, 80) + (raw.length > 80 ? '…' : '');
+            }
             const bar = document.getElementById('agent-bar');
             const oldErr = document.getElementById('agent-inline-error');
             if(oldErr) oldErr.remove();
             const errEl = document.createElement('div');
             errEl.id = 'agent-inline-error';
-            errEl.style.cssText = 'background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.35);border-radius:8px;padding:8px 10px;font-size:11px;color:#ef4444;font-weight:600;margin-bottom:4px;word-break:break-word;';
-            errEl.textContent = '⚠ ' + errMsg;
+            errEl.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:7px 10px;margin:4px 10px;';
+            errEl.innerHTML = `<div style="min-width:0;"><div style="font-size:11px;font-weight:700;color:#ef4444;">${errMsg}</div><div style="font-size:10px;color:#ef4444;opacity:0.75;margin-top:2px;word-break:break-word;">${errHint}</div></div><span class="material-icons-round" style="font-size:15px;color:#ef4444;opacity:0.6;cursor:pointer;flex-shrink:0;pointer-events:auto;" onclick="this.parentElement.remove()">close</span>`;
             const inputRow = document.getElementById('agent-compact-row');
             bar.insertBefore(errEl, inputRow);
-            setTimeout(() => { if(errEl.parentElement) errEl.remove(); }, 8000);
+            setTimeout(() => { if(errEl.parentElement) errEl.remove(); }, 12000);
         } finally {
             thinking.classList.remove('visible'); sendBtn.disabled = false;
         }
