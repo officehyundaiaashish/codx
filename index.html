@@ -53,17 +53,6 @@
         .tab { padding: 4px 14px; border-radius: 18px; font-weight: 600; font-size: 12px; color: var(--text-color); opacity: 0.7; transition: var(--transition); cursor: pointer; }
         .tab.active { background: var(--accent); color: white; opacity: 1; }
         
-        /* Added Dynamic Tips Header */
-        .tips-ticker { font-size: 10px; color: var(--accent); opacity: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 140px; font-weight: 600; transition: opacity 0.3s; text-align: center; }
-
-        /* Added File Tabs Support */
-        .file-tabs-container { display: flex; overflow-x: auto; background: var(--editor-bg); padding: 5px 10px 0 10px; gap: 5px; flex-shrink: 0; border-bottom: 1px solid var(--glass-border); scroll-behavior: smooth; }
-        .file-tabs-container::-webkit-scrollbar { display: none; }
-        .file-tab { display: flex; align-items: center; gap: 8px; padding: 6px 14px; background: rgba(128,128,128,0.05); border-radius: 8px 8px 0 0; font-size: 11px; color: var(--text-color); opacity: 0.6; cursor: pointer; border: 1px solid transparent; border-bottom: none; white-space: nowrap; transition: var(--transition); }
-        .file-tab.active { opacity: 1; background: var(--glass-bg); border-color: var(--glass-border); color: var(--accent); font-weight: 600; }
-        .file-tab-close { font-size: 14px; opacity: 0.5; margin-left: 5px; cursor: pointer; pointer-events: auto;}
-        .file-tab-close:hover { opacity: 1; color: #ef4444; }
-
         .main-container { flex-grow: 1; position: relative; background-color: var(--editor-bg); overflow: hidden; }
 
         /* FASTEST MONOSPACE FOR EDITOR ONLY */
@@ -72,10 +61,8 @@
         #preview.active-pane { visibility: visible; opacity: 1; }
 
         .ace_mobile-menu, .ace_tooltip { display: none !important; opacity: 0 !important; pointer-events: none !important; }
-        
-        /* Adjusted Selection Highlight Colors for Better Readability */
-        .ace_selection { background: rgba(16, 185, 129, 0.25) !important; }
-        .ace_selected-word { background: rgba(16, 185, 129, 0.4) !important; border: 1px solid var(--accent) !important; border-radius: 2px; }
+        .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
+        .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
         .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
@@ -104,38 +91,219 @@
         .restore-btn.visible { opacity: 1; pointer-events: auto; transform: scale(1); }
         .restore-btn .material-icons-round { font-size: 18px; pointer-events: none; }
 
-        /* Shared Modal CSS - Anchored to Bottom Default */
+        /* Shared Modal CSS */
         .modal { 
             position: fixed; left: 5%; width: 90%; background: var(--glass-bg); backdrop-filter: blur(35px); 
             border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; z-index: 100; 
-            box-shadow: 0 10px 50px rgba(0,0,0,0.8); transition: opacity 0.3s ease;
-            bottom: -150%; opacity: 0; pointer-events: none;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.8); transition: opacity 0.3s ease, transform 0.3s ease;
+            bottom: -150%; opacity: 0; pointer-events: none; transform: scale(0.96);
         }
-        .modal.active { bottom: 20px; opacity: 1; pointer-events: auto; }
-        
-        /* New Center Modal CSS purely for GitHub & Custom Dialogs */
-        .center-modal {
-            top: 50%; bottom: auto !important; left: 50%; transform: translate(-50%, -50%) scale(0.9);
-            width: 85%; max-width: 400px; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
-        }
-        .center-modal.active { transform: translate(-50%, -50%) scale(1); opacity: 1; bottom: auto; }
+        .modal.active { bottom: 20px; opacity: 1; pointer-events: auto; transform: scale(1); }
         
         .modal textarea, .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
-        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer; transition: var(--transition);}
-        .modal-btn:active { transform: scale(0.95); }
+        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
+        .modal-btn:active { opacity: 0.8; transform: scale(0.97); }
         .modal-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text-color); }
-        
-        #github-modal input, #github-modal select, #custom-dialog input { font-family: 'Poppins', sans-serif; }
-        
-        /* Checkboxes for Find and Replace */
-        .checkbox-row { display: flex; gap: 15px; margin-bottom: 10px; font-size: 11px; align-items: center; color: var(--text-color); opacity: 0.8;}
-        .checkbox-label { display: flex; align-items: center; gap: 4px; cursor: pointer; }
-        .checkbox-label input[type="checkbox"] { width: 14px; height: 14px; margin: 0; accent-color: var(--accent); }
 
-        /* Custom Beautiful Dropdown */
-        select.beautiful-select { appearance: none; background: rgba(0,0,0,0.2) url("data:image/svg+xml;utf8,<svg fill='%2310b981' height='24' viewBox='0 0 24 24' width='24' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/><path d='M0 0h24v24H0z' fill='none'/></svg>") no-repeat right 10px center; padding-right: 30px; transition: var(--transition); border-radius: 12px; outline: none;}
-        select.beautiful-select:focus { border-color: var(--accent); box-shadow: 0 0 8px var(--accent-dim); }
+        /* Find modal checkbox styles */
+        .find-options { display: flex; gap: 12px; margin-bottom: 8px; }
+        .find-check-label { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.8; cursor: pointer; user-select: none; }
+        .find-check-label input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
+
+        /* GitHub modal — centered on screen */
+        #github-modal {
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.88);
+            bottom: auto !important;
+            width: 88%;
+            max-width: 400px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
+            z-index: 110;
+            box-shadow: 0 20px 70px rgba(0,0,0,0.9);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.35s cubic-bezier(0.34, 1.56, 0.64, 1), transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        #github-modal.active {
+            opacity: 1;
+            pointer-events: auto;
+            transform: translate(-50%, -50%) scale(1);
+        }
+        /* GitHub modal overlay */
+        #gh-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(4px);
+            z-index: 105; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #gh-overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* GitHub modal custom select wrapper */
+        .gh-select-wrap { position: relative; margin-bottom: 8px; }
+        .gh-select-wrap select {
+            width: 100%; padding: 11px 36px 11px 12px; border-radius: 10px;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border);
+            color: var(--text-color); font-family: 'Poppins', sans-serif; font-size: 13px;
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        .gh-select-wrap select:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); outline: none; }
+        .gh-select-wrap::after {
+            content: 'expand_more'; font-family: 'Material Icons Round'; font-size: 18px;
+            color: var(--accent); position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+            pointer-events: none;
+        }
+        #github-modal input { font-family: 'Poppins', sans-serif; border-radius: 10px; padding: 11px 12px; transition: border-color 0.2s, box-shadow 0.2s; }
+        #github-modal input:focus { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); outline: none; }
+        .gh-section-anim { animation: ghSlideIn 0.3s cubic-bezier(0.25,0.8,0.25,1); }
+        @keyframes ghSlideIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* File Tabs Bar */
+        .file-tabs-bar { flex-shrink: 0; display: flex; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
+        .file-tabs-bar::-webkit-scrollbar { display: none; }
+        .file-tab { display: flex; align-items: center; gap: 5px; padding: 6px 12px 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.55; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; transition: opacity 0.2s, border-color 0.2s; flex-shrink: 0; }
+        .file-tab.active { opacity: 1; border-bottom-color: var(--accent); color: var(--accent); }
+        .file-tab .ft-close { font-size: 13px; opacity: 0.4; margin-left: 2px; line-height: 1; transition: opacity 0.15s; pointer-events: auto; }
+        .file-tab .ft-close:active { opacity: 1; }
+
+        /* ===== CUSTOM DIALOG (replaces all browser dialogs) ===== */
+        #custom-dialog-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+            z-index: 500; opacity: 0; pointer-events: none; transition: opacity 0.25s ease;
+            display: flex; align-items: center; justify-content: center;
+        }
+        #custom-dialog-overlay.active { opacity: 1; pointer-events: auto; }
+        #custom-dialog-box {
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 18px;
+            padding: 22px 20px 16px; width: 82%; max-width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            transform: scale(0.9) translateY(10px); transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+            font-family: 'Poppins', sans-serif;
+        }
+        #custom-dialog-overlay.active #custom-dialog-box { transform: scale(1) translateY(0); }
+        #custom-dialog-icon { font-size: 28px; margin-bottom: 10px; }
+        #custom-dialog-title { font-size: 15px; font-weight: 600; color: var(--text-color); margin-bottom: 6px; }
+        #custom-dialog-msg { font-size: 12px; color: var(--text-color); opacity: 0.65; margin-bottom: 14px; line-height: 1.5; }
+        #custom-dialog-input { width: 100%; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Poppins', sans-serif; font-size: 13px; margin-bottom: 12px; user-select: text; -webkit-user-select: text; }
+        #custom-dialog-input:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-dim); }
+        #custom-dialog-btns { display: flex; gap: 8px; }
+        .cdlg-btn { flex: 1; padding: 11px; border: none; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform 0.15s, opacity 0.15s; }
+        .cdlg-btn:active { transform: scale(0.96); opacity: 0.85; }
+        .cdlg-btn.primary { background: var(--accent); color: #fff; }
+        .cdlg-btn.danger { background: #ef4444; color: #fff; }
+        .cdlg-btn.secondary { background: rgba(128,128,128,0.18); color: var(--text-color); }
+
+        /* ===== CUSTOM GITHUB DROPDOWNS ===== */
+        .gh-custom-select { position: relative; margin-bottom: 10px; }
+        .gh-custom-trigger {
+            width: 100%; padding: 11px 36px 11px 12px; border-radius: 10px;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border);
+            color: var(--text-color); font-family: 'Poppins', sans-serif; font-size: 13px;
+            cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+            transition: border-color 0.2s, box-shadow 0.2s; user-select: none;
+        }
+        .gh-custom-trigger.open { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-dim); }
+        .gh-custom-trigger .gh-trigger-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; opacity: 0.7; }
+        .gh-custom-trigger .gh-trigger-text.selected { opacity: 1; color: var(--text-color); }
+        .gh-custom-trigger .material-icons-round { font-size: 18px; color: var(--accent); transition: transform 0.2s; flex-shrink: 0; }
+        .gh-custom-trigger.open .material-icons-round { transform: rotate(180deg); }
+        .gh-custom-list {
+            position: absolute; left: 0; right: 0; top: calc(100% + 4px);
+            background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 12px;
+            box-shadow: 0 10px 35px rgba(0,0,0,0.7); z-index: 200; max-height: 200px; overflow-y: auto;
+            opacity: 0; transform: translateY(-6px) scale(0.97); pointer-events: none;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+        }
+        .gh-custom-list::-webkit-scrollbar { display: none; }
+        .gh-custom-list.open { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+        .gh-custom-option {
+            padding: 11px 14px; font-family: 'Poppins', sans-serif; font-size: 12px;
+            color: var(--text-color); cursor: pointer; transition: background 0.15s;
+            display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--glass-border);
+        }
+        .gh-custom-option:last-child { border-bottom: none; }
+        .gh-custom-option:active, .gh-custom-option.selected { background: var(--accent-dim); color: var(--accent); }
+        .gh-custom-option .material-icons-round { font-size: 15px; opacity: 0.6; }
+
+        /* ===== AGENT MODAL ===== */
+        #agent-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(6px);
+            z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        #agent-overlay.active { opacity: 1; pointer-events: auto; }
+        #agent-modal {
+            position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0.88);
+            width: 88%; max-width: 400px;
+            background: var(--glass-bg); backdrop-filter: blur(40px);
+            border: 1px solid var(--glass-border); border-radius: 20px; padding: 20px;
+            z-index: 210; box-shadow: 0 20px 70px rgba(0,0,0,0.9);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.35s cubic-bezier(0.34,1.56,0.64,1), transform 0.35s cubic-bezier(0.34,1.56,0.64,1);
+            font-family: 'Poppins', sans-serif;
+        }
+        #agent-modal.active { opacity: 1; pointer-events: auto; transform: translate(-50%, -50%) scale(1); }
+        .agent-provider-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .agent-provider-btn {
+            padding: 10px 8px; border-radius: 10px; border: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.2); color: var(--text-color); font-family: 'Poppins', sans-serif;
+            font-size: 11px; font-weight: 600; cursor: pointer; text-align: center;
+            transition: border-color 0.2s, background 0.2s, transform 0.15s;
+        }
+        .agent-provider-btn:active { transform: scale(0.95); }
+        .agent-provider-btn.selected { border-color: var(--accent); background: var(--accent-dim); color: var(--accent); }
+        .agent-provider-btn .provider-tag { font-size: 9px; opacity: 0.6; display: block; margin-top: 2px; }
+
+        /* ===== AI AGENT BAR (bottom, above panel) ===== */
+        #agent-bar {
+            position: absolute; bottom: 0; left: 0; right: 0; z-index: 35;
+            background: var(--glass-bg); backdrop-filter: blur(25px);
+            border-top: 1px solid var(--glass-border);
+            border-radius: var(--panel-round) var(--panel-round) 0 0;
+            padding: 10px 12px 12px; padding-bottom: env(safe-area-inset-bottom);
+            display: none; flex-direction: column; gap: 8px;
+            box-shadow: 0 -5px 25px rgba(0,0,0,0.3);
+            animation: agentBarIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+        }
+        @keyframes agentBarIn { from { transform: translateY(100%); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        #agent-bar.visible { display: flex; }
+        .agent-bar-header { display: flex; align-items: center; justify-content: space-between; }
+        .agent-status-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--accent); animation: pulse 1.5s infinite; flex-shrink: 0; }
+        @keyframes pulse { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.4; transform:scale(0.8); } }
+        .agent-input-row { display: flex; gap: 8px; align-items: flex-end; }
+        #agent-prompt {
+            flex: 1; padding: 10px 12px; border-radius: 12px;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border);
+            color: var(--text-color); font-family: 'Poppins', sans-serif; font-size: 13px;
+            resize: none; min-height: 42px; max-height: 100px; overflow-y: auto; line-height: 1.4;
+            user-select: text; -webkit-user-select: text;
+            transition: border-color 0.2s;
+        }
+        #agent-prompt:focus { border-color: var(--accent); outline: none; box-shadow: 0 0 0 2px var(--accent-dim); }
+        #agent-attach-btn, #agent-send-btn {
+            width: 42px; height: 42px; border-radius: 12px; border: none; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        #agent-attach-btn:active, #agent-send-btn:active { transform: scale(0.9); }
+        #agent-attach-btn { background: rgba(128,128,128,0.12); color: var(--text-color); }
+        #agent-send-btn { background: var(--accent); color: white; }
+        #agent-send-btn .material-icons-round, #agent-attach-btn .material-icons-round { font-size: 18px; pointer-events: none; }
+        #agent-thinking {
+            display: none; align-items: center; gap: 8px; font-size: 11px; color: var(--accent); font-weight: 600;
+        }
+        #agent-thinking.visible { display: flex; }
+        .agent-dots span {
+            display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: var(--accent);
+            animation: dotBounce 1.2s infinite; margin-right: 2px;
+        }
+        .agent-dots span:nth-child(2) { animation-delay: 0.2s; }
+        .agent-dots span:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes dotBounce { 0%,80%,100%{ transform:translateY(0); opacity:0.4; } 40%{ transform:translateY(-4px); opacity:1; } }
+        #agent-file-input { display: none; }
     </style>
 </head>
 <body class="dark-theme no-select">
@@ -143,12 +311,10 @@
 <div class="app-layout">
     <div class="app-header" id="header">
         <div class="tabs">
-            <div class="tab active" onclick="switchMainTab('editor')">Code</div>
-            <div class="tab" onclick="switchMainTab('preview')">Preview</div>
+            <div class="tab active" onclick="switchTab('editor')">Code</div>
+            <div class="tab" onclick="switchTab('preview')">Preview</div>
         </div>
         
-        <div id="header-tips" class="tips-ticker">CodX Editor Ready</div>
-
         <div style="display:flex; align-items:center;">
             <button class="icon-btn no-select" id="install-btn" style="display:none; width:30px; height:30px; background:var(--accent-dim); min-width:30px; border: 1px solid var(--accent); margin-right: 5px;">
                 <span class="material-icons-round" style="color:var(--accent); font-size:16px;">download</span>
@@ -158,9 +324,8 @@
             </button>
         </div>
     </div>
-    
-    <div class="file-tabs-container" id="file-tabs-container">
-        </div>
+
+    <div class="file-tabs-bar no-select" id="file-tabs-bar"></div>
 
     <div class="main-container" id="editor-wrapper">
         <div id="editor"></div>
@@ -193,14 +358,16 @@
             
             <div class="toolbar">
                 <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span> Open</button>
-                <button class="toolbar-btn" onclick="saveFileToDevice()"><span class="material-icons-round">save</span> Save</button>
+                <button class="toolbar-btn" onclick="saveFile()"><span class="material-icons-round">save</span> Save</button>
                 <button class="toolbar-btn" onclick="editor.selectAll()"><span class="material-icons-round">select_all</span> All</button>
                 <button class="toolbar-btn" onclick="pasteClipboard()"><span class="material-icons-round">content_paste</span> Paste</button>
+                <button class="toolbar-btn" onclick="cutClipboard()"><span class="material-icons-round">content_cut</span> Cut</button>
                 <button class="toolbar-btn" onclick="copyClipboard()"><span class="material-icons-round">content_copy</span> Copy</button>
                 <button class="toolbar-btn" onclick="editor.undo()"><span class="material-icons-round">undo</span> Undo</button>
                 <button class="toolbar-btn" onclick="editor.redo()"><span class="material-icons-round">redo</span> Redo</button>
                 <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">search</span> Find</button>
                 <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">cloud_sync</span> GitSync</button>
+                <button class="toolbar-btn" onclick="openAgentModal()"><span class="material-icons-round">smart_toy</span> Agent</button>
             </div>
         </div>
     </div>
@@ -212,14 +379,12 @@
     <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
         Find & Replace <span class="material-icons-round" onclick="toggleFindReplace()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
     </div>
-    
-    <div class="checkbox-row">
-        <label class="checkbox-label"><input type="checkbox" id="find-case-sensitive"> Match Case</label>
-        <label class="checkbox-label"><input type="checkbox" id="find-use-regex"> Regex</label>
+    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px;"></textarea>
+    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px;"></textarea>
+    <div class="find-options">
+        <label class="find-check-label"><input type="checkbox" id="find-case"> Case Sensitive</label>
+        <label class="find-check-label"><input type="checkbox" id="find-regex"> Regex</label>
     </div>
-
-    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:40px;"></textarea>
-    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:40px;"></textarea>
     <div class="modal-actions">
         <button class="modal-btn secondary" onclick="clearFind()">Clear</button>
         <button class="modal-btn" onclick="findText(true)">Find Next</button>
@@ -227,43 +392,130 @@
     </div>
 </div>
 
-<div class="modal center-modal no-select" id="github-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:15px; font-size:15px;">
-        CodX GitHub Sync <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
+<div id="gh-overlay" onclick="closeGithubModal()"></div>
+
+<div class="no-select" id="github-modal">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="material-icons-round" style="color:var(--accent); font-size:20px;">cloud_sync</span>
+            <span style="color:var(--text-color); font-weight:600; font-size:15px; font-family:'Poppins',sans-serif;">CodX GitHub Sync</span>
+        </div>
+        <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto; transition:opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">close</span>
     </div>
     
     <div id="gh-login-section">
-        <input type="text" id="gh-token" placeholder="Personal Access Token (PAT)" style="user-select:text; -webkit-user-select:text; border-radius:12px;">
-        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:5px; border-radius:12px;">Login & Save Device</button>
+        <div style="font-size:11px; color:var(--text-color); opacity:0.5; margin-bottom:8px; font-family:'Poppins',sans-serif;">Enter your GitHub Personal Access Token</div>
+        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" style="user-select:text; -webkit-user-select:text;">
+        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:0px;">Login & Save to Device</button>
     </div>
 
-    <div id="gh-repo-section" style="display:none;">
-        <div style="font-size:11px; color:var(--accent); margin-bottom:10px; text-align:right; cursor:pointer;" onclick="ghLogout()">Logout</div>
+    <div id="gh-repo-section" style="display:none;" class="gh-section-anim">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+            <div style="font-size:11px; color:var(--accent); font-family:'Poppins',sans-serif; font-weight:600;">Connected</div>
+            <div style="font-size:11px; color:var(--text-color); opacity:0.5; cursor:pointer; font-family:'Poppins',sans-serif; display:flex; align-items:center; gap:3px;" onclick="ghLogout()">
+                <span class="material-icons-round" style="font-size:13px;">logout</span> Logout
+            </div>
+        </div>
         
-        <select id="gh-repo-select" class="beautiful-select" onchange="fetchGhFiles()">
-            <option value="">Select Repository...</option>
-        </select>
+        <div class="gh-select-wrap">
+            <select id="gh-repo-select" onchange="fetchGhFiles()">
+                <option value="">Select Repository...</option>
+            </select>
+        </div>
         
-        <select id="gh-file-select" class="beautiful-select" style="display:none;" onchange="enableLoadBtn()">
-            <option value="">Select File...</option>
-        </select>
+        <div class="gh-select-wrap" style="display:none;" id="gh-file-select-wrap">
+            <select id="gh-file-select" onchange="enableLoadBtn()">
+                <option value="">Select File...</option>
+            </select>
+        </div>
 
-        <div class="modal-actions" style="margin-top:15px;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="triggerGhLoadPrompt()" disabled>Load Repo Code</button>
-            <button class="modal-btn" id="gh-commit-btn" onclick="triggerGhCommitProcess()" disabled style="background:#ef4444;">Commit Edit</button>
+        <div class="modal-actions" style="margin-top:12px; gap:10px;">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex; align-items:center; justify-content:center; gap:5px;">
+                <span class="material-icons-round" style="font-size:16px; pointer-events:none;">download</span> Load File
+            </button>
+            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444; display:flex; align-items:center; justify-content:center; gap:5px;">
+                <span class="material-icons-round" style="font-size:16px; pointer-events:none;">upload</span> Commit
+            </button>
         </div>
     </div>
 </div>
 
-<div class="modal center-modal no-select" id="custom-dialog">
-    <h3 style="margin-bottom:8px; color:var(--accent); font-size: 16px;" id="dialog-title">Alert</h3>
-    <p style="font-size:12px; margin-bottom:15px; color:var(--text-color); opacity: 0.9;" id="dialog-msg">Message goes here</p>
-    
-    <input type="text" id="dialog-input" style="display:none; user-select:text; -webkit-user-select:text; border-radius: 10px;" placeholder="Type here..." />
-    
-    <div class="modal-actions">
-        <button class="modal-btn secondary" id="dialog-btn-secondary">Cancel</button>
-        <button class="modal-btn" id="dialog-btn-primary">OK</button>
+<input type="file" id="agent-file-input" accept=".html,.js,.css,.txt,.json,.md" style="display:none;">
+
+<!-- Custom Dialog (replaces all browser confirm/alert/prompt) -->
+<div id="custom-dialog-overlay">
+    <div id="custom-dialog-box">
+        <div id="custom-dialog-icon"></div>
+        <div id="custom-dialog-title"></div>
+        <div id="custom-dialog-msg"></div>
+        <input type="text" id="custom-dialog-input" style="display:none;">
+        <div id="custom-dialog-btns"></div>
+    </div>
+</div>
+
+<!-- Agent Setup Modal -->
+<div id="agent-overlay" onclick="closeAgentModal()"></div>
+<div id="agent-modal" class="no-select">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span class="material-icons-round" style="color:var(--accent); font-size:20px;">smart_toy</span>
+            <span style="font-weight:600; font-size:15px; color:var(--text-color);">AI Agent</span>
+        </div>
+        <span class="material-icons-round" onclick="closeAgentModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
+    </div>
+    <div id="agent-setup-section">
+        <div style="font-size:11px; opacity:0.5; margin-bottom:10px;">Choose AI Provider</div>
+        <div class="agent-provider-grid" id="agent-provider-grid">
+            <div class="agent-provider-btn" data-provider="openai" data-url="https://api.openai.com/v1/chat/completions" data-model="gpt-4o-mini" onclick="selectProvider(this)">
+                OpenAI <span class="provider-tag">GPT-4o-mini • Paid</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="anthropic" data-url="https://api.anthropic.com/v1/messages" data-model="claude-3-haiku-20240307" onclick="selectProvider(this)">
+                Anthropic <span class="provider-tag">Claude Haiku • Paid</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="groq" data-url="https://api.groq.com/openai/v1/chat/completions" data-model="llama3-8b-8192" onclick="selectProvider(this)">
+                Groq <span class="provider-tag">Llama3 • Free</span>
+            </div>
+            <div class="agent-provider-btn" data-provider="gemini" data-url="https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent" data-model="gemini-1.5-flash" onclick="selectProvider(this)">
+                Gemini <span class="provider-tag">Flash 1.5 • Free</span>
+            </div>
+        </div>
+        <input type="text" id="agent-api-key" placeholder="Paste API Key here..." style="width:100%; padding:11px 12px; border-radius:10px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); color:var(--text-color); font-family:'Poppins',sans-serif; font-size:13px; margin-bottom:10px; user-select:text; -webkit-user-select:text; transition:border-color 0.2s, box-shadow 0.2s;">
+        <button class="modal-btn" onclick="connectAgent()" style="width:100%;">Connect Agent</button>
+    </div>
+    <div id="agent-connected-section" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+            <div style="display:flex; align-items:center; gap:6px;">
+                <div style="width:8px; height:8px; border-radius:50%; background:var(--accent); animation:pulse 1.5s infinite;"></div>
+                <span style="font-size:12px; color:var(--accent); font-weight:600;" id="agent-connected-label">Connected</span>
+            </div>
+            <span style="font-size:11px; opacity:0.5; cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="disconnectAgent()">
+                <span class="material-icons-round" style="font-size:13px;">logout</span> Disconnect
+            </span>
+        </div>
+        <button class="modal-btn" onclick="openAgentBar()" style="width:100%; display:flex; align-items:center; justify-content:center; gap:6px;">
+            <span class="material-icons-round" style="font-size:16px; pointer-events:none;">psychology</span> Open Agent Bar
+        </button>
+    </div>
+</div>
+
+<!-- Agent Bar -->
+<div id="agent-bar">
+    <div class="agent-bar-header">
+        <div style="display:flex; align-items:center; gap:6px;">
+            <div class="agent-status-dot"></div>
+            <span style="font-size:11px; font-weight:600; color:var(--accent);" id="agent-bar-label">Agent</span>
+        </div>
+        <span class="material-icons-round" onclick="closeAgentBar()" style="font-size:18px; opacity:0.5; cursor:pointer; pointer-events:auto;">close</span>
+    </div>
+    <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
+    <div class="agent-input-row">
+        <textarea id="agent-prompt" placeholder="Describe what to change..." rows="1"></textarea>
+        <button id="agent-attach-btn" onclick="document.getElementById('agent-file-input').click()">
+            <span class="material-icons-round">attach_file</span>
+        </button>
+        <button id="agent-send-btn" onclick="sendAgentPrompt()">
+            <span class="material-icons-round">send</span>
+        </button>
     </div>
 </div>
 
@@ -271,34 +523,23 @@
     document.body.style.height = window.innerHeight + 'px';
     window.visualViewport.addEventListener('resize', () => {
         let kbHeight = window.innerHeight - window.visualViewport.height;
-        let activeFindModal = document.querySelector('#find-modal.active');
-        if (activeFindModal) { activeFindModal.style.bottom = kbHeight > 0 ? (kbHeight + 10) + 'px' : '20px'; }
+        let activeModal = document.querySelector('.modal.active:not(#github-modal)');
+        if (activeModal) { activeModal.style.bottom = kbHeight > 0 ? (kbHeight + 10) + 'px' : '20px'; }
     });
 
-    // --- Dynamic Tips Rotator ---
-    const tipsArray = ["Tip: Use GitSync for instant Cloud Backups", "Tip: Swipe down toolbar to hide", "Tip: 2 Finger Pinch to zoom code", "Tip: Turn on Regex for advanced find"];
-    let tipIndex = 0;
-    setInterval(() => {
-        let tipEl = document.getElementById('header-tips');
-        tipEl.style.opacity = 0;
-        setTimeout(() => { tipIndex = (tipIndex + 1) % tipsArray.length; tipEl.innerText = tipsArray[tipIndex]; tipEl.style.opacity = 1; }, 300);
-    }, 4500);
-
-    // --- PWA & SERVICE WORKER FIX (Silent Install Fail Fix) ---
-    // Start URL is set to relative, and fetch handler handles requests properly to pass PWA criteria.
+    // --- PWA & SERVICE WORKER DEEP FIX ---
     const manifestData = {
-        "name": "CodX", "short_name": "CodX", "start_url": "./", "display": "standalone",
-        "background_color": "#141419", "theme_color": "#10b981",
+        "name": "CodX", "short_name": "CodX", "start_url": window.location.href.split('?')[0], "display": "standalone",
+        "background_color": "#0a0a0c", "theme_color": "#0a0a0c",
         "icons": [{"src": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%2310b981'/><text x='50' y='65' font-size='40' font-family='sans-serif' font-weight='bold' fill='white' text-anchor='middle'>&lt;/&gt;</text></svg>", "sizes": "512x512", "type": "image/svg+xml", "purpose": "any maskable"}]
     };
     const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/manifest+json'});
     document.getElementById('manifest-link').href = URL.createObjectURL(manifestBlob);
 
     if ('serviceWorker' in navigator) {
-        // Simple fetch bypass to satisfy valid PWA installation requirements.
-        const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => {});`;
+        const swCode = `self.addEventListener('install', (e) => self.skipWaiting()); self.addEventListener('activate', (e) => e.waitUntil(clients.claim())); self.addEventListener('fetch', (e) => { e.respondWith(fetch(e.request).catch(() => new Response('CodX Offline Working'))); });`;
         const swBlob = new Blob([swCode], {type: 'application/javascript'});
-        navigator.serviceWorker.register(URL.createObjectURL(swBlob), { scope: './' }).catch(()=>console.log("Hosted mode optimal for PWA."));
+        navigator.serviceWorker.register(URL.createObjectURL(swBlob)).catch(()=>console.log("Hosted mode required for automatic SW install popup."));
     }
 
     let deferredPrompt;
@@ -306,84 +547,31 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault(); deferredPrompt = e; installBtn.style.display = 'flex';
     });
+    window.addEventListener('appinstalled', () => {
+        installBtn.style.display = 'none'; deferredPrompt = null;
+    });
     installBtn.addEventListener('click', async () => {
         if (deferredPrompt) {
             deferredPrompt.prompt();
             const { outcome } = await deferredPrompt.userChoice;
-            if (outcome === 'accepted') installBtn.style.display = 'none';
-            deferredPrompt = null;
+            if (outcome === 'accepted') { installBtn.style.display = 'none'; deferredPrompt = null; }
+            // If dismissed, keep deferredPrompt so user can try again
         }
     });
 
-    // --- MULTI-TAB & LOCAL STORAGE SYSTEM ---
-    let appFiles = JSON.parse(localStorage.getItem('codx_files')) || [];
-    if(appFiles.length === 0) {
-        appFiles.push({ id: Date.now(), name: "index.html", content: "\n<!DOCTYPE html>\n<html>\n<head>\n  <title>CodX</title>\n</head>\n<body>\n  <h1>Welcome to CodX!</h1>\n</body>\n</html>", ghSha: "", ghRepo: "", ghPath: "" });
-    }
-    let activeFileId = appFiles[0].id;
-    let pendingFileData = null; // Temp holder for new files being loaded
-
-    function renderFileTabs() {
-        const container = document.getElementById('file-tabs-container');
-        container.innerHTML = "";
-        appFiles.forEach(f => {
-            let tab = document.createElement('div');
-            tab.className = `file-tab ${f.id === activeFileId ? 'active' : ''}`;
-            tab.innerHTML = `${f.name} <span class="material-icons-round file-tab-close" onclick="closeFileTab(event, ${f.id})">close</span>`;
-            tab.onclick = () => switchFileTab(f.id);
-            container.appendChild(tab);
-        });
-        localStorage.setItem('codx_files', JSON.stringify(appFiles));
-    }
-
-    function switchFileTab(id) {
-        activeFileId = id;
-        let file = appFiles.find(f => f.id === id);
-        if(file) {
-            editor.setValue(file.content, -1);
-            ghCurrentSha = file.ghSha || "";
-            ghCurrentRepo = file.ghRepo || "";
-            ghCurrentFile = file.ghPath || "";
-            document.getElementById('gh-commit-btn').disabled = !ghCurrentSha;
-            renderFileTabs();
-        }
-    }
-
-    function closeFileTab(e, id) {
-        e.stopPropagation();
-        if(appFiles.length === 1) return showCustomDialog("Action Denied", "Cannot close the last remaining tab.", "OK", null, null, null, false);
-        appFiles = appFiles.filter(f => f.id !== id);
-        if(activeFileId === id) switchFileTab(appFiles[appFiles.length - 1].id);
-        else renderFileTabs();
-    }
-
-    // --- EDITOR CORE ---
+    // --- EDITOR ---
     var editor = ace.edit("editor");
     editor.setTheme("ace/theme/tomorrow_night_eighties"); 
     editor.session.setMode("ace/mode/html");
     
+    // Performance: Fast, No Wrap, No Fold Widgets
     editor.setOptions({
         fontSize: "14px", showLineNumbers: true, showGutter: true, wrap: false, displayIndentGuides: false, 
         showPrintMargin: false, useWorker: false, animatedScroll: false, tooltipFollowsMouse: false,
         highlightActiveLine: false, showFoldWidgets: false, touchScroll: true
     });
 
-    let saveTimeout;
-    editor.session.on("change", function() {
-        checkScrollable();
-        // Debounce auto-save to local storage
-        clearTimeout(saveTimeout);
-        saveTimeout = setTimeout(() => {
-            let activeFile = appFiles.find(f => f.id === activeFileId);
-            if(activeFile) {
-                activeFile.content = editor.getValue();
-                localStorage.setItem('codx_files', JSON.stringify(appFiles));
-            }
-        }, 800);
-    });
-
-    // Initialize Editor with Active File
-    switchFileTab(activeFileId);
+    editor.setValue("\n<!DOCTYPE html>\n<html>\n<head>\n  <title>CodX</title>\n</head>\n<body>\n  <h1>Welcome to CodX!</h1>\n</body>\n</html>", -1);
 
     let scrollTimeout;
     const jumpers = document.getElementById('jumpers');
@@ -399,6 +587,7 @@
         clearTimeout(scrollTimeout);
         scrollTimeout = setTimeout(() => { jumpers.classList.remove('visible'); }, 2000);
     });
+    editor.session.on("change", checkScrollable);
 
     function customFastScroll(direction) {
         let startPos = editor.renderer.getScrollTop();
@@ -418,8 +607,9 @@
         requestAnimationFrame(animation);
     }
 
-    async function pasteClipboard() { try { const text = await navigator.clipboard.readText(); editor.insert(text); } catch (err) { alert("Please paste natively."); } }
-    async function copyClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); alert("Copied!"); } else { alert("Double-tap text first."); } } catch (err) { alert("Copy failed."); } }
+    async function pasteClipboard() { try { const text = await navigator.clipboard.readText(); editor.insert(text); } catch (err) { cdAlert('Paste', 'Please paste natively using your keyboard.', 'info'); } }
+    async function copyClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); } else { cdAlert('Copy', 'Double-tap text to select it first.', 'info'); } } catch (err) { cdAlert('Copy', 'Copy failed.', 'error'); } }
+    async function cutClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); editor.insert(''); } else { cdAlert('Cut', 'Double-tap text to select it first.', 'info'); } } catch (err) { cdAlert('Cut', 'Cut failed.', 'error'); } }
 
     const editorWrapper = document.getElementById('editor');
     let initialDistance = null, initialFontSize = 14, zoomReq;
@@ -450,23 +640,22 @@
     });
     function restoreBottomPanel() { bottomPanel.classList.remove('collapsed'); restoreBtn.classList.remove('visible'); }
 
-    // Dynamic Theme Color Updater with exact background colors
+    // Dynamic Theme Color Updater
     function toggleTheme() {
         let isDark = document.body.classList.contains('dark-theme');
         document.body.className = isDark ? 'light-theme no-select' : 'dark-theme no-select';
         editor.setTheme(isDark ? "ace/theme/textmate" : "ace/theme/tomorrow_night_eighties");
         document.getElementById('theme-icon').innerText = isDark ? 'dark_mode' : 'light_mode';
-        document.getElementById('theme-color-meta').content = isDark ? '#f0f2f5' : '#0a0a0c'; // Matches EXACT bg
+        document.getElementById('theme-color-meta').content = isDark ? '#f0f2f5' : '#0a0a0c';
     }
 
-    function switchMainTab(tabName) {
+    function switchTab(tabName) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         if(tabName === 'preview') {
             event.currentTarget.classList.add('active'); 
             document.getElementById('preview').classList.add('active-pane');
             document.getElementById('editor').style.opacity = '0'; document.getElementById('editor').style.pointerEvents = 'none';
             jumpers.style.display = 'none'; bottomPanel.style.display = 'none'; restoreBtn.style.display = 'none';
-            document.getElementById('file-tabs-container').style.display = 'none';
             document.getElementById('find-modal').classList.remove('active'); closeGithubModal();
             let code = editor.getValue();
             if(!code.includes('viewport')) code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
@@ -475,128 +664,159 @@
             event.currentTarget.classList.add('active'); 
             document.getElementById('preview').classList.remove('active-pane');
             document.getElementById('editor').style.opacity = '1'; document.getElementById('editor').style.pointerEvents = 'auto';
-            document.getElementById('file-tabs-container').style.display = 'flex';
             checkScrollable(); bottomPanel.style.display = ''; 
             if(bottomPanel.classList.contains('collapsed')) { restoreBtn.style.display = ''; }
-            // editor.focus();  <-- Removed per instruction to stop keyboard auto pop-up
+            editor.blur();
         }
     }
 
-    // --- CUSTOM ANIMATED DIALOG SYSTEM ---
-    function showCustomDialog(title, msg, btn1Text, btn2Text, callback1, callback2, showInput = false) {
-        document.getElementById('dialog-title').innerText = title;
-        document.getElementById('dialog-msg').innerText = msg;
-        
-        let inputEl = document.getElementById('dialog-input');
-        inputEl.style.display = showInput ? 'block' : 'none';
-        inputEl.value = showInput && showInput.default ? showInput.default : '';
+    // --- MULTI-TAB SYSTEM ---
+    let fileTabs = [{ id: 1, name: 'index.html', content: editor.getValue() }];
+    let activeTabId = 1;
+    let tabIdCounter = 2;
 
-        let b1 = document.getElementById('dialog-btn-secondary');
-        let b2 = document.getElementById('dialog-btn-primary');
-        
-        b1.style.display = btn1Text ? 'block' : 'none';
-        b1.innerText = btn1Text || '';
-        b2.innerText = btn2Text || 'OK';
-
-        b1.onclick = () => { closeCustomDialog(); if(callback1) callback1(inputEl.value); };
-        b2.onclick = () => { closeCustomDialog(); if(callback2) callback2(inputEl.value); };
-        
-        document.getElementById('custom-dialog').classList.add('active');
-    }
-    function closeCustomDialog() { document.getElementById('custom-dialog').classList.remove('active'); }
-
-    // --- FILE LOADING W/ TABS ---
-    function loadFile(event) {
-        const file = event.target.files[0]; if (!file) return; 
-        const reader = new FileReader(); 
-        reader.onload = e => {
-            pendingFileData = { name: file.name, content: e.target.result, ghSha: "", ghRepo: "", ghPath: "" };
-            showCustomDialog("Open File", `Where do you want to open '${file.name}'?`, "Current Tab", "New Tab", 
-                () => finalizeFileOpen(false), 
-                () => finalizeFileOpen(true)
-            );
-        }; 
-        reader.readAsText(file);
-        event.target.value = ''; 
+    function renderFileTabs() {
+        const bar = document.getElementById('file-tabs-bar');
+        bar.innerHTML = '';
+        fileTabs.forEach(tab => {
+            const el = document.createElement('div');
+            el.className = 'file-tab' + (tab.id === activeTabId ? ' active' : '');
+            el.innerHTML = `<span style="pointer-events:none">${tab.name}</span>${fileTabs.length > 1 ? `<span class="material-icons-round ft-close" onclick="closeFileTab(${tab.id},event)">close</span>` : ''}`;
+            el.onclick = (e) => { if(!e.target.classList.contains('ft-close')) switchFileTab(tab.id); };
+            bar.appendChild(el);
+        });
     }
 
-    function finalizeFileOpen(inNewTab) {
-        if(!pendingFileData) return;
-        if(inNewTab) {
-            let newId = Date.now();
-            appFiles.push({ id: newId, ...pendingFileData });
-            switchFileTab(newId);
+    function switchFileTab(id) {
+        // Save current tab content
+        let cur = fileTabs.find(t => t.id === activeTabId);
+        if(cur) cur.content = editor.getValue();
+        activeTabId = id;
+        let tab = fileTabs.find(t => t.id === id);
+        if(tab) { editor.setValue(tab.content, -1); currentFileName = tab.name; }
+        renderFileTabs();
+    }
+
+    function closeFileTab(id, e) {
+        e.stopPropagation();
+        if(fileTabs.length === 1) return;
+        let idx = fileTabs.findIndex(t => t.id === id);
+        fileTabs.splice(idx, 1);
+        if(activeTabId === id) {
+            let newTab = fileTabs[Math.max(0, idx - 1)];
+            activeTabId = newTab.id;
+            editor.setValue(newTab.content, -1); currentFileName = newTab.name;
+        }
+        renderFileTabs();
+    }
+
+    function openFileInTab(name, content, forceNew) {
+        // Save current tab
+        let cur = fileTabs.find(t => t.id === activeTabId);
+        if(cur) cur.content = editor.getValue();
+
+        if(forceNew) {
+            let newTab = { id: tabIdCounter++, name: name, content: content };
+            fileTabs.push(newTab);
+            activeTabId = newTab.id;
         } else {
-            let activeFile = appFiles.find(f => f.id === activeFileId);
-            activeFile.name = pendingFileData.name;
-            activeFile.content = pendingFileData.content;
-            activeFile.ghSha = pendingFileData.ghSha;
-            activeFile.ghRepo = pendingFileData.ghRepo;
-            activeFile.ghPath = pendingFileData.ghPath;
-            switchFileTab(activeFileId);
+            let cur2 = fileTabs.find(t => t.id === activeTabId);
+            if(cur2) { cur2.name = name; cur2.content = content; }
         }
-        pendingFileData = null;
+        editor.setValue(content, -1);
+        currentFileName = name;
+        renderFileTabs();
     }
 
-    async function saveFileToDevice() {
+    renderFileTabs();
+
+    let currentFileName = "index.html";
+    function loadFile(event) {
+        const file = event.target.files[0]; if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const content = e.target.result;
+            const name = file.name;
+            if(fileTabs.length > 0) {
+                cdConfirm('Open File', `Open "${name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
+                    openFileInTab(name, content, useNew);
+                });
+            } else {
+                openFileInTab(name, content, false);
+            }
+            event.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+    async function saveFile() {
         const code = editor.getValue();
-        let activeFile = appFiles.find(f => f.id === activeFileId);
-        if (window.showSaveFilePicker) { try { const handle = await window.showSaveFilePicker({ suggestedName: activeFile.name }); const writable = await handle.createWritable(); await writable.write(code); await writable.close(); return; } catch (err) {} }
-        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = activeFile.name; a.click();
+        if (window.showSaveFilePicker) { try { const handle = await window.showSaveFilePicker({ suggestedName: currentFileName }); const writable = await handle.createWritable(); await writable.write(code); await writable.close(); return; } catch (err) {} }
+        const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = currentFileName; a.click();
     }
 
-    // --- FIND AND REPLACE W/ REGEX & CASE SENSITIVE ---
     const findModal = document.getElementById('find-modal');
     function toggleFindReplace() { 
-        closeGithubModal(); let isActive = findModal.classList.toggle('active'); 
-        if (isActive) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); findModal.style.bottom = '20px'; }
+        closeGithubModal(); 
+        let isActive = findModal.classList.toggle('active'); 
+        if (isActive) { 
+            bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); findModal.style.bottom = '20px'; 
+            // Focus find input to push keyboard up smoothly
+            requestAnimationFrame(() => { 
+                const fi = document.getElementById('find-input');
+                fi.focus(); 
+                fi.setSelectionRange(fi.value.length, fi.value.length);
+            });
+        }
     }
     function findText(showErrorAlert = true) { 
         let searchStr = document.getElementById('find-input').value.trim(); if (!searchStr) return;
-        
-        let isCaseSensitive = document.getElementById('find-case-sensitive').checked;
-        let isRegex = document.getElementById('find-use-regex').checked;
-
-        editor.find(searchStr, { wrap: true, caseSensitive: isCaseSensitive, regExp: isRegex, wholeWord: false }); 
+        let caseSensitive = document.getElementById('find-case').checked;
+        let useRegex = document.getElementById('find-regex').checked;
+        editor.find(searchStr, { wrap: true, caseSensitive: caseSensitive, wholeWord: false, regExp: useRegex }); 
         let match = editor.getSelectionRange();
-        
-        if(match.isEmpty() && showErrorAlert) { 
-            showCustomDialog("Not Found", "No match found for your query.", null, "OK", null, null);
-            editor.clearSelection(); 
-        } 
-        else if (!match.isEmpty()) { 
-            editor.renderer.scrollSelectionIntoView(match.start, match.end); editor.centerSelection(); 
-        }
+        if(match.isEmpty() && showErrorAlert) { cdAlert('Find', 'No exact match found.', 'warn'); editor.clearSelection(); } 
+        else if (!match.isEmpty()) { editor.renderer.scrollSelectionIntoView(match.start, match.end); editor.centerSelection(); }
     }
     function replaceText() { 
         let replaceStr = document.getElementById('replace-input').value; let match = editor.getSelectionRange();
-        if(!match.isEmpty()) { editor.replace(replaceStr); findText(false); } else { showCustomDialog("Error", "Click 'Find Next' to highlight target first.", null, "OK", null, null); }
+        if(!match.isEmpty()) { editor.replace(replaceStr); findText(false); } else { cdAlert('Replace', "Click 'Find Next' first.", 'info'); }
     }
     function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
 
     // --- GITHUB MANAGER ---
     const ghModal = document.getElementById('github-modal');
+    const ghOverlay = document.getElementById('gh-overlay');
     let ghCurrentRepo = "", ghCurrentFile = "", ghCurrentSha = "";
 
     function openGithubModal() {
-        findModal.classList.remove('active'); ghModal.classList.add('active');
+        findModal.classList.remove('active'); 
+        ghOverlay.classList.add('active');
+        ghModal.classList.add('active');
         if(!bottomPanel.classList.contains('collapsed')) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform = ''; restoreBtn.classList.add('visible'); }
         checkGhLogin();
     }
-    function closeGithubModal() { ghModal.classList.remove('active'); }
+    function closeGithubModal() { 
+        ghModal.classList.remove('active'); 
+        ghOverlay.classList.remove('active');
+    }
 
+    let _ghReposLoaded = false;
     function checkGhLogin() {
         let token = localStorage.getItem('gh_token');
+        let loginSec = document.getElementById('gh-login-section');
+        let repoSec = document.getElementById('gh-repo-section');
         if(token) {
-            document.getElementById('gh-login-section').style.display = 'none'; document.getElementById('gh-repo-section').style.display = 'block';
-            if(document.getElementById('gh-repo-select').options.length <= 1) fetchGhRepos();
+            loginSec.style.display = 'none'; repoSec.style.display = 'block'; repoSec.className = 'gh-section-anim';
+            if(!_ghReposLoaded) { _ghReposLoaded = true; fetchGhRepos(); }
         } else {
-            document.getElementById('gh-login-section').style.display = 'block'; document.getElementById('gh-repo-section').style.display = 'none';
+            loginSec.style.display = 'block'; repoSec.style.display = 'none';
+            document.getElementById('gh-file-select-wrap').style.display = 'none';
+            _ghReposLoaded = false;
         }
     }
 
     function saveGhToken() { let tk = document.getElementById('gh-token').value.trim(); if(tk) { localStorage.setItem('gh_token', tk); checkGhLogin(); } }
-    function ghLogout() { localStorage.removeItem('gh_token'); checkGhLogin(); }
+    function ghLogout() { localStorage.removeItem('gh_token'); _ghReposLoaded = false; checkGhLogin(); }
 
     async function ghApi(endpoint, method='GET', body=null) {
         let token = localStorage.getItem('gh_token');
@@ -611,87 +831,435 @@
 
     async function fetchGhRepos() {
         try {
-            document.getElementById('gh-load-btn').innerText = "Loading Repos...";
-            let repos = await ghApi('/user/repos?sort=updated');
-            let sel = document.getElementById('gh-repo-select'); sel.innerHTML = '<option value="">Select Repository...</option>';
-            repos.forEach(r => { sel.innerHTML += `<option value="${r.full_name}">${r.name}</option>`; });
-            document.getElementById('gh-load-btn').innerText = "Load Repo Code";
-        } catch(e) { showCustomDialog("Auth Error", "Failed to load Repos. Check Token.", null, "OK", null, ghLogout); }
+            let repos = await ghApi('/user/repos?sort=updated&per_page=100');
+            let sel = document.getElementById('gh-repo-select');
+            renderGhCustomSelect('gh-repo-select', repos.map(r => ({ value: r.full_name, label: r.name, icon: 'folder' })), 'Select Repository...', (val) => {
+                document.getElementById('gh-repo-select')._value = val;
+                fetchGhFiles();
+            });
+        } catch(e) { cdAlert('GitHub', 'Failed to load repos. Check your token.', 'error'); ghLogout(); }
     }
 
     async function fetchGhFiles() {
-        ghCurrentRepo = document.getElementById('gh-repo-select').value;
-        let fileSel = document.getElementById('gh-file-select'); document.getElementById('gh-commit-btn').disabled = true;
-        if(!ghCurrentRepo) { fileSel.style.display = 'none'; return; }
+        ghCurrentRepo = document.getElementById('gh-repo-select')._value || '';
+        let fileSelWrap = document.getElementById('gh-file-select-wrap');
+        document.getElementById('gh-commit-btn').disabled = true;
+        if(!ghCurrentRepo) { fileSelWrap.style.display = 'none'; return; }
         try {
-            fileSel.style.display = 'block'; fileSel.innerHTML = '<option value="">Loading Files...</option>';
+            fileSelWrap.style.display = 'block';
+            renderGhCustomSelect('gh-file-select', [{ value: '', label: 'Loading files...', icon: 'hourglass_empty' }], 'Loading...', null);
             let repoData = await ghApi(`/repos/${ghCurrentRepo}`);
             let branch = repoData.default_branch;
             let treeData = await ghApi(`/repos/${ghCurrentRepo}/git/trees/${branch}?recursive=1`);
-            fileSel.innerHTML = '<option value="">Select File to Edit...</option>';
-            treeData.tree.forEach(file => { if(file.type === 'blob') { fileSel.innerHTML += `<option value="${file.path}">${file.path}</option>`; } });
-        } catch(e) { showCustomDialog("Error", "Failed to load repository files.", null, "OK", null, null); fileSel.style.display = 'none'; }
+            let files = treeData.tree.filter(f => f.type === 'blob').map(f => ({ value: f.path, label: f.path, icon: 'insert_drive_file' }));
+            renderGhCustomSelect('gh-file-select', files, 'Select File to Edit...', (val) => {
+                document.getElementById('gh-file-select')._value = val;
+                enableLoadBtn();
+            });
+        } catch(e) { cdAlert('GitHub', 'Failed to load files.', 'error'); fileSelWrap.style.display = 'none'; }
     }
 
     function enableLoadBtn() {
-        ghCurrentFile = document.getElementById('gh-file-select').value;
-        document.getElementById('gh-load-btn').disabled = !ghCurrentFile;
+        ghCurrentFile = document.getElementById('gh-file-select')._value || '';
+        document.getElementById('gh-load-btn').disabled = !ghCurrentFile; document.getElementById('gh-commit-btn').disabled = true; 
     }
 
-    function triggerGhLoadPrompt() {
-        closeGithubModal();
-        showCustomDialog("Cloud Sync", `Fetching file from GitHub...`, "Current Tab", "New Tab", 
-            () => loadGhFile(false), 
-            () => loadGhFile(true)
-        );
-    }
-
-    async function loadGhFile(inNewTab) {
+    async function loadGhFile() {
         try {
+            document.getElementById('gh-load-btn').disabled = true;
             let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`);
+            ghCurrentSha = fileData.sha; 
+            let name = ghCurrentFile.split('/').pop();
             let content = decodeB64(fileData.content);
-            
-            pendingFileData = { name: ghCurrentFile.split('/').pop(), content: content, ghSha: fileData.sha, ghRepo: ghCurrentRepo, ghPath: ghCurrentFile };
-            finalizeFileOpen(inNewTab);
-            
-            showCustomDialog("Success", "File loaded successfully from GitHub!", null, "OK", null, null);
-        } catch(e) { showCustomDialog("Error", "Failed to download file.", null, "OK", null, null); }
+            closeGithubModal();
+            // Ask new tab with custom dialog
+            cdConfirm('Open File', `Open "${name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
+                openFileInTab(name, content, useNew);
+                document.getElementById('gh-load-btn').disabled = false;
+                document.getElementById('gh-commit-btn').disabled = false;
+            });
+        } catch(e) { cdAlert('GitHub', 'Failed to download file.', 'error'); document.getElementById('gh-load-btn').disabled = false; }
     }
 
-    // BEAUTIFUL BACKUP AND COMMIT FLOW
-    function triggerGhCommitProcess() {
-        if(!ghCurrentSha) return showCustomDialog("Error", "Please Load a file first before committing!", null, "OK", null, null);
+    // COMMIT WARNING AND BACKUP
+    async function commitGhFile() {
+        if(!ghCurrentSha) return cdAlert('GitHub', 'Please load a file first before committing.', 'warn');
+        cdConfirm('Backup First?', 'You are about to commit to GitHub. Download a backup first? (Optional)', 'Download Backup', 'Skip', async (doBackup) => {
+            if(doBackup) await saveFile();
+            cdPrompt('Commit Message', 'Enter a commit message:', 'Update ' + ghCurrentFile, async (msg) => {
+                if(msg === null) return;
+                try {
+                    document.getElementById('gh-commit-btn').disabled = true;
+                    let contentB64 = encodeB64(editor.getValue());
+                    await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
+                    cdAlert('Success', 'Code committed to GitHub successfully!', 'success');
+                    document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
+                } catch(e) { cdAlert('Error', 'Commit failed. Please try again.', 'error'); document.getElementById('gh-commit-btn').disabled = false; }
+            });
+        });
+    }
+
+    // ===== CUSTOM DIALOG ENGINE =====
+    const _cdOverlay = document.getElementById('custom-dialog-overlay');
+    let _cdResolve = null;
+    function _showDialog(icon, title, msg, inputDef, buttons) {
+        document.getElementById('custom-dialog-icon').innerHTML = icon;
+        document.getElementById('custom-dialog-title').textContent = title;
+        document.getElementById('custom-dialog-msg').textContent = msg;
+        const inp = document.getElementById('custom-dialog-input');
+        if(inputDef !== null) { inp.style.display = 'block'; inp.value = inputDef; inp.style.userSelect='text'; inp.style.webkitUserSelect='text'; setTimeout(()=>{inp.focus();inp.select();},120); }
+        else { inp.style.display = 'none'; }
+        const btnsEl = document.getElementById('custom-dialog-btns');
+        btnsEl.innerHTML = '';
+        buttons.forEach(b => {
+            const btn = document.createElement('button');
+            btn.className = 'cdlg-btn ' + (b.cls||'secondary');
+            btn.textContent = b.label;
+            btn.onclick = () => { _hideDialog(); const r = _cdResolve; _cdResolve = null; if(r) r(b.value); };
+            btnsEl.appendChild(btn);
+        });
+        _cdOverlay.classList.add('active');
+    }
+    function _hideDialog() { _cdOverlay.classList.remove('active'); }
+    function cdAlert(title, msg, type) {
+        const icons = { success:'<span class="material-icons-round" style="color:#10b981">check_circle</span>', error:'<span class="material-icons-round" style="color:#ef4444">error</span>', warn:'<span class="material-icons-round" style="color:#f59e0b">warning</span>', info:'<span class="material-icons-round" style="color:var(--accent)">info</span>' };
+        return new Promise(r => { _cdResolve = r; _showDialog(icons[type]||icons.info, title, msg, null, [{label:'OK',cls:'primary',value:true}]); });
+    }
+    function cdConfirm(title, msg, okLabel, cancelLabel, cb) {
+        _cdResolve = cb;
+        _showDialog('<span class="material-icons-round" style="color:var(--accent)">help_outline</span>', title, msg, null, [
+            {label:cancelLabel||'Cancel', cls:'secondary', value:false},
+            {label:okLabel||'OK', cls:'primary', value:true}
+        ]);
+    }
+    function cdPrompt(title, msg, defaultVal, cb) {
+        _cdResolve = (v) => cb(v === false ? null : document.getElementById('custom-dialog-input').value);
+        _showDialog('<span class="material-icons-round" style="color:var(--accent)">edit</span>', title, msg, defaultVal||'', [
+            {label:'Cancel', cls:'secondary', value:false},
+            {label:'OK', cls:'primary', value:true}
+        ]);
+    }
+
+    // ===== GITHUB CUSTOM SELECT RENDERER =====
+    function renderGhCustomSelect(id, items, placeholder, onChange) {
+        // Find parent container
+        const oldEl = document.getElementById(id);
+        const parent = oldEl ? oldEl.closest('.gh-select-wrap') || oldEl.parentElement : null;
+        if(!parent) return;
+        parent.innerHTML = '';
+        parent.className = 'gh-custom-select gh-select-wrap';
+
+        const trigger = document.createElement('div');
+        trigger.className = 'gh-custom-trigger';
+        trigger.innerHTML = `<span class="gh-trigger-text">${placeholder}</span><span class="material-icons-round">expand_more</span>`;
+
+        const list = document.createElement('div');
+        list.className = 'gh-custom-list';
+
+        items.forEach(item => {
+            if(!item.value) return;
+            const opt = document.createElement('div');
+            opt.className = 'gh-custom-option';
+            opt.innerHTML = `<span class="material-icons-round">${item.icon||'insert_drive_file'}</span><span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">${item.label}</span>`;
+            opt.onclick = (e) => {
+                e.stopPropagation();
+                trigger.querySelector('.gh-trigger-text').textContent = item.label;
+                trigger.querySelector('.gh-trigger-text').classList.add('selected');
+                trigger.classList.remove('open'); list.classList.remove('open');
+                hidden._value = item.value;
+                if(onChange) onChange(item.value);
+            };
+            list.appendChild(opt);
+        });
+
+        const hidden = document.createElement('span');
+        hidden.id = id; hidden._value = '';
+
+        trigger.onclick = (e) => { e.stopPropagation(); trigger.classList.toggle('open'); list.classList.toggle('open'); };
+        // Close on outside tap
+        document.addEventListener('click', () => { trigger.classList.remove('open'); list.classList.remove('open'); });
+
+        parent.appendChild(trigger); parent.appendChild(list); parent.appendChild(hidden);
+    }
+
+    // Init GitHub selects when modal opens (called from openGithubModal -> checkGhLogin -> fetchGhRepos)
+    // The select wrappers in HTML will be used as containers
+
+    // ===== EDITOR PERFORMANCE: Gaming-level =====
+    editor.renderer.setScrollMargin(0,0,0,0);
+    editor.renderer.setPadding(6);
+    editor.setOption('enableBasicAutocompletion', false);
+    editor.setOption('enableLiveAutocompletion', false);
+    editor.setOption('enableSnippets', false);
+
+    // ===== AGENT SYSTEM =====
+    let agentConfig = null;
+    let agentAttachment = null;
+    // Diff review queue — pending edits waiting for accept/reject
+    let _agentPendingEdits = [];
+    let _agentOriginalCode = '';
+    // Undo history for agent edits (separate from editor undo — full snapshots)
+    let _agentUndoStack = [];
+    const AGENT_UNDO_LIMIT = 20;
+
+    // Load saved config on startup
+    (function() {
+        try { const s = localStorage.getItem('agent_config'); if(s) agentConfig = JSON.parse(s); } catch(e){}
+    })();
+
+    document.getElementById('agent-file-input').addEventListener('change', (e) => {
+        const file = e.target.files[0]; if(!file) return;
+        const r = new FileReader();
+        r.onload = ev => { agentAttachment = { name: file.name, content: ev.target.result }; document.getElementById('agent-attach-btn').style.background = 'var(--accent-dim)'; document.getElementById('agent-attach-btn').style.color = 'var(--accent)'; };
+        r.readAsText(file); e.target.value = '';
+    });
+
+    // Auto-expand textarea height
+    document.getElementById('agent-prompt').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+
+    function selectProvider(el) {
+        document.querySelectorAll('.agent-provider-btn').forEach(b => b.classList.remove('selected'));
+        el.classList.add('selected');
+    }
+
+    function openAgentModal() {
         closeGithubModal();
-        
-        showCustomDialog("Cloud Backup", "Would you like to download a safe backup of this code to your device before committing?", "Skip", "Yes, Backup", 
-            () => proceedToCommitMsg(),
-            async () => { await saveFileToDevice(); proceedToCommitMsg(); }
-        );
+        document.getElementById('agent-overlay').classList.add('active');
+        document.getElementById('agent-modal').classList.add('active');
+        if(agentConfig) {
+            document.getElementById('agent-setup-section').style.display = 'none';
+            document.getElementById('agent-connected-section').style.display = 'block';
+            document.getElementById('agent-connected-label').textContent = 'Connected · ' + agentConfig.providerName;
+        } else {
+            document.getElementById('agent-setup-section').style.display = 'block';
+            document.getElementById('agent-connected-section').style.display = 'none';
+        }
+    }
+    function closeAgentModal() {
+        document.getElementById('agent-overlay').classList.remove('active');
+        document.getElementById('agent-modal').classList.remove('active');
     }
 
-    function proceedToCommitMsg() {
-        showCustomDialog("Commit Message", "Enter a message for this commit:", "Cancel", "Push Code", 
-            null, 
-            (msg) => executeGhCommit(msg),
-            { default: `Update ${ghCurrentFile.split('/').pop()}` }
-        );
+    function connectAgent() {
+        const key = document.getElementById('agent-api-key').value.trim();
+        if(!key) { cdAlert('Agent', 'Please enter your API key.', 'warn'); return; }
+        const sel = document.querySelector('.agent-provider-btn.selected');
+        if(!sel) { cdAlert('Agent', 'Please select a provider first.', 'warn'); return; }
+        agentConfig = { provider: sel.dataset.provider, providerName: sel.textContent.trim().split('\n')[0].trim(), url: sel.dataset.url, model: sel.dataset.model, key };
+        localStorage.setItem('agent_config', JSON.stringify(agentConfig));
+        closeAgentModal();
+        openAgentBar();
     }
 
-    async function executeGhCommit(msg) {
-        if(!msg) msg = "Update from CodX";
+    function disconnectAgent() {
+        agentConfig = null; localStorage.removeItem('agent_config');
+        closeAgentModal(); closeAgentBar();
+        document.getElementById('agent-setup-section').style.display = 'block';
+        document.getElementById('agent-connected-section').style.display = 'none';
+    }
+
+    function openAgentBar() {
+        closeAgentModal();
+        if(!agentConfig) { openAgentModal(); return; }
+        const bar = document.getElementById('agent-bar');
+        bar.classList.add('visible');
+        document.getElementById('agent-bar-label').textContent = agentConfig.providerName;
+        if(!bottomPanel.classList.contains('collapsed')) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform=''; restoreBtn.classList.add('visible'); }
+        setTimeout(() => document.getElementById('agent-prompt').focus(), 250);
+    }
+    function closeAgentBar() {
+        document.getElementById('agent-bar').classList.remove('visible');
+        _cancelPendingEdits();
+    }
+
+    async function _callAgentAPI(systemPrompt, userMsg) {
+        const cfg = agentConfig;
+        if(cfg.provider === 'anthropic') {
+            const res = await fetch(cfg.url, { method:'POST', headers:{'Content-Type':'application/json','x-api-key':cfg.key,'anthropic-version':'2023-06-01'}, body:JSON.stringify({ model:cfg.model, max_tokens:2000, system:systemPrompt, messages:[{role:'user',content:userMsg}] }) });
+            const d = await res.json(); if(!res.ok) throw new Error(d.error?.message||'API Error');
+            return d.content[0].text.trim();
+        } else if(cfg.provider === 'gemini') {
+            const res = await fetch(cfg.url+'?key='+cfg.key, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ contents:[{parts:[{text:systemPrompt+'\n\n'+userMsg}]}], generationConfig:{maxOutputTokens:2000} }) });
+            const d = await res.json(); if(!res.ok) throw new Error(d.error?.message||'API Error');
+            return d.candidates[0].content.parts[0].text.trim();
+        } else {
+            // OpenAI-compatible (OpenAI, Groq)
+            const res = await fetch(cfg.url, { method:'POST', headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key}, body:JSON.stringify({ model:cfg.model, max_tokens:2000, messages:[{role:'system',content:systemPrompt},{role:'user',content:userMsg}] }) });
+            const d = await res.json(); if(!res.ok) throw new Error(d.error?.message||'API Error');
+            return d.choices[0].message.content.trim();
+        }
+    }
+
+    async function sendAgentPrompt() {
+        if(!agentConfig) { openAgentModal(); return; }
+        const userRequest = document.getElementById('agent-prompt').value.trim();
+        if(!userRequest) return;
+        if(_agentPendingEdits.length > 0) { cdAlert('Agent', 'Please accept or reject the current edits first.', 'warn'); return; }
+
+        const thinking = document.getElementById('agent-thinking');
+        const sendBtn = document.getElementById('agent-send-btn');
+        thinking.classList.add('visible'); sendBtn.disabled = true;
+
+        const code = editor.getValue();
+        _agentOriginalCode = code;
+
+        const systemPrompt = `You are CodX AI Agent — a precise surgical code editor. You receive code and a user request.
+
+RULES (STRICT):
+1. Analyse the ENTIRE code first before making any changes.
+2. Make ONLY the minimal, targeted edits to satisfy the request. Never rewrite the whole file.
+3. Return a JSON array of edit objects. Each object: {"find": "exact string", "replace": "new string", "reason": "brief explanation"}
+4. "find" MUST be an exact verbatim substring from the code — copy-paste accurate, including whitespace and newlines.
+5. Each "find" must be unique enough to identify exactly one location. Include surrounding context if needed.
+6. If nothing needs changing: return [].
+7. Return ONLY the JSON array. No markdown, no backticks, no explanation outside the array.`;
+
+        let attachCtx = agentAttachment ? `\n\nAttached file (${agentAttachment.name}):\n${agentAttachment.content.slice(0,3000)}` : '';
+        const userMsg = `Code:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
+
         try {
-            showCustomDialog("Committing", "Pushing your code to GitHub...", null, "Wait", null, null);
-            let contentB64 = encodeB64(editor.getValue());
-            let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: ghCurrentSha });
-            
-            // Update local tracking sha to allow consecutive commits
-            ghCurrentSha = res.content.sha;
-            let activeFile = appFiles.find(f => f.id === activeFileId);
-            if(activeFile) { activeFile.ghSha = ghCurrentSha; localStorage.setItem('codx_files', JSON.stringify(appFiles)); }
-            
-            showCustomDialog("Success!", "Code successfully committed to GitHub.", null, "Awesome", null, null);
-        } catch(e) { showCustomDialog("Error", "Commit failed. Verify your connection and permissions.", null, "Close", null, null); }
+            let raw = await _callAgentAPI(systemPrompt, userMsg);
+            raw = raw.replace(/```json|```/g,'').trim();
+            const edits = JSON.parse(raw);
+
+            if(!Array.isArray(edits) || edits.length === 0) {
+                cdAlert('Agent', 'No changes needed for this request.', 'info');
+            } else {
+                // Validate edits — check all finds exist
+                const valid = edits.filter(e => e.find && code.includes(e.find));
+                const invalid = edits.length - valid.length;
+                if(valid.length === 0) {
+                    cdAlert('Agent', 'Could not locate the code sections to edit. Try a more specific request.', 'warn');
+                } else {
+                    _agentPendingEdits = valid;
+                    _showAgentDiffReview(valid, invalid);
+                }
+            }
+            // Clear input
+            document.getElementById('agent-prompt').value = '';
+            document.getElementById('agent-prompt').style.height = 'auto';
+            agentAttachment = null;
+            document.getElementById('agent-attach-btn').style.background = '';
+            document.getElementById('agent-attach-btn').style.color = '';
+        } catch(err) {
+            cdAlert('Agent Error', err.message || 'Something went wrong. Check API key.', 'error');
+        }
+        thinking.classList.remove('visible'); sendBtn.disabled = false;
     }
+
+    // Show accept/reject diff review inside agent bar
+    function _showAgentDiffReview(edits, skipped) {
+        const bar = document.getElementById('agent-bar');
+        // Remove old review if any
+        const oldReview = document.getElementById('agent-diff-review');
+        if(oldReview) oldReview.remove();
+
+        const review = document.createElement('div');
+        review.id = 'agent-diff-review';
+        review.style.cssText = 'background:rgba(0,0,0,0.2);border-radius:10px;padding:10px;font-family:Poppins,sans-serif;';
+
+        const header = document.createElement('div');
+        header.style.cssText = 'display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;';
+        header.innerHTML = `<span style="font-size:11px;font-weight:600;color:var(--accent)">${edits.length} edit${edits.length>1?'s':''} ready${skipped>0?' ('+skipped+' skipped)':''}</span>`;
+        review.appendChild(header);
+
+        edits.forEach((edit, i) => {
+            const card = document.createElement('div');
+            card.style.cssText = 'background:rgba(0,0,0,0.15);border:1px solid var(--glass-border);border-radius:8px;padding:8px;margin-bottom:6px;font-size:11px;';
+            const reason = edit.reason || 'Edit';
+            const findPreview = edit.find.slice(0,60).replace(/\n/g,'↵') + (edit.find.length>60?'…':'');
+            const replacePreview = edit.replace.slice(0,60).replace(/\n/g,'↵') + (edit.replace.length>60?'…':'');
+            card.innerHTML = `
+                <div style="font-weight:600;color:var(--text-color);margin-bottom:4px;opacity:0.9">${reason}</div>
+                <div style="color:#ef4444;font-family:monospace;font-size:10px;opacity:0.8;margin-bottom:2px">- ${findPreview}</div>
+                <div style="color:#10b981;font-family:monospace;font-size:10px;opacity:0.8">+ ${replacePreview}</div>
+            `;
+            review.appendChild(card);
+        });
+
+        const actions = document.createElement('div');
+        actions.style.cssText = 'display:flex;gap:8px;margin-top:8px;';
+        const rejectBtn = document.createElement('button');
+        rejectBtn.className = 'modal-btn secondary'; rejectBtn.style.cssText = 'flex:1;padding:9px;font-size:12px;border-radius:8px;';
+        rejectBtn.innerHTML = '✕ Reject All';
+        rejectBtn.onclick = _cancelPendingEdits;
+        const acceptBtn = document.createElement('button');
+        acceptBtn.className = 'modal-btn'; acceptBtn.style.cssText = 'flex:1;padding:9px;font-size:12px;border-radius:8px;';
+        acceptBtn.innerHTML = '✓ Accept All';
+        acceptBtn.onclick = _acceptPendingEdits;
+        actions.appendChild(rejectBtn); actions.appendChild(acceptBtn);
+        review.appendChild(actions);
+
+        // Insert before input row
+        const inputRow = bar.querySelector('.agent-input-row');
+        bar.insertBefore(review, inputRow);
+    }
+
+    function _acceptPendingEdits() {
+        if(_agentPendingEdits.length === 0) return;
+        // Push to undo stack before applying
+        _agentUndoStack.push(editor.getValue());
+        if(_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+
+        let code = editor.getValue();
+        let applied = 0;
+        _agentPendingEdits.forEach(edit => {
+            if(code.includes(edit.find)) { code = code.split(edit.find).join(edit.replace); applied++; }
+        });
+        editor.setValue(code, -1);
+        // Sync active tab
+        const cur = fileTabs.find(t => t.id === activeTabId);
+        if(cur) cur.content = code;
+
+        _agentPendingEdits = [];
+        const rev = document.getElementById('agent-diff-review');
+        if(rev) rev.remove();
+        // Show undo option briefly
+        _showAgentUndoToast(applied);
+    }
+
+    function _cancelPendingEdits() {
+        _agentPendingEdits = [];
+        const rev = document.getElementById('agent-diff-review');
+        if(rev) rev.remove();
+    }
+
+    function _showAgentUndoToast(count) {
+        const bar = document.getElementById('agent-bar');
+        const old = document.getElementById('agent-undo-toast');
+        if(old) old.remove();
+        const toast = document.createElement('div');
+        toast.id = 'agent-undo-toast';
+        toast.style.cssText = 'display:flex;justify-content:space-between;align-items:center;background:var(--accent-dim);border:1px solid var(--accent);border-radius:8px;padding:8px 12px;font-size:11px;font-family:Poppins,sans-serif;animation:ghSlideIn 0.3s ease;';
+        toast.innerHTML = `<span style="color:var(--accent);font-weight:600">✓ Applied ${count} edit${count>1?'s':''}</span>`;
+        const undoBtn = document.createElement('span');
+        undoBtn.textContent = 'Undo';
+        undoBtn.style.cssText = 'color:var(--accent);font-weight:600;cursor:pointer;text-decoration:underline;margin-left:10px;';
+        undoBtn.onclick = _agentUndo;
+        toast.appendChild(undoBtn);
+        const inputRow = bar.querySelector('.agent-input-row');
+        bar.insertBefore(toast, inputRow);
+        // Auto-remove after 5s
+        setTimeout(() => { if(toast.parentElement) toast.remove(); }, 5000);
+    }
+
+    function _agentUndo() {
+        if(_agentUndoStack.length === 0) { cdAlert('Undo', 'Nothing to undo.', 'info'); return; }
+        const prev = _agentUndoStack.pop();
+        editor.setValue(prev, -1);
+        const cur = fileTabs.find(t => t.id === activeTabId);
+        if(cur) cur.content = prev;
+        const toast = document.getElementById('agent-undo-toast');
+        if(toast) toast.remove();
+    }
+
+    // Enter to send, Shift+Enter for new line
+    document.getElementById('agent-prompt').addEventListener('keydown', (e) => {
+        if(e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendAgentPrompt(); }
+    });
 </script>
 </body>
 </html>
