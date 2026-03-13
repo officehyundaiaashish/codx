@@ -111,13 +111,14 @@
         .icon-btn .material-icons-round { font-size: 18px; pointer-events: none; }
 
         /* 3-row toolbar grid */
-        .toolbar-rows { display: flex; flex-direction: column; gap: 0; padding: 2px 8px 4px 8px; }
-        .toolbar-row { display: flex; justify-content: space-between; gap: 2px; }
+        .toolbar-rows { display: flex; flex-direction: row; gap: 2px; padding: 2px 8px 4px 8px; overflow-x: auto; }
+        .toolbar-rows::-webkit-scrollbar { display: none; }
+        .toolbar-row { display: contents; }
         .toolbar-btn { 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
             background: none; border: none; color: var(--text-color); opacity: 0.8; 
-            font-size: 9px; font-weight: 600; gap: 1px; flex: 1;
-            padding: 5px 2px; cursor: pointer; border-radius: 8px; min-width: 0;
+            font-size: 9px; font-weight: 600; gap: 1px; flex: 0 0 auto;
+            padding: 5px 8px; cursor: pointer; border-radius: 8px; min-width: 0;
             -webkit-tap-highlight-color: transparent;
         }
         .toolbar-btn .material-icons-round { font-size: 19px; pointer-events: none; }
@@ -200,7 +201,7 @@
          to { opacity: 1; transform: translateY(0); } }
 
         /* File Tabs Bar */
-        .file-tabs-bar { flex-shrink: 0; display: flex; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
+        .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
         .file-tabs-bar::-webkit-scrollbar { display: none; }
         .file-tab { display: flex; align-items: center; gap: 5px; padding: 6px 12px 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.55; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .file-tab.active { opacity: 1; border-bottom-color: var(--accent); color: var(--accent); }
@@ -545,7 +546,7 @@
 
     <div class="main-container" id="editor-wrapper">
         <div id="editor"></div>
-        <iframe id="preview" sandbox="allow-scripts allow-same-origin allow-forms allow-modals allow-popups"></iframe>
+        <iframe id="preview" allow="geolocation; microphone; camera; fullscreen; payment; clipboard-read; clipboard-write"></iframe>
         <!-- Preview welcome overlay — shown when no project is loaded -->
         <div id="preview-welcome" style="
             position:absolute;top:0;left:0;right:0;bottom:0;
@@ -1350,8 +1351,17 @@
     bottomPanel.addEventListener('touchend', (e) => {
         _swipeRaf = null;
         bottomPanel.style.transition = '';
-        if (isSwipingDown && e.changedTouches[0].clientY - startY > 40) { _collapseNav(); }
-        else { bottomPanel.style.transform = 'translateY(0)'; }
+        if (isSwipingDown && e.changedTouches[0].clientY - startY > 40) {
+            // Must reset inline transform BEFORE adding collapsed class,
+            // otherwise the CSS translateY(100%) transition never runs
+            bottomPanel.style.transform = '';
+            // Force a reflow so the browser registers the cleared transform
+            void bottomPanel.offsetHeight;
+            bottomPanel.style.transition = '';
+            _collapseNav();
+        } else {
+            bottomPanel.style.transform = 'translateY(0)';
+        }
     }, {passive: true});
 
     // Dynamic Theme Color Updater
@@ -1375,9 +1385,9 @@
     function _refreshPreview() {
         let code = editor.getValue();
         if(!code.includes('viewport')) code = code.replace('<head>', '<head><meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">');
-        if(_previewBlobUrl) URL.revokeObjectURL(_previewBlobUrl);
-        _previewBlobUrl = URL.createObjectURL(new Blob([code], { type: 'text/html' }));
-        document.getElementById('preview').src = _previewBlobUrl;
+        // Use srcdoc — no blob: URL so external CDNs, fetch(), WebSockets all work
+        if(_previewBlobUrl) { URL.revokeObjectURL(_previewBlobUrl); _previewBlobUrl = null; }
+        document.getElementById('preview').srcdoc = code;
     }
 
     function switchTab(tabName, fromBtn) {
@@ -1435,7 +1445,7 @@
         fileTabs.forEach(tab => {
             const el = document.createElement('div');
             el.className = 'file-tab' + (tab.id === activeTabId ? ' active' : '');
-            el.innerHTML = `<span style="pointer-events:none">${tab.name}</span>${fileTabs.length > 1 ? `<span class="material-icons-round ft-close" onclick="closeFileTab(${tab.id},event)">close</span>` : ''}`;
+            el.innerHTML = `<span style="pointer-events:none">${tab.name}</span><span class="material-icons-round ft-close" onclick="closeFileTab(${tab.id},event)">close</span>`;
             el.onclick = (e) => { if(!e.target.classList.contains('ft-close')) switchFileTab(tab.id); };
             bar.appendChild(el);
         });
@@ -1452,31 +1462,23 @@
             currentFileName = tab.name;
         }
         renderFileTabs();
-    // Start in preview mode — matches default active tab
-    (function() {
-        document.getElementById('editor').style.opacity = '0';
-        document.getElementById('editor').style.pointerEvents = 'none';
-        const bp = document.getElementById('bottom-panel');
-        if(bp) bp.style.display = 'none';
-        const rb = document.getElementById('restore-btn');
-        if(rb) rb.classList.add('hidden-btn');
-        document.getElementById('preview').classList.add('active-pane');
-        // Load the initial preview
-        setTimeout(() => {
-            dismissPreviewWelcome(); // hide welcome after first real load
-        }, 50);
-        _refreshPreview();
-    })();
         // If currently in preview, auto-refresh with new tab's content
         if(_inPreview) { _refreshPreview(); }
     }
 
     function closeFileTab(id, e) {
         e.stopPropagation();
-        if(fileTabs.length === 1) return;
         let idx = fileTabs.findIndex(t => t.id === id);
         fileTabs.splice(idx, 1);
-        if(activeTabId === id) {
+        if(fileTabs.length === 0) {
+            // Create a fresh blank tab so editor is never empty
+            const blank = { id: tabIdCounter++, name: 'index.html', content: '' };
+            fileTabs.push(blank);
+            activeTabId = blank.id;
+            _setEditorValueFast(blank.content);
+            _setEditorMode(blank.name, blank.content);
+            currentFileName = blank.name;
+        } else if(activeTabId === id) {
             let newTab = fileTabs[Math.max(0, idx - 1)];
             activeTabId = newTab.id;
             _setEditorValueFast(newTab.content);
@@ -1953,16 +1955,7 @@
         document.getElementById('agent-modal').classList.remove('active');
     }
 
-    function connectAgent() {
-        const key = document.getElementById('agent-api-key').value.trim();
-        if(!key) { cdAlert('Agent', 'Please enter your API key.', 'warn'); return; }
-        const sel = document.querySelector('.agent-provider-btn.selected');
-        if(!sel) { cdAlert('Agent', 'Please select a provider first.', 'warn'); return; }
-        agentConfig = { provider: sel.dataset.provider, providerName: sel.textContent.trim().split('\n')[0].trim(), url: sel.dataset.url, model: sel.dataset.model, key };
-        localStorage.setItem('agent_config', JSON.stringify(agentConfig));
-        closeAgentModal();
-        openAgentBar();
-    }
+
 
     function disconnectAgent() {
         agentConfig = null; localStorage.removeItem('agent_config');
@@ -2003,10 +1996,50 @@
         _updateAgentFileSelector();
         if(!bottomPanel.classList.contains('collapsed')) { bottomPanel.classList.add('collapsed'); bottomPanel.style.transform=''; if(!_inPreview) restoreBtn.classList.remove('hidden-btn'); }
         setTimeout(() => document.getElementById('agent-prompt').focus(), 250);
+        // Add agent nav tab if not already present
+        _addAgentNavTab();
+        // Ping model for online/offline status
+        _pingAgentModel();
+    }
+
+    function _addAgentNavTab() {
+        const bar = document.getElementById('file-tabs-bar');
+        if(document.getElementById('agent-nav-tab')) return; // already added
+        const tab = document.createElement('div');
+        tab.id = 'agent-nav-tab';
+        tab.className = 'file-tab';
+        tab.style.cssText = 'color:var(--accent);border-bottom-color:var(--accent);opacity:1;gap:4px;';
+        tab.innerHTML = `<span class="material-icons-round" style="font-size:14px;pointer-events:none">smart_toy</span><span style="pointer-events:none">${agentConfig.providerName}</span><span id="agent-nav-status" style="width:7px;height:7px;border-radius:50%;background:#6b7280;display:inline-block;margin-left:2px;flex-shrink:0;" title="Checking..."></span><span class="material-icons-round ft-close" onclick="closeAgentBar();_removeAgentNavTab();" style="font-size:13px;opacity:0.5;pointer-events:auto;">close</span>`;
+        tab.onclick = (e) => { if(!e.target.classList.contains('ft-close')) openAgentBar(); };
+        bar.appendChild(tab);
+    }
+
+    function _removeAgentNavTab() {
+        const t = document.getElementById('agent-nav-tab');
+        if(t) t.remove();
+    }
+
+    async function _pingAgentModel() {
+        const dot = document.getElementById('agent-nav-status');
+        const barDot = document.querySelector('.agent-status-dot');
+        if(dot) { dot.style.background = '#f59e0b'; dot.title = 'Checking...'; }
+        if(barDot) barDot.style.background = '#f59e0b';
+        try {
+            // Send a minimal test prompt to verify the model is reachable
+            const testSystem = 'Reply with the single word: ok';
+            const testMsg = 'ok?';
+            await _callAgentAPI(testSystem, testMsg);
+            if(dot) { dot.style.background = '#10b981'; dot.title = 'Online'; }
+            if(barDot) barDot.style.background = '#10b981';
+        } catch(e) {
+            if(dot) { dot.style.background = '#ef4444'; dot.title = 'Offline / Error: ' + (e.message||''); }
+            if(barDot) barDot.style.background = '#ef4444';
+        }
     }
     function closeAgentBar() {
         document.getElementById('agent-bar').classList.remove('visible');
         _cancelPendingEdits();
+        _removeAgentNavTab();
     }
 
     async function _callAgentAPI(systemPrompt, userMsg) {
@@ -2282,9 +2315,17 @@ RULES (STRICT):
             const findPreview = edit.find.slice(0,60).replace(/\n/g,'↵') + (edit.find.length>60?'…':'');
             const replacePreview = edit.replace.slice(0,60).replace(/\n/g,'↵') + (edit.replace.length>60?'…':'');
             card.innerHTML = `
-                <div style="font-weight:600;color:var(--text-color);margin-bottom:4px;opacity:0.9">${reason}</div>
-                <div style="color:#ef4444;font-family:monospace;font-size:10px;opacity:0.8;margin-bottom:2px">- ${findPreview}</div>
-                <div style="color:#10b981;font-family:monospace;font-size:10px;opacity:0.8">+ ${replacePreview}</div>
+                <div style="font-weight:600;color:var(--text-color);margin-bottom:6px;opacity:0.9;font-size:11px;">${reason}</div>
+                <div style="display:flex;gap:6px;">
+                    <div style="flex:1;min-width:0;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:6px;padding:5px 7px;">
+                        <div style="font-size:9px;color:#ef4444;font-weight:700;margin-bottom:3px;letter-spacing:0.4px;">REMOVE</div>
+                        <div style="color:#ef4444;font-family:monospace;font-size:10px;opacity:0.9;word-break:break-all;">${findPreview}</div>
+                    </div>
+                    <div style="flex:1;min-width:0;background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:6px;padding:5px 7px;">
+                        <div style="font-size:9px;color:#10b981;font-weight:700;margin-bottom:3px;letter-spacing:0.4px;">INSERT</div>
+                        <div style="color:#10b981;font-family:monospace;font-size:10px;opacity:0.9;word-break:break-all;">${replacePreview}</div>
+                    </div>
+                </div>
             `;
             review.appendChild(card);
         });
@@ -2549,9 +2590,10 @@ RULES (STRICT):
             if (addLicense) payload.license_template = 'mit';
             const result = await ghApi('/user/repos', 'POST', payload);
             closeNewProjectModal();
-            cdAlert('Repo Created!', `"${result.full_name}" created successfully on GitHub.`, 'success');
             // Invalidate repo cache so GitSync reloads
             _ghReposLoaded = false;
+            // Show repo link with copy button
+            _showRepoCreatedLink(result.full_name, result.html_url);
         } catch (e) {
             let msg = e.message || 'Failed to create repo.';
             try { const j = JSON.parse(msg); msg = j.message || msg; } catch(ee) {}
@@ -2559,7 +2601,43 @@ RULES (STRICT):
         }
     }
 
-    // ===== REPO LOAD PROGRESS BAR =====
+    // ===== REPO CREATED LINK DIALOG =====
+    function _showRepoCreatedLink(fullName, htmlUrl) {
+        const _cdOverlay = document.getElementById('custom-dialog-overlay');
+        document.getElementById('custom-dialog-icon').innerHTML = '<span class="material-icons-round" style="color:#10b981">check_circle</span>';
+        document.getElementById('custom-dialog-title').textContent = 'Repo Created!';
+        document.getElementById('custom-dialog-msg').textContent = '"' + fullName + '" is live on GitHub.';
+        const inp = document.getElementById('custom-dialog-input');
+        inp.style.display = 'block';
+        inp.value = htmlUrl;
+        inp.style.userSelect = 'text';
+        inp.style.webkitUserSelect = 'text';
+        inp.readOnly = true;
+        inp.style.cursor = 'text';
+        setTimeout(() => { inp.focus(); inp.select(); }, 120);
+        const btnsEl = document.getElementById('custom-dialog-btns');
+        btnsEl.innerHTML = '';
+        // Copy button
+        const copyBtn = document.createElement('button');
+        copyBtn.className = 'cdlg-btn primary';
+        copyBtn.textContent = 'Copy Link';
+        copyBtn.onclick = () => {
+            navigator.clipboard.writeText(htmlUrl).then(() => {
+                copyBtn.textContent = 'Copied!';
+                setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 2000);
+            }).catch(() => { inp.select(); document.execCommand('copy'); copyBtn.textContent = 'Copied!'; setTimeout(() => { copyBtn.textContent = 'Copy Link'; }, 2000); });
+        };
+        const closeBtn = document.createElement('button');
+        closeBtn.className = 'cdlg-btn secondary';
+        closeBtn.textContent = 'Done';
+        closeBtn.onclick = () => {
+            inp.readOnly = false; inp.style.cursor = '';
+            document.getElementById('custom-dialog-overlay').classList.remove('active');
+        };
+        btnsEl.appendChild(copyBtn);
+        btnsEl.appendChild(closeBtn);
+        _cdOverlay.classList.add('active');
+    }
     function _showRepoProgress(sub, filled, total) {
         const overlay = document.getElementById('repo-progress-overlay');
         overlay.classList.add('visible');
