@@ -5829,6 +5829,7 @@ CRITICAL RULES:
 - Respond in same language as user (English/Hindi/Hinglish).
 - Do not add unrequested changes.
 - Preserve all existing functionality unless explicitly asked to change it.
+- If the message contains "── OPEN FILE: filename ──" sections, those are OTHER files currently open in the editor. Use them as reference/context. If user asks to create something "like" another file or "similar to" another file — study those open files for style, structure, and patterns.
 
 ════ ACTION TYPE 5: reorganize ════
 User wants to restructure, reorder, or reorganize the code layout (move sections, reorder CSS, restructure HTML, etc.)
@@ -5959,13 +5960,28 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             : '';
         _inlineClearAttach();
 
+        // ── Build other open files context ──
+        // All open tabs (except current target) are included as reference context
+        // Each file is truncated to avoid overloading context window
+        const _CTX_PER_FILE = Math.floor(_MAX_CHARS * 0.15); // max 15% of budget per context file
+        let otherFilesCtx = '';
+        fileTabs.forEach(t => {
+            if (t.id === (targetTab ? targetTab.id : activeTabId)) return; // skip target file
+            if (!t.content || !t.content.trim()) return; // skip empty files
+            let preview = t.content;
+            if (preview.length > _CTX_PER_FILE) {
+                preview = preview.slice(0, _CTX_PER_FILE) + `\n// ... [${t.name} truncated for context]`;
+            }
+            otherFilesCtx += `\n\n── OPEN FILE: ${t.name} ──\n\`\`\`\n${preview}\n\`\`\``;
+        });
+
         // ── Build full structured context message ──
-        // Every call gets: full current code + conversation summary + pending state
+        // Every call gets: full current code + all open files + session events
         const historyForAPI = _buildHistoryForAPI();
 
         // Summarise what has happened so far in this session (for AI awareness)
         const sessionEvents = _inlineChatHistory
-            .filter(m => m.content.startsWith('[APPLIED') || m.content.startsWith('[CONFIRMED') || m.content.startsWith('[REJECTED') || m.content.startsWith('[USER CONFIRMED'))
+            .filter(m => m.content.startsWith('[APPLIED') || m.content.startsWith('[CONFIRMED') || m.content.startsWith('[REJECTED') || m.content.startsWith('[USER CONFIRMED') || m.content.startsWith('[CREATED') || m.content.startsWith('[SPLIT'))
             .map(m => m.content)
             .join('\n');
 
@@ -5973,7 +5989,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             ? `\n\n── SESSION EVENTS (changes made so far) ──\n${sessionEvents}`
             : '';
 
-        const userMsg = `── CURRENT FILE: ${filename} ──${indexSummary}${sessionSummaryBlock}\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\`${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
+        const userMsg = `── CURRENT FILE: ${filename} ──${indexSummary}${sessionSummaryBlock}\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\`${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
 
         try {
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
