@@ -586,487 +586,264 @@
             font-weight:600; appearance:none; -webkit-appearance:none; cursor:pointer;
         }
     
+        /* ──────────────────────── Agent Chat UI ──────────────────────── */
+
+        /* Full-screen chat overlay */
+        #agent-chat-overlay {
+            position: fixed; inset: 0; z-index: 400;
+            background: rgba(0,0,0,0.6);
+            opacity: 0; pointer-events: none;
+            transition: opacity 0.25s ease;
+        }
+        #agent-chat-overlay.active { opacity: 1; pointer-events: auto; }
+
+        /* Chat panel — slides up like WhatsApp */
+        #agent-chat-panel {
+            position: fixed; left: 0; right: 0; bottom: 0;
+            height: 88vh; max-height: 88vh;
+            background: var(--glass-bg);
+            border-radius: 22px 22px 0 0;
+            border-top: 1px solid var(--glass-border);
+            z-index: 410;
+            display: flex; flex-direction: column;
+            transform: translateY(100%);
+            transition: transform 0.32s cubic-bezier(0.34,1.2,0.64,1);
+            font-family: 'Poppins', sans-serif;
+        }
+        #agent-chat-panel.active { transform: translateY(0); }
+
+        /* Chat header bar */
+        #agent-chat-header {
+            display: flex; align-items: center; gap: 10px;
+            padding: 14px 16px 10px;
+            border-bottom: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+        .chat-header-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg,#10b981,#059669);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+        }
+        .chat-header-avatar .material-icons-round { font-size: 18px; color: white; }
+        .chat-header-info { flex: 1; min-width: 0; }
+        .chat-header-name {
+            font-size: 14px; font-weight: 700; color: var(--text-color);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .chat-header-status {
+            font-size: 10px; color: var(--accent); font-weight: 600; margin-top: 1px;
+        }
+        #chat-session-name-btn {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-color); opacity: 0.4;
+            display: flex; align-items: center;
+            padding: 4px; border-radius: 6px; transition: opacity 0.15s;
+        }
+        #chat-session-name-btn:active { opacity: 1; }
+        #chat-session-name-btn .material-icons-round { font-size: 17px; pointer-events: none; }
+        #chat-close-btn {
+            background: none; border: none; cursor: pointer;
+            color: var(--text-color); opacity: 0.45;
+            display: flex; align-items: center;
+            padding: 4px; border-radius: 6px;
+        }
+        #chat-close-btn .material-icons-round { font-size: 20px; pointer-events: none; }
+
+        /* Session name pill */
+        #chat-session-label {
+            font-size: 10px; font-weight: 700; color: var(--accent);
+            background: var(--accent-dim); border: 1px solid var(--accent);
+            border-radius: 20px; padding: 2px 9px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 120px; cursor: pointer;
+        }
+
+        /* Messages scroll area */
+        #agent-chat-messages {
+            flex: 1; overflow-y: auto; padding: 12px 14px;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        #agent-chat-messages::-webkit-scrollbar { display: none; }
+
+        /* Individual message bubbles */
+        .chat-msg { display: flex; flex-direction: column; max-width: 85%; }
+        .chat-msg.user { align-self: flex-end; align-items: flex-end; }
+        .chat-msg.agent { align-self: flex-start; align-items: flex-start; }
+
+        .chat-bubble {
+            padding: 9px 13px; border-radius: 16px;
+            font-size: 12px; line-height: 1.55; word-break: break-word;
+        }
+        .chat-msg.user .chat-bubble {
+            background: var(--accent); color: white;
+            border-bottom-right-radius: 4px;
+        }
+        .chat-msg.agent .chat-bubble {
+            background: rgba(255,255,255,0.06);
+            border: 1px solid var(--glass-border);
+            color: var(--text-color);
+            border-bottom-left-radius: 4px;
+        }
+        body.light-theme .chat-msg.agent .chat-bubble {
+            background: rgba(0,0,0,0.04);
+        }
+        .chat-time {
+            font-size: 9px; opacity: 0.4; margin-top: 3px; font-weight: 600;
+        }
+
+        /* Typing indicator bubble */
+        .chat-typing-bubble {
+            display: flex; align-items: center; gap: 4px;
+            padding: 10px 14px; border-radius: 16px; border-bottom-left-radius: 4px;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--glass-border);
+            width: fit-content;
+        }
+        .chat-typing-bubble span {
+            width: 5px; height: 5px; border-radius: 50%;
+            background: var(--accent); display: inline-block;
+            animation: agentBounce 0.8s infinite;
+        }
+        .chat-typing-bubble span:nth-child(2) { animation-delay: 0.2s; }
+        .chat-typing-bubble span:nth-child(3) { animation-delay: 0.4s; }
+
+        /* Fix / Apply card inside chat bubble */
+        .chat-fix-card {
+            margin-top: 8px;
+            background: rgba(16,185,129,0.07);
+            border: 1px solid rgba(16,185,129,0.25);
+            border-radius: 10px; padding: 9px 11px;
+        }
+        .chat-fix-title {
+            font-size: 10px; font-weight: 700; color: var(--accent);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px;
+        }
+        .chat-fix-reason {
+            font-size: 11px; color: var(--text-color); opacity: 0.8;
+            margin-bottom: 8px; line-height: 1.5;
+        }
+        .chat-fix-preview {
+            display: flex; gap: 5px; margin-bottom: 8px;
+        }
+        .chat-fix-side {
+            flex: 1; border-radius: 6px; padding: 5px 7px; min-width: 0;
+        }
+        .chat-fix-side.remove {
+            background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2);
+        }
+        .chat-fix-side.insert {
+            background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.2);
+        }
+        .chat-fix-side-label {
+            font-size: 8px; font-weight: 700; letter-spacing: 0.4px; margin-bottom: 3px;
+        }
+        .chat-fix-side.remove .chat-fix-side-label { color: #ef4444; }
+        .chat-fix-side.insert .chat-fix-side-label { color: #10b981; }
+        .chat-fix-code {
+            font-family: monospace; font-size: 10px;
+            word-break: break-all; opacity: 0.9;
+        }
+        .chat-fix-side.remove .chat-fix-code { color: #ef4444; }
+        .chat-fix-side.insert .chat-fix-code { color: #10b981; }
+        .chat-apply-btn {
+            width: 100%; padding: 8px; border: none; border-radius: 8px;
+            background: var(--accent); color: white;
+            font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; display: flex; align-items: center;
+            justify-content: center; gap: 6px;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+        .chat-apply-btn:active { opacity: 0.85; transform: scale(0.97); }
+        .chat-apply-btn.applied {
+            background: rgba(128,128,128,0.2); color: var(--text-color); cursor: default;
+        }
+        .chat-apply-btn .material-icons-round { font-size: 15px; pointer-events: none; }
+
+        /* Split file card */
+        .chat-split-card {
+            margin-top: 8px;
+            background: rgba(16,185,129,0.06);
+            border: 1px solid rgba(16,185,129,0.2);
+            border-radius: 10px; padding: 9px 11px;
+        }
+        .chat-split-file-row {
+            display: flex; align-items: center; gap: 8px;
+            padding: 6px 0; border-bottom: 1px solid var(--glass-border);
+        }
+        .chat-split-file-row:last-of-type { border-bottom: none; }
+        .chat-split-file-name {
+            flex: 1; font-size: 12px; font-weight: 600;
+            color: var(--text-color); overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap;
+        }
+        .chat-split-mini-btn {
+            background: var(--accent-dim); border: none; border-radius: 6px;
+            padding: 4px 7px; cursor: pointer; font-size: 10px;
+            font-family: 'Poppins', sans-serif; font-weight: 700;
+            color: var(--accent); transition: transform 0.15s;
+        }
+        .chat-split-mini-btn:active { transform: scale(0.92); }
+
+        /* Chat input row */
+        #agent-chat-input-row {
+            display: flex; align-items: flex-end; gap: 8px;
+            padding: 10px 14px;
+            padding-bottom: max(env(safe-area-inset-bottom), 14px);
+            border-top: 1px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+        #agent-chat-file-selector {
+            padding: 0 14px 6px; display: none;
+            flex-shrink: 0;
+        }
+        #agent-chat-file-select {
+            width: 100%; padding: 5px 8px; border-radius: 7px;
+            background: rgba(0,0,0,0.25); border: 1px solid var(--glass-border);
+            color: var(--text-color); font-family: Poppins,sans-serif;
+            font-size: 10px; font-weight: 600;
+            appearance: none; -webkit-appearance: none; cursor: pointer;
+        }
+        #agent-chat-textarea {
+            flex: 1; padding: 9px 12px; border-radius: 20px;
+            background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            color: var(--text-color); font-family: 'Poppins', sans-serif;
+            font-size: 13px; resize: none; min-height: 38px;
+            max-height: 100px; overflow-y: auto; line-height: 1.4;
+            user-select: text; -webkit-user-select: text;
+            transition: border-color 0.2s;
+        }
+        #agent-chat-textarea:focus {
+            border-color: var(--accent); outline: none;
+            box-shadow: 0 0 0 2px var(--accent-dim);
+        }
+        #agent-chat-attach-btn, #agent-chat-send-btn {
+            width: 38px; height: 38px; border-radius: 50%; border: none;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; flex-shrink: 0;
+            transition: transform 0.15s, opacity 0.15s;
+        }
+        #agent-chat-attach-btn:active, #agent-chat-send-btn:active { transform: scale(0.88); }
+        #agent-chat-attach-btn { background: rgba(128,128,128,0.12); color: var(--text-color); }
+        #agent-chat-send-btn { background: var(--accent); color: white; }
+        #agent-chat-attach-btn .material-icons-round,
+        #agent-chat-send-btn .material-icons-round { font-size: 17px; pointer-events: none; }
+
+        /* Empty chat state */
+        #chat-empty-state {
+            flex: 1; display: flex; flex-direction: column;
+            align-items: center; justify-content: center;
+            gap: 10px; opacity: 0.45; pointer-events: none;
+            padding: 20px;
+        }
+        #chat-empty-state .material-icons-round { font-size: 38px; color: var(--accent); }
+        #chat-empty-state p {
+            font-size: 12px; text-align: center; line-height: 1.6;
+            color: var(--text-color);
+        }
+
     </style>
 
 
-    <!-- ════════════════ Welcome Screen ════════════════ -->
-<!-- Welcome Screen (first launch only) -->
-<div id="welcome-screen" class="hidden">
-    <div class="welcome-card">
-        <div class="welcome-logo">&lt;/&gt;</div>
-        <div class="welcome-title">CodX Editor</div>
-        <div class="welcome-sub">Your pocket-sized code editor.<br>Write, edit & sync with GitHub — anywhere.</div>
-        <div class="welcome-features">
-            <div class="welcome-feature">
-                <span class="material-icons-round">code</span>
-                <span>Full code editor with syntax highlighting</span>
-            </div>
-            <div class="welcome-feature">
-                <span class="material-icons-round">cloud_sync</span>
-                <span>GitHub sync — load, edit & commit</span>
-            </div>
-            <div class="welcome-feature">
-                <span class="material-icons-round">smart_toy</span>
-                <span>AI Agent with multiple model support</span>
-            </div>
-            <div class="welcome-feature">
-                <span class="material-icons-round">preview</span>
-                <span>Live preview with instant refresh</span>
-            </div>
-        </div>
-        <button class="welcome-start-btn" onclick="dismissWelcome()">
-            <span class="material-icons-round">rocket_launch</span>
-            Start Coding
-        </button>
-    </div>
-</div>
-
-
-    <!-- ════════════════ Repo Progress Overlay ════════════════ -->
-<!-- Repo Load Progress Bar -->
-<div id="repo-progress-overlay">
-    <div class="repo-progress-card">
-        <div class="repo-progress-title">Loading Repository</div>
-        <div class="repo-progress-sub" id="repo-progress-sub">Fetching files...</div>
-        <div class="repo-progress-bar-track">
-            <div class="repo-progress-bar-fill" id="repo-progress-fill"></div>
-        </div>
-        <div class="repo-progress-count" id="repo-progress-count">0 / 0</div>
-    </div>
-</div>
-
-
-    <!-- ════════════════ App Shell ════════════════ -->
-<div class="app-layout">
-    <div class="app-header" id="header">
-        <div class="tabs">
-            <div class="tab active" id="tab-code" onclick="switchTab('editor')">Code</div>
-            <div class="tab" id="tab-preview" onclick="switchTab('preview')">Preview</div>
-        </div>
-        
-        <div style="display:flex; align-items:center;">
-            <button class="icon-btn no-select" id="install-btn" style="display:none; width:30px; height:30px; background:var(--accent-dim); min-width:30px; border: 1px solid var(--accent); margin-right: 5px;">
-                <span class="material-icons-round" style="color:var(--accent); font-size:16px;">download</span>
-            </button>
-            <button class="icon-btn no-select" style="width:30px; height:30px; background:none; min-width:30px;" onclick="toggleTheme()">
-                <span class="material-icons-round" id="theme-icon" style="color:var(--accent); font-size:18px;">light_mode</span>
-            </button>
-        </div>
-    </div>
-
-    <div class="file-tabs-bar no-select" id="file-tabs-bar"></div>
-
-    <div class="main-container" id="editor-wrapper">
-        <div id="editor"></div>
-        <iframe id="preview" allow="geolocation; microphone; camera; fullscreen; payment; clipboard-read; clipboard-write"></iframe>
-        <!-- Preview welcome overlay — shown when no project is loaded -->
-                <div id="preview-welcome" style="
-            position:absolute;top:0;left:0;right:0;bottom:0;
-            background:#10b981;
-            display:none;flex-direction:column;align-items:center;justify-content:center;
-            z-index:25;padding:28px;
-        ">
-            <div style="font-size:38px;font-weight:900;color:white;font-family:monospace;margin-bottom:8px;">&lt;/&gt;</div>
-            <div style="font-size:20px;font-weight:700;color:white;margin-bottom:6px;">CodX Editor</div>
-            <div style="font-size:12px;color:rgba(255,255,255,0.7);margin-bottom:32px;text-align:center;line-height:1.6;">Write, preview &amp; sync code<br>from your phone.</div>
-            <div style="display:flex;flex-direction:column;gap:12px;width:100%;max-width:260px;">
-                <button onclick="dismissPreviewWelcome();openNewProjectModal();" style="
-                    padding:15px;border:none;border-radius:14px;
-                    background:white;color:#10b981;
-                    font-size:15px;font-weight:700;font-family:system-ui,sans-serif;
-                    display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
-                "><span style="font-size:20px;font-family:'Material Icons Round';font-style:normal;">add_box</span>New Project</button>
-                <button onclick="dismissPreviewWelcome();document.getElementById('file-input').click();" style="
-                    padding:15px;border:1.5px solid rgba(255,255,255,0.5);border-radius:14px;
-                    background:transparent;color:white;
-                    font-size:15px;font-weight:700;font-family:system-ui,sans-serif;
-                    display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;
-                "><span style="font-size:20px;font-family:'Material Icons Round';font-style:normal;">folder_open</span>Open Project</button>
-            </div>
-        </div>
-        
-        <div class="scroll-jumpers no-select" id="jumpers">
-            <div class="jumper-btn" onclick="customFastScroll('up')"><span class="material-icons-round">keyboard_double_arrow_up</span></div>
-            <div class="jumper-btn" onclick="customFastScroll('down')"><span class="material-icons-round">keyboard_double_arrow_down</span></div>
-        </div>
-    </div>
-
-    <button class="restore-btn no-select" id="restore-btn" onclick="restoreBottomPanel()">
-        <span class="material-icons-round">keyboard_arrow_up</span>
-    </button>
-
-    <div class="bottom-wrapper no-select" id="bottom-panel">
-        <div class="bottom-area">
-            <!-- AGENT BAR — compact strip, sits at top of nav panel -->
-            <div id="agent-bar">
-                <div id="agent-file-selector" style="display:none;">
-                    <select id="agent-file-select" onchange="agentSelectFile(this.value)"></select>
-                </div>
-                <div id="agent-compact-row">
-                    <div class="agent-status-dot"></div>
-                    <span id="agent-bar-label" onclick="openAgentModal()" style="cursor:pointer;" title="Switch agent">AI</span>
-                    <textarea id="agent-prompt" placeholder="Ask agent to edit code..." rows="1"></textarea>
-                    <button id="agent-attach-btn" onclick="document.getElementById('agent-file-input').click()">
-                        <span class="material-icons-round">attach_file</span>
-                    </button>
-                    <button id="agent-send-btn" onclick="sendAgentPrompt()">
-                        <span class="material-icons-round">send</span>
-                    </button>
-                    <span class="material-icons-round" id="agent-close-btn" onclick="closeAgentBar()">close</span>
-                </div>
-                <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
-            </div>
-
-            <div class="drag-handle-area"><div class="drag-pill"></div></div>
-
-            <!-- ROW 0: Cursor Navigation (scroll row) -->
-            <div class="cursor-nav">
-                <button class="icon-btn" onclick="editor.gotoLine(1)"><span class="material-icons-round">vertical_align_top</span></button>
-                <button class="icon-btn" onclick="editor.gotoLine(editor.session.getLength())"><span class="material-icons-round">vertical_align_bottom</span></button>
-                <div style="width:1px;background:var(--glass-border);margin:4px 3px;flex-shrink:0;"></div>
-                <button class="icon-btn" onclick="editor.navigateLineStart()"><span class="material-icons-round">first_page</span></button>
-                <button class="icon-btn" onclick="editor.navigateLineEnd()"><span class="material-icons-round">last_page</span></button>
-                <button class="icon-btn" onclick="editor.navigateLeft()"><span class="material-icons-round">chevron_left</span></button>
-                <button class="icon-btn" onclick="editor.navigateRight()"><span class="material-icons-round">chevron_right</span></button>
-                <button class="icon-btn" onclick="editor.navigateUp()"><span class="material-icons-round">keyboard_arrow_up</span></button>
-                <button class="icon-btn" onclick="editor.navigateDown()"><span class="material-icons-round">keyboard_arrow_down</span></button>
-                <div style="width:1px;background:var(--glass-border);margin:4px 3px;flex-shrink:0;"></div>
-                <button class="icon-btn" onclick="editorUndo()"><span class="material-icons-round">undo</span></button>
-                <button class="icon-btn" onclick="editorRedo()"><span class="material-icons-round">redo</span></button>
-            </div>
-
-            <div class="toolbar-rows">
-                <!-- ROW 1: File & Project -->
-                <div class="toolbar-row">
-                    <button class="toolbar-btn" onclick="openNewProjectModal()"><span class="material-icons-round">add_box</span>New</button>
-                    <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span>Open</button>
-                    <button class="toolbar-btn" onclick="saveFile()"><span class="material-icons-round">save</span>Save</button>
-                    <button class="toolbar-btn" onclick="saveFileToRepo()"><span class="material-icons-round">cloud_upload</span>Commit</button>
-                    <button class="toolbar-btn" onclick="closeAllTabs()"><span class="material-icons-round">playlist_remove</span>Close All</button>
-                    <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">hub</span>GitHub</button>
-                </div>
-                <!-- ROW 2: Edit -->
-                <div class="toolbar-row">
-                    <button class="toolbar-btn" onclick="editor.selectAll()"><span class="material-icons-round">select_all</span>Select All</button>
-                    <button class="toolbar-btn" onclick="copyClipboard()"><span class="material-icons-round">content_copy</span>Copy</button>
-                    <button class="toolbar-btn" onclick="cutClipboard()"><span class="material-icons-round">content_cut</span>Cut</button>
-                    <button class="toolbar-btn" onclick="pasteClipboard()"><span class="material-icons-round">content_paste</span>Paste</button>
-                    <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">find_replace</span>Find</button>
-                    <button class="toolbar-btn" onclick="openAgentModal()"><span class="material-icons-round">smart_toy</span>AI Agent</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-    <!-- ════════════════ Hidden File Inputs ════════════════ -->
-<input type="file" id="file-input" accept=".html,.js,.css,.txt" onchange="loadFile(event)" style="display: none !important; position: absolute; left: -9999px;">
-
-
-    <!-- ════════════════ Find & Replace Modal ════════════════ -->
-<div class="modal no-select" id="find-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; color:var(--accent); font-weight:600; margin-bottom:10px; font-size:14px;">
-        Find & Replace <span class="material-icons-round" onclick="toggleFindReplace()" style="opacity:0.6; cursor:pointer; font-size: 18px; pointer-events:auto;">close</span>
-    </div>
-        <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px; font-family: 'Poppins', sans-serif;"></textarea>
-    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:45px; font-family: 'Poppins', sans-serif;"></textarea>
-    <div class="find-options">
-        <label class="find-check-label"><input type="checkbox" id="find-case"> Case Sensitive</label>
-        <label class="find-check-label"><input type="checkbox" id="find-regex"> Regex</label>
-    </div>
-    <div class="modal-actions">
-        <button class="modal-btn secondary" onclick="clearFind()">Clear</button>
-        <button class="modal-btn" onclick="findText(true)">Find Next</button>
-        <button class="modal-btn" onclick="replaceText()">Replace</button>
-    </div>
-</div>
-
-
-    <!-- ════════════════ GitHub Overlay & Modal ════════════════ -->
-<div id="gh-overlay" onclick="closeGithubModal()"></div>
-
-<div class="no-select" id="github-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span class="material-icons-round" style="color:var(--accent); font-size:20px;">cloud_sync</span>
-            <span style="color:var(--text-color); font-weight:700; font-size:15px; font-family:'Poppins',sans-serif;">GitSync</span>
-        </div>
-        <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
-    </div>
-    
-    <div id="gh-login-section">
-        <div style="font-size:11px; color:var(--text-color); opacity:0.5; margin-bottom:8px; font-family:'Poppins',sans-serif;">Enter your GitHub Personal Access Token</div>
-        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" style="user-select:text; -webkit-user-select:text;">
-        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:0px;">Login & Save to Device</button>
-    </div>
-
-    <div id="gh-repo-section" style="display:none;" class="gh-section-anim">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="font-size:11px; color:var(--accent); font-weight:700;">● Connected</div>
-            <div style="font-size:11px; color:var(--text-color); opacity:0.5; cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="ghLogout()">
-                <span class="material-icons-round" style="font-size:13px;">logout</span> Logout
-            </div>
-        </div>
-        
-        <!-- Repo selector -->
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <div class="gh-select-wrap" style="flex:1; margin-bottom:0;">
-                <select id="gh-repo-select" onchange="fetchGhFiles()">
-                    <option value="">Select Repository...</option>
-                </select>
-            </div>
-            <button class="modal-btn secondary" onclick="fetchGhFiles()" style="flex:none; width:42px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:10px;" title="Sync Repo">
-                <span class="material-icons-round" style="font-size:20px; pointer-events:none;">sync</span>
-            </button>
-        </div>
-
-        <!-- Breadcrumb path -->
-        <div class="gh-breadcrumb" id="gh-breadcrumb" style="display:none;"></div>
-
-        <!-- File tree -->
-        <div id="gh-file-tree" style="display:none;">
-            <div class="gh-tree-loading">Loading files...</div>
-        </div>
-
-        <!-- Action bar -->
-        <div id="gh-action-bar" style="display:none; gap:6px; margin-top:10px; flex-wrap:wrap;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">edit</span> Open
-            </button>
-            <button class="modal-btn secondary" id="gh-dl-btn" onclick="downloadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">download</span> Download
-            </button>
-            <button class="modal-btn secondary" id="gh-rename-btn" onclick="renameGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">drive_file_rename_outline</span> Rename
-            </button>
-            <button class="modal-btn secondary" id="gh-delete-btn" onclick="deleteGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">delete</span> Delete
-            </button>
-        </div>
-
-        <!-- Create bar -->
-        <div style="display:flex;gap:6px;margin-top:8px;" id="gh-create-bar" style="display:none;">
-            <button class="modal-btn secondary" onclick="createGhFile()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;" id="gh-new-file-btn">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add</span> New File
-            </button>
-            <button class="modal-btn secondary" onclick="createGhFolder()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">create_new_folder</span> New Folder
-            </button>
-            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;border-color:var(--accent);">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">folder_zip</span> Load All
-            </button>
-        </div>
-
-        <!-- Commit bar -->
-        <div style="margin-top:8px;">
-            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:10px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">upload</span> Commit Current File
-            </button>
-        </div>
-    </div>
-</div>
-
-
-    <!-- ════════════════ Agent File Input ════════════════ -->
-<input type="file" id="agent-file-input" accept=".html,.js,.css,.txt,.json,.md" style="display:none;">
-
-<!-- New Project Modal -->
-
-
-    <!-- ════════════════ New Project Modal ════════════════ -->
-<div id="new-project-overlay" onclick="if(event.target===this)closeNewProjectModal()">
-    <div id="new-project-modal" class="no-select">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <div style="display:flex;align-items:center;gap:8px;">
-                <span class="material-icons-round" style="color:var(--accent);font-size:20px;">add_circle</span>
-                <span style="font-weight:700;font-size:15px;color:var(--text-color);">New Project</span>
-            </div>
-            <span class="material-icons-round" onclick="closeNewProjectModal()" style="opacity:0.5;cursor:pointer;font-size:20px;pointer-events:auto;">close</span>
-        </div>
-        <div class="np-tab-bar">
-            <div class="np-tab active" id="np-tab-blank" onclick="npSwitchTab('blank')">Blank File</div>
-            <div class="np-tab" id="np-tab-repo" onclick="npSwitchTab('repo')">New GitHub Repo</div>
-        </div>
-        <!-- Blank File Pane -->
-        <div class="np-pane active" id="np-pane-blank">
-            <div class="np-section-label">File Name</div>
-            <input type="text" id="np-filename" placeholder="e.g. index.html, app.js" value="index.html">
-            <div class="np-section-label">Save To</div>
-            <div class="np-save-options">
-                <div class="np-save-opt selected" id="np-save-local" onclick="npSelectSave('local')">
-                    <span class="material-icons-round">phone_android</span>
-                    <span>Local Device</span>
-                </div>
-                <div class="np-save-opt" id="np-save-github" onclick="npSelectSave('github')">
-                    <span class="material-icons-round">cloud_upload</span>
-                    <span>GitHub Repo</span>
-                </div>
-            </div>
-            <div id="np-github-repo-wrap" style="display:none;">
-                <div class="np-section-label">Select Repo</div>
-                <div class="gh-select-wrap" id="np-repo-select-wrap">
-                    <select id="np-gh-repo-select"><option value="">Select Repository...</option></select>
-                </div>
-            </div>
-            <div style="display:flex;gap:8px;margin-top:14px;">
-                <button class="modal-btn secondary" onclick="closeNewProjectModal()" style="flex:1;">Cancel</button>
-                <button class="modal-btn" onclick="createNewProject()" style="flex:2;display:flex;align-items:center;justify-content:center;gap:6px;">
-                    <span class="material-icons-round" style="font-size:16px;pointer-events:none;">rocket_launch</span> Create & Open
-                </button>
-            </div>
-        </div>
-        <!-- New GitHub Repo Pane -->
-        <div class="np-pane" id="np-pane-repo">
-            <div id="np-repo-login-warn" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:10px 12px;margin-bottom:12px;font-size:11px;color:#ef4444;font-weight:600;">
-                &#9888; Please connect GitHub first via GitSync &#8594; Login
-            </div>
-            <div class="np-section-label">Repository Name</div>
-            <input type="text" id="np-repo-name" placeholder="my-awesome-project">
-            <div class="np-section-label">Description (optional)</div>
-            <input type="text" id="np-repo-desc" placeholder="Short description of your project">
-            <div class="np-section-label">Visibility</div>
-            <div class="np-repo-visibility">
-                <div class="np-vis-opt selected" id="np-vis-public" onclick="npSelectVis('public')">
-                    <span class="material-icons-round">public</span>
-                    <span>Public</span>
-                </div>
-                <div class="np-vis-opt" id="np-vis-private" onclick="npSelectVis('private')">
-                    <span class="material-icons-round">lock</span>
-                    <span>Private</span>
-                </div>
-            </div>
-            <div class="np-section-label">Options</div>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;user-select:none;">
-                <input type="checkbox" id="np-repo-readme" checked style="accent-color:var(--accent);width:14px;height:14px;"> Add README.md
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:8px;cursor:pointer;user-select:none;">
-                <input type="checkbox" id="np-repo-gitignore" style="accent-color:var(--accent);width:14px;height:14px;"> Add .gitignore (Node)
-            </label>
-            <label style="display:flex;align-items:center;gap:8px;font-size:12px;margin-bottom:14px;cursor:pointer;user-select:none;">
-                <input type="checkbox" id="np-repo-license" style="accent-color:var(--accent);width:14px;height:14px;"> Add MIT License
-            </label>
-            <div style="display:flex;gap:8px;">
-                <button class="modal-btn secondary" onclick="closeNewProjectModal()" style="flex:1;">Cancel</button>
-                <button class="modal-btn" onclick="createGithubRepo()" style="flex:2;display:flex;align-items:center;justify-content:center;gap:6px;">
-                    <span class="material-icons-round" style="font-size:16px;pointer-events:none;">cloud</span> Create Repo
-                </button>
-            </div>
-        </div>
-    </div>
-</div>
-
-
-    <!-- ════════════════ Custom Dialog ════════════════ -->
-<!-- Custom Dialog (replaces all browser confirm/alert/prompt) -->
-<div id="custom-dialog-overlay">
-    <div id="custom-dialog-box">
-        <div id="custom-dialog-icon"></div>
-        <div id="custom-dialog-title"></div>
-        <div id="custom-dialog-msg"></div>
-        <input type="text" id="custom-dialog-input" style="display:none;">
-        <div id="custom-dialog-btns"></div>
-    </div>
-</div>
-
-
-    <!-- ════════════════ Agent Setup Modal ════════════════ -->
-<!-- Agent Setup Modal -->
-<div id="agent-overlay" onclick="closeAgentModal()"></div>
-<div id="agent-modal" class="no-select">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span class="material-icons-round" style="color:var(--accent); font-size:20px;">smart_toy</span>
-            <span style="font-weight:700; font-size:15px; color:var(--text-color);">AI Agents</span>
-        </div>
-        <span class="material-icons-round" onclick="closeAgentModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
-    </div>
-
-    <!-- Free providers tip -->
-    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:10px;line-height:1.7;color:var(--text-color);opacity:0.85;">
-        <span style="font-weight:700;color:var(--accent);">⚡ Best Free AI:</span>
-        <span style="font-weight:600;"> Groq</span> — console.groq.com · No quota · Super fast<br>
-        <span style="font-weight:600;"> OpenRouter</span> — openrouter.ai · Many free models<br>
-        <span style="font-weight:600;"> Gemini</span> — aistudio.google.com · Has daily limits
-    </div>
-
-    <!-- Connected agents list -->
-    <div id="agent-connected-section" style="display:none; margin-bottom:10px;">
-        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Connected Agents — tap to switch active</div>
-        <div id="agent-list-container"></div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="modal-btn secondary" onclick="disconnectAgent()" style="flex:1;font-size:11px;padding:8px;">
-                <span style="display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-icons-round" style="font-size:14px;">logout</span>Remove All</span>
-            </button>
-            <button class="modal-btn" onclick="closeAgentModal();openAgentBar();" style="flex:1;font-size:11px;padding:8px;display:flex;align-items:center;justify-content:center;gap:4px;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">psychology</span> Open Bar
-            </button>
-        </div>
-        <div style="height:1px;background:var(--glass-border);margin:12px 0;"></div>
-    </div>
-
-    <!-- Add new agent -->
-    <div id="agent-setup-section">
-        <div style="font-size:11px; font-weight:700; color:var(--text-color); margin-bottom:8px;">Add Agent — Paste API Key</div>
-        <input type="text" id="agent-api-key" placeholder="AIza... / gsk_... / sk-or-... / sk-..."
-            style="width:100%; padding:11px 12px; border-radius:10px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); color:var(--text-color); font-family:'Poppins',sans-serif; font-size:13px; margin-bottom:8px; user-select:text; -webkit-user-select:text; transition:border-color 0.15s;"
-            oninput="agentKeyPreview(this.value)">
-        <div id="agent-detect-badge" style="display:none; align-items:center; gap:8px; background:var(--accent-dim); border:1px solid var(--accent); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:11px; font-weight:600; color:var(--accent);">
-            <span class="material-icons-round" style="font-size:15px;pointer-events:none;">auto_awesome</span>
-            <span id="agent-detect-text">Detected: —</span>
-        </div>
-        <button class="modal-btn" onclick="connectAgent()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
-            <span class="material-icons-round" style="font-size:16px;pointer-events:none;">add_circle</span> Connect Agent
-        </button>
-    </div>
-</div>
-
-
-<script>
-
-    // ═════════════════ INIT — Viewport & Modal Refs ═════════════════
-
-    // ════════════ PWA — Icons, Manifest & Service Worker ════════════
-
-    // ═════════════════════ PWA — Install Prompt ═════════════════════
-
-    // ═══════════════ STORAGE — CodXStore (IndexedDB) ════════════════
-
-    // ═════════════════ EDITOR — ACE Setup & Config ══════════════════
-
-    // ════════════════ UI — Scroll, Swipe & Nav Panel ════════════════
-
-    // ═══════════════ UI — Theme Toggle, Toast & Zoom ════════════════
-
-    // ═══════════════════ TABS — Multi-Tab System ════════════════════
-
-    // ═══════════════════ FILE — Open, Save & Load ═══════════════════
-
-    // ════════════════════════ FIND & REPLACE ════════════════════════
-
-    // ═══════════════════════ GITHUB — Manager ═══════════════════════
-
-    // ════════════ DIALOGS — Custom Alert/Confirm/Prompt ═════════════
-
-    // ═══════════════ GITHUB — Custom Select Renderer ════════════════
-
-    // ═════════════════════ AGENT — Full System ══════════════════════
-
-    // ═════════════════ MISC — Undo/Redo & Close All ═════════════════
-
-    // ══════════════════ GITHUB — Save File to Repo ══════════════════
-
-    // ═════════════════ NEW PROJECT — Modal & Create ═════════════════
-
-    // ═════════════════════ GITHUB — Create Repo ═════════════════════
-
-    // ═════════════════ GITHUB — Repo Created Dialog ═════════════════
-
-    // ════════════════════ FIX — Nav Bar Restore ═════════════════════
-
-    // ═════════════════ APK — Install Log Downloader ═════════════════
-
-</script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ext-searchbox.min.js"></script>
     
@@ -3923,7 +3700,55 @@ RULES (STRICT):
     }
     function _getBlankContentForFile(fname) {
         const ext = fname.split('.').pop().toLowerCase();
-        if (ext === 'html' || ext === 'htm') return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${fname.replace(/\.[^.]+$/,'')}</title>\n</head>\n<body>\n  \n</body>\n</html>`;
+        if (ext === 'html' || ext === 'htm') return `<!DOCTYPE html>\n<html lang="en">\n<head>\n  <meta charset="UTF-8">\n  <meta name="viewport" content="width=device-width, initial-scale=1.0">\n  <title>${fname.replace(/\.[^.]+$/,'')}</title>\n</head>\n<body>\n  \n
+    <!-- ════════════════ Agent Chat Panel ════════════════ -->
+    <div id="agent-chat-overlay" onclick="closeChatPanel()"></div>
+    <div id="agent-chat-panel">
+
+        <!-- Header -->
+        <div id="agent-chat-header">
+            <div class="chat-header-avatar">
+                <span class="material-icons-round">smart_toy</span>
+            </div>
+            <div class="chat-header-info">
+                <div class="chat-header-name" id="chat-agent-name">AI Agent</div>
+                <div class="chat-header-status" id="chat-agent-status">● Online</div>
+            </div>
+            <span id="chat-session-label" onclick="renameChatSession()" title="Rename session">New Chat</span>
+            <button id="chat-session-name-btn" onclick="renameChatSession()" title="Rename">
+                <span class="material-icons-round">edit</span>
+            </button>
+            <button id="chat-close-btn" onclick="closeChatPanel()">
+                <span class="material-icons-round">close</span>
+            </button>
+        </div>
+
+        <!-- File selector (multi-tab) -->
+        <div id="agent-chat-file-selector">
+            <select id="agent-chat-file-select" onchange="agentSelectFile(this.value)"></select>
+        </div>
+
+        <!-- Messages -->
+        <div id="agent-chat-messages">
+            <div id="chat-empty-state">
+                <span class="material-icons-round">chat</span>
+                <p>Ask me anything about your code.<br>I can explain problems, suggest fixes,<br>and apply changes directly.</p>
+            </div>
+        </div>
+
+        <!-- Input row -->
+        <div id="agent-chat-input-row">
+            <button id="agent-chat-attach-btn" onclick="document.getElementById('agent-file-input').click()">
+                <span class="material-icons-round">attach_file</span>
+            </button>
+            <textarea id="agent-chat-textarea" placeholder="Ask agent..." rows="1"></textarea>
+            <button id="agent-chat-send-btn" onclick="sendChatMessage()">
+                <span class="material-icons-round">send</span>
+            </button>
+        </div>
+    </div>
+
+</body>\n</html>`;
         if (ext === 'css') return `/* ${fname} */\n\n* {\n  box-sizing: border-box;\n  margin: 0;\n  padding: 0;\n}\n`;
         if (ext === 'js') return `// ${fname}\n\n`;
         if (ext === 'json') return `{\n  \n}\n`;
@@ -4066,6 +3891,529 @@ RULES (STRICT):
     }, true);
     window.addEventListener('beforeinstallprompt', () => { window._logApkEvent('INFO', 'beforeinstallprompt fired — PWA installable'); });
     window.addEventListener('appinstalled', () => { window._logApkEvent('SUCCESS', 'appinstalled event fired'); });
+
+
+    // ═══════════════════════ AGENT CHAT SYSTEM ═══════════════════════
+
+    // ── Chat state ──
+    let _chatHistory = [];          // { role, text, time, edits, files, msgId }
+    let _chatSessionName = 'New Chat';
+    let _chatMsgCounter = 0;
+    let _chatPendingEditsMap = {};  // msgId → edits array (for per-message apply)
+
+    // ── Auto-generate session name from first user message ──
+    function _autoChatName(text) {
+        const words = text.trim().split(/\s+/).slice(0, 5).join(' ');
+        return words.length > 32 ? words.slice(0, 32) + '…' : words;
+    }
+
+    // ── Open the chat panel ──
+    function openChatPanel() {
+        if (!_activeAgent()) { openAgentModal(); return; }
+        const overlay = document.getElementById('agent-chat-overlay');
+        const panel   = document.getElementById('agent-chat-panel');
+        overlay.classList.add('active');
+        panel.classList.add('active');
+        // Sync agent name + status
+        const ag = _activeAgent();
+        document.getElementById('chat-agent-name').textContent = ag ? ag.providerName : 'AI Agent';
+        document.getElementById('chat-session-label').textContent = _chatSessionName;
+        // Sync file selector
+        _updateChatFileSelector();
+        // Focus textarea
+        setTimeout(() => document.getElementById('agent-chat-textarea').focus(), 280);
+    }
+
+    // ── Close the chat panel ──
+    function closeChatPanel() {
+        document.getElementById('agent-chat-overlay').classList.remove('active');
+        document.getElementById('agent-chat-panel').classList.remove('active');
+    }
+
+    // ── Rename the session ──
+    function renameChatSession() {
+        cdPrompt('Rename Chat', 'Give this chat a name:', _chatSessionName, (name) => {
+            if (!name) return;
+            _chatSessionName = name.trim();
+            document.getElementById('chat-session-label').textContent = _chatSessionName;
+        });
+    }
+
+    // ── Update file selector inside chat panel ──
+    function _updateChatFileSelector() {
+        const wrap = document.getElementById('agent-chat-file-selector');
+        const sel  = document.getElementById('agent-chat-file-select');
+        if (!wrap || !sel) return;
+        if (fileTabs.length <= 1) { wrap.style.display = 'none'; return; }
+        wrap.style.display = 'block';
+        sel.innerHTML = '';
+        fileTabs.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id; opt.textContent = t.name;
+            if (t.id === activeTabId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        _agentTargetTabId = activeTabId;
+    }
+
+    // ── Format timestamp ──
+    function _chatTime() {
+        return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    }
+
+    // ── Scroll messages to bottom ──
+    function _chatScrollBottom() {
+        const box = document.getElementById('agent-chat-messages');
+        if (box) requestAnimationFrame(() => { box.scrollTop = box.scrollHeight; });
+    }
+
+    // ── Append a message bubble ──
+    function _appendChatMsg(role, text, time, extraEl) {
+        const box = document.getElementById('agent-chat-messages');
+        // Remove empty state on first message
+        const empty = document.getElementById('chat-empty-state');
+        if (empty) empty.remove();
+
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-msg ' + role;
+
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-bubble';
+        // Render text with newlines
+        bubble.innerHTML = text.replace(/\n/g, '<br>').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/&lt;br&gt;/g,'<br>');
+
+        const ts = document.createElement('div');
+        ts.className = 'chat-time';
+        ts.textContent = time || _chatTime();
+
+        wrap.appendChild(bubble);
+        if (extraEl) bubble.appendChild(extraEl);
+        wrap.appendChild(ts);
+        box.appendChild(wrap);
+        _chatScrollBottom();
+        return bubble;
+    }
+
+    // ── Show typing indicator ──
+    function _showChatTyping() {
+        const box = document.getElementById('agent-chat-messages');
+        const empty = document.getElementById('chat-empty-state');
+        if (empty) empty.remove();
+        const wrap = document.createElement('div');
+        wrap.className = 'chat-msg agent';
+        wrap.id = 'chat-typing-indicator';
+        const bubble = document.createElement('div');
+        bubble.className = 'chat-typing-bubble';
+        bubble.innerHTML = '<span></span><span></span><span></span>';
+        wrap.appendChild(bubble);
+        box.appendChild(wrap);
+        _chatScrollBottom();
+    }
+    function _hideChatTyping() {
+        const t = document.getElementById('chat-typing-indicator');
+        if (t) t.remove();
+    }
+
+    // ── Build fix card (one edit) with Apply button ──
+    function _buildFixCard(edits, msgId) {
+        const card = document.createElement('div');
+        card.className = 'chat-fix-card';
+
+        const title = document.createElement('div');
+        title.className = 'chat-fix-title';
+        title.textContent = edits.length + ' fix' + (edits.length > 1 ? 'es' : '') + ' ready';
+        card.appendChild(title);
+
+        edits.forEach((edit, i) => {
+            const reason = document.createElement('div');
+            reason.className = 'chat-fix-reason';
+            reason.textContent = edit.reason || 'Code edit';
+            card.appendChild(reason);
+
+            if (i < 3) { // Show max 3 previews to keep it compact
+                const preview = document.createElement('div');
+                preview.className = 'chat-fix-preview';
+                const fp = edit.find.slice(0, 50).replace(/\n/g, '↵') + (edit.find.length > 50 ? '…' : '');
+                const rp = edit.replace.slice(0, 50).replace(/\n/g, '↵') + (edit.replace.length > 50 ? '…' : '');
+                preview.innerHTML = `
+                    <div class="chat-fix-side remove">
+                        <div class="chat-fix-side-label">REMOVE</div>
+                        <div class="chat-fix-code">${fp}</div>
+                    </div>
+                    <div class="chat-fix-side insert">
+                        <div class="chat-fix-side-label">INSERT</div>
+                        <div class="chat-fix-code">${rp}</div>
+                    </div>`;
+                card.appendChild(preview);
+            }
+        });
+
+        // Apply button
+        const applyBtn = document.createElement('button');
+        applyBtn.className = 'chat-apply-btn';
+        applyBtn.id = 'chat-apply-' + msgId;
+        applyBtn.innerHTML = '<span class="material-icons-round">check_circle</span> Apply Fix';
+        applyBtn.onclick = () => _applyChatFix(msgId, applyBtn);
+        card.appendChild(applyBtn);
+        return card;
+    }
+
+    // ── Build split files card ──
+    function _buildSplitCard(files, msgId) {
+        const card = document.createElement('div');
+        card.className = 'chat-split-card';
+        const title = document.createElement('div');
+        title.className = 'chat-fix-title';
+        title.textContent = files.length + ' files ready';
+        card.appendChild(title);
+
+        files.forEach(f => {
+            const row = document.createElement('div');
+            row.className = 'chat-split-file-row';
+            const name = document.createElement('div');
+            name.className = 'chat-split-file-name';
+            name.textContent = f.filename;
+            const openBtn = document.createElement('button');
+            openBtn.className = 'chat-split-mini-btn';
+            openBtn.textContent = 'Open';
+            openBtn.onclick = () => {
+                openFileInTab(f.filename, f.content, true);
+                openBtn.textContent = '✓';
+                openBtn.style.background = 'var(--accent)';
+                openBtn.style.color = 'white';
+            };
+            row.appendChild(name); row.appendChild(openBtn);
+            card.appendChild(row);
+        });
+
+        const openAllBtn = document.createElement('button');
+        openAllBtn.className = 'chat-apply-btn';
+        openAllBtn.style.marginTop = '8px';
+        openAllBtn.innerHTML = '<span class="material-icons-round">tab</span> Open All Tabs';
+        openAllBtn.onclick = () => {
+            files.forEach(f => openFileInTab(f.filename, f.content, true));
+            openAllBtn.className = 'chat-apply-btn applied';
+            openAllBtn.innerHTML = '<span class="material-icons-round">check</span> All Opened';
+        };
+        card.appendChild(openAllBtn);
+        return card;
+    }
+
+    // ── Apply fix for a specific message ──
+    function _applyChatFix(msgId, btn) {
+        const edits = _chatPendingEditsMap[msgId];
+        if (!edits || edits.length === 0) return;
+
+        _agentUndoStack.push(editor.getValue());
+        if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+
+        const targetId  = _agentTargetTabId || activeTabId;
+        const targetTab = fileTabs.find(t => t.id === targetId);
+        let code = targetTab ? targetTab.content : editor.getValue();
+        let applied = 0;
+        edits.forEach(edit => {
+            if (code.includes(edit.find)) { code = code.split(edit.find).join(edit.replace); applied++; }
+        });
+        if (targetTab) {
+            targetTab.content = code;
+            if (targetId !== activeTabId) switchFileTab(targetId);
+        }
+        _setEditorValueFast(code);
+        const cur = fileTabs.find(t => t.id === activeTabId);
+        if (cur) cur.content = code;
+
+        // Mark button as applied
+        btn.className = 'chat-apply-btn applied';
+        btn.innerHTML = '<span class="material-icons-round">check</span> Applied (' + applied + ' edit' + (applied > 1 ? 's' : '') + ')';
+
+        // Remove from pending map so it can't be applied twice
+        delete _chatPendingEditsMap[msgId];
+
+        // Add undo toast in chat
+        const undoWrap = document.createElement('div');
+        undoWrap.style.cssText = 'margin-top:6px;display:flex;gap:6px;align-items:center;';
+        undoWrap.innerHTML = '<span style="font-size:10px;color:var(--accent);font-weight:600">✓ Applied to editor</span>';
+        const undoSpan = document.createElement('span');
+        undoSpan.textContent = 'Undo';
+        undoSpan.style.cssText = 'font-size:10px;color:var(--accent);font-weight:700;cursor:pointer;text-decoration:underline;';
+        undoSpan.onclick = () => { _agentUndo(); undoWrap.remove(); };
+        undoWrap.appendChild(undoSpan);
+        btn.parentElement.appendChild(undoWrap);
+        _chatScrollBottom();
+    }
+
+    // ── Auto resize textarea ──
+    document.getElementById('agent-chat-textarea').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 100) + 'px';
+    });
+
+    // ── Send on Enter (shift+enter = newline) ──
+    document.getElementById('agent-chat-textarea').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChatMessage(); }
+    });
+
+    // ── STEP 1: SEARCH — scan code for relevant sections (like grep) ──
+    // Splits code into numbered lines, extracts sections matching user keywords,
+    // returns a short summary shown as first agent bubble before analyse/edit.
+    async function _searchCodeSections(code, userRequest, filename) {
+        const lines = code.split('\n');
+        const totalLines = lines.length;
+
+        // Extract keywords from user request — same way grep keywords work
+        const stopWords = new Set(['the','and','for','are','was','but','not','you',
+            'all','can','has','him','his','how','its','may','new','now','see','too',
+            'use','karo','karna','mein','hai','hain','yeh','voh','aur','iska','uska',
+            'kuch','mere','teri','mera','kar','kya','bhi','woh','isko','usse','isse']);
+        const words = userRequest
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 2 && !stopWords.has(w));
+
+        // Scan every line — collect line numbers that match any keyword (like grep -n)
+        const matchedLineNums = [];
+        lines.forEach((line, idx) => {
+            const lower = line.toLowerCase();
+            if (words.some(w => lower.includes(w))) {
+                matchedLineNums.push(idx + 1);
+            }
+        });
+
+        // Group consecutive matches into sections (like grep context -A2 -B2)
+        const sections = [];
+        let i = 0;
+        while (i < matchedLineNums.length) {
+            const startLine = matchedLineNums[i];
+            let endLine = startLine;
+            // Merge lines within 4 of each other into one section
+            while (i + 1 < matchedLineNums.length && matchedLineNums[i+1] - matchedLineNums[i] <= 4) {
+                i++;
+                endLine = matchedLineNums[i];
+            }
+            // Add ±2 lines of context around the match
+            const fromIdx = Math.max(0, startLine - 3);
+            const toIdx   = Math.min(totalLines - 1, endLine + 1);
+            const snippet = lines
+                .slice(fromIdx, toIdx + 1)
+                .map((l, si) => `L${fromIdx + si + 1}: ${l.trim().slice(0, 72)}`)
+                .join('\n');
+            sections.push({ from: fromIdx + 1, to: toIdx + 1, snippet });
+            i++;
+        }
+
+        // Build summary bubble text
+        let summary = '';
+        if (sections.length === 0) {
+            summary = `🔍 Searched "${filename}" (${totalLines} lines) — no direct matches for your keywords.\nWill analyse the full file now.`;
+        } else {
+            const label = sections.length === 1 ? 'section' : 'sections';
+            summary = `🔍 Searched "${filename}" (${totalLines} lines) — found ${sections.length} relevant ${label}:\n`;
+            sections.slice(0, 3).forEach((s, idx) => {
+                const previewLines = s.snippet.split('\n').slice(0, 3).map(l => '  ' + l).join('\n');
+                const hasMore = s.snippet.split('\n').length > 3 ? '\n  ...' : '';
+                summary += `\n📌 Lines ${s.from}–${s.to}:\n${previewLines}${hasMore}\n`;
+            });
+            if (sections.length > 3) {
+                summary += `\n...and ${sections.length - 3} more section(s) found.`;
+            }
+        }
+
+        // Return summary + raw sections (sections passed into agent context for better accuracy)
+        return { summary, sections };
+    }
+
+    // ── Main send function ──
+    // ── Main send function ──
+    async function sendChatMessage() {
+        if (!_activeAgent()) { openAgentModal(); return; }
+        const textarea   = document.getElementById('agent-chat-textarea');
+        const userRequest = textarea.value.trim();
+        if (!userRequest) return;
+
+        // Auto-name session from first message
+        if (_chatSessionName === 'New Chat') {
+            _chatSessionName = _autoChatName(userRequest);
+            document.getElementById('chat-session-label').textContent = _chatSessionName;
+        }
+
+        // Append user bubble
+        const userTime = _chatTime();
+        _appendChatMsg('user', userRequest, userTime);
+        _chatHistory.push({ role: 'user', text: userRequest, time: userTime });
+
+        // Clear input
+        textarea.value = '';
+        textarea.style.height = 'auto';
+
+        // Disable send
+        const sendBtn = document.getElementById('agent-chat-send-btn');
+        sendBtn.disabled = true;
+
+        // Show typing
+        _showChatTyping();
+
+        // Get current code
+        let _agentWorkTab = null;
+        const chatFileSel = document.getElementById('agent-chat-file-select');
+        if (chatFileSel && chatFileSel.value) _agentTargetTabId = parseInt(chatFileSel.value) || activeTabId;
+        if (_agentTargetTabId) _agentWorkTab = fileTabs.find(t => t.id === _agentTargetTabId);
+        if (!_agentWorkTab) _agentWorkTab = fileTabs.find(t => t.id === activeTabId);
+        const curTab = fileTabs.find(t => t.id === activeTabId);
+        if (curTab) curTab.content = editor.getValue();
+        const code = _agentWorkTab ? _agentWorkTab.content : editor.getValue();
+
+        // Detect intents
+        const splitKeywords = /\b(split|divide|separate|extract|break\s*up|break\s*into|multiple\s*files?|alag|vibhajit|tod|tod\s*do|file\s*mein|files\s*mein|parts?)\b/i;
+        const chatKeywords  = /\b(explain|what|why|how|problem|issue|error|bug|help|bata|kya|kyon|samjhao|dekho|check|analyse|analyze|review|tell me|isko|isme|kaise|kyun|kab|kuch|sahi|galat|thik|dik|dikkat|problem|solution|suggest|better|improve|optimise|optimize)\b/i;
+        const isSplitIntent = splitKeywords.test(userRequest);
+        const isChatIntent  = chatKeywords.test(userRequest) && !isSplitIntent;
+
+        // Build context from other tabs
+        let contextFiles = '';
+        fileTabs.forEach(t => {
+            if (t.id !== (_agentWorkTab ? _agentWorkTab.id : activeTabId)) {
+                contextFiles += `\n--- Context File: ${t.name} ---\n\`\`\`\n${t.content.slice(0,3000)}\n\`\`\`\n`;
+            }
+        });
+        let attachCtx = agentAttachment ? `\n\nAttached file (${agentAttachment.name}):\n${agentAttachment.content.slice(0,2000)}` : '';
+        attachCtx = contextFiles + attachCtx;
+        // searchSections populated after STEP 1 — used to focus agent on right parts
+        let _searchSections = [];
+
+        // Clear attachment after use
+        agentAttachment = null;
+        document.getElementById('agent-chat-attach-btn').style.background = '';
+
+        try {
+            let agentText = '';
+            let extraEl   = null;
+            const msgId   = ++_chatMsgCounter;
+
+            // ── STEP 1: SEARCH ──
+            // Exactly like grep — scan code, find line numbers + relevant sections
+            // Show searching bubble first, then replace with found sections summary
+            const searchResult = await _searchCodeSections(code, userRequest, _agentWorkTab ? _agentWorkTab.name : 'untitled');
+            _searchSections = searchResult.sections;
+            _hideChatTyping();
+            _appendChatMsg('agent', searchResult.summary, _chatTime());
+            _chatScrollBottom();
+            // Brief pause so user sees search result before analyse step
+            await new Promise(r => setTimeout(r, 320));
+            _showChatTyping();
+
+            if (isChatIntent) {
+                // ── CHAT MODE: explain / diagnose ──
+                const systemPrompt = `You are CodX AI — a friendly, expert code assistant. 
+You are talking to the developer directly inside a chat interface (like WhatsApp).
+Keep responses SHORT, clear, and conversational. Use plain English (or match the user's language if they write in Hindi/Hinglish).
+If you spot a bug or problem, explain it clearly and tell them exactly what to fix.
+If the user asks what's wrong, diagnose the code and describe the issue in 2-3 sentences max.
+Do NOT return JSON. Just talk naturally.`;
+                const foundCtx = _searchSections.length > 0
+                    ? '\n\nRELEVANT SECTIONS FOUND BY SEARCH:\n' + _searchSections.slice(0,5).map(s => s.snippet).join('\n---\n')
+                    : '';
+                const userMsg = `My code (${_agentWorkTab ? _agentWorkTab.name : 'untitled'}):\n\`\`\`\n${code.slice(0,8000)}\n\`\`\`${attachCtx}${foundCtx}\n\nUser says: ${userRequest}`;
+                agentText = await _callAgentAPI(systemPrompt, userMsg);
+
+            } else if (isSplitIntent) {
+                // ── SPLIT MODE ──
+                const splitSystemPrompt = `You are CodX AI Agent. The user wants to split their code into multiple separate files.
+Analyse the code and split it logically. Return ONLY a JSON array:
+[{"filename":"name.ext","content":"full content","reason":"brief reason"}]
+No markdown, no backticks, no explanation outside the array.`;
+                const userMsg = `Code to split:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
+                let raw = await _callAgentAPI(splitSystemPrompt, userMsg);
+                let jsonMatch = raw.match(/\[[\s\S]*\]/);
+                if (!jsonMatch) throw new Error('Agent could not split the code. Try again.');
+                const files = JSON.parse(jsonMatch[0]);
+                agentText = `I've split your code into ${files.length} files. Open each one below:`;
+                extraEl = _buildSplitCard(files, msgId);
+
+            } else {
+                // ── EDIT MODE: surgical fixes ──
+                const systemPrompt = `You are CodX AI Agent — a surgical code editor AND a helpful assistant.
+FIRST, write 1-2 sentences explaining what you are changing and why (in the user's language — English or Hindi/Hinglish).
+THEN on a new line write exactly: FIXES:
+THEN return a JSON array of edits: [{"find":"exact string","replace":"new string","reason":"brief"}]
+Rules:
+- "find" must be exact verbatim substring from the code.
+- Return [] if no changes needed.
+- Only the JSON array after FIXES: — no extra text after it.`;
+                const foundCtx = _searchSections.length > 0
+                    ? '\n\nRELEVANT SECTIONS FOUND BY SEARCH (focus edits here):\n' + _searchSections.slice(0,5).map(s => s.snippet).join('\n---\n')
+                    : '';
+                const userMsg = `Code (${_agentWorkTab ? _agentWorkTab.name : 'untitled'}):\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${attachCtx}${foundCtx}\n\nRequest: ${userRequest}`;
+                let raw = await _callAgentAPI(systemPrompt, userMsg);
+
+                // Split explanation from JSON
+                const fixesIdx = raw.indexOf('FIXES:');
+                if (fixesIdx !== -1) {
+                    agentText = raw.slice(0, fixesIdx).trim();
+                    const jsonPart = raw.slice(fixesIdx + 6).trim();
+                    let jsonMatch = jsonPart.match(/\[[\s\S]*\]/);
+                    if (jsonMatch) {
+                        const edits = JSON.parse(jsonMatch[0]);
+                        const valid = edits.filter(e => {
+                            if (!e.find) return false;
+                            if (code.includes(e.find)) return true;
+                            const t = e.find.trim();
+                            if (t && code.includes(t)) { e.find = t; return true; }
+                            return false;
+                        });
+                        if (valid.length > 0) {
+                            _chatPendingEditsMap[msgId] = valid;
+                            extraEl = _buildFixCard(valid, msgId);
+                        } else if (edits.length > 0) {
+                            agentText += '\n\nI found changes to make but could not locate the exact code sections. Try being more specific.';
+                        }
+                    }
+                } else {
+                    // No FIXES: marker — treat as pure chat reply
+                    agentText = raw.trim();
+                }
+            }
+
+            _hideChatTyping();
+            const agentTime = _chatTime();
+            _appendChatMsg('agent', agentText, agentTime, extraEl);
+            _chatHistory.push({ role: 'agent', text: agentText, time: agentTime, msgId });
+
+        } catch (err) {
+            _hideChatTyping();
+            const raw = err.message || 'Something went wrong.';
+            let errMsg;
+            if (/quota|rate.?limit|exceeded/i.test(raw))      errMsg = 'Quota exceeded — wait a bit or switch agent.';
+            else if (/timeout|abort|timed out/i.test(raw))    errMsg = 'Request timed out — check your connection.';
+            else if (/401|403|invalid.*key|api.?key/i.test(raw)) errMsg = 'Invalid API key — reconnect your agent.';
+            else if (/network|fetch|failed to fetch/i.test(raw)) errMsg = 'Network error — check your internet.';
+            else errMsg = raw.slice(0, 100);
+            _appendChatMsg('agent', '⚠️ ' + errMsg, _chatTime());
+        } finally {
+            sendBtn.disabled = false;
+        }
+    }
+
+    // ── Override openAgentBar to open chat panel instead ──
+    const _origOpenAgentBar = openAgentBar;
+    openAgentBar = function() {
+        openChatPanel();
+    };
+
+    // ── Keep openAgentModal working (for settings) ──
+    // No change needed — openAgentModal still opens the agent config modal
+
+    // ── Sync agent name whenever agent changes ──
+    const _origUpdateAgentBarLabel = _updateAgentBarLabel;
+    _updateAgentBarLabel = function() {
+        _origUpdateAgentBarLabel();
+        const ag = _activeAgent();
+        if (ag) {
+            const nameEl = document.getElementById('chat-agent-name');
+            if (nameEl) nameEl.textContent = ag.providerName;
+        }
+    };
+
 
 </script>
 </body>
