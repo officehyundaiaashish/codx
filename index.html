@@ -1700,8 +1700,9 @@
                     <div id="inline-file-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;min-width:160px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
                     </div>
                 </div>
-                <button onclick="openAgentModal()" title="Agent settings" style="background:none;border:none;cursor:pointer;color:var(--text-color);opacity:0.45;display:flex;align-items:center;padding:3px;">
-                    <span class="material-icons-round" style="font-size:17px;pointer-events:none;">settings</span>
+                <button onclick="openAgentModal()" title="Switch or add agent" style="background:rgba(128,128,128,0.1);border:1px solid var(--glass-border);border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-color);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;transition:all 0.15s;flex-shrink:0;">
+                    <span class="material-icons-round" style="font-size:13px;pointer-events:none;color:var(--accent);">smart_toy</span>
+                    <span id="inline-agent-label" style="max-width:60px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">Add Agent</span>
                 </button>
                 <button id="inline-chat-close" onclick="closeInlineChat()">
                     <span class="material-icons-round">close</span>
@@ -5463,7 +5464,25 @@ No markdown, no backticks, no explanation outside the array.`;
 
     // ── Main send function — reuses all existing agent logic ──
     async function sendInlineChat() {
-        if (!_activeAgent()) { openAgentModal(); return; }
+        if (!_activeAgent()) {
+            // Show friendly banner inside chat instead of abruptly opening modal
+            const box = document.getElementById('inline-chat-messages');
+            if (box && !document.getElementById('inline-no-agent-banner')) {
+                const banner = document.createElement('div');
+                banner.id = 'inline-no-agent-banner';
+                banner.style.cssText = 'margin:12px;padding:14px;border-radius:14px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.3);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;';
+                banner.innerHTML = `
+                    <span class="material-icons-round" style="font-size:28px;color:var(--accent);">smart_toy</span>
+                    <div style="font-size:12px;font-weight:700;color:var(--text-color);font-family:'Poppins',sans-serif;">No Agent Connected</div>
+                    <div style="font-size:11px;color:var(--text-color);opacity:0.6;font-family:'Poppins',sans-serif;line-height:1.5;">Connect a free AI agent to start chatting.<br>Groq is free &amp; super fast.</div>
+                    <button onclick="openAgentModal();document.getElementById('inline-no-agent-banner')?.remove();" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 20px;font-size:12px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;">
+                        <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add_circle</span>Add Agent
+                    </button>`;
+                box.appendChild(banner);
+                _inlineChatScroll();
+            }
+            return;
+        }
 
         const ta = document.getElementById('inline-chat-textarea');
         const userRequest = ta.value.trim();
@@ -5625,6 +5644,7 @@ No markdown, no backticks.`;
     // ── Inline chat: populate model dropdown ──
     function _inlinePopulateModels() {
         const sel = document.getElementById('inline-model-select');
+        const agLabel = document.getElementById('inline-agent-label');
         if (!sel) return;
         sel.innerHTML = '';
         agentList.forEach((ag, i) => {
@@ -5634,8 +5654,11 @@ No markdown, no backticks.`;
             if (i === activeAgentIdx) opt.selected = true;
             sel.appendChild(opt);
         });
-        // If only one agent, hide the dropdown arrow feel — still usable
         sel.style.display = agentList.length > 0 ? 'block' : 'none';
+        // Update agent button label + remove no-agent banner if showing
+        const activeAg = _activeAgent();
+        if (agLabel) agLabel.textContent = activeAg ? activeAg.providerName : 'Add Agent';
+        if (activeAg) { const b = document.getElementById('inline-no-agent-banner'); if(b) b.remove(); }
     }
 
     // ── Inline chat: switch active model from dropdown ──
