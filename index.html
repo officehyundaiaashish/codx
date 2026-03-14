@@ -1874,7 +1874,7 @@
                 border:1.5px solid var(--accent);
                 border-radius:999px;
                 cursor:pointer;
-                color:white;
+                color:var(--accent);
                 display:flex;
                 align-items:center;
                 justify-content:center;
@@ -6006,7 +6006,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
     // ── Build Reorganize card with full file diff ──
     function _buildInlineReorganizeCard(newContent, targetTab) {
         const card = document.createElement('div');
-        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;';
+        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;max-width:100%;';
 
         const oldContent = targetTab ? targetTab.content : editor.getValue();
         const oldLines = oldContent.split('\n');
@@ -6088,13 +6088,13 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         let hasChanges = false;
         ops.forEach(op => {
             if (op.t === '=') {
-                html += `<div style="padding:1px 8px;font-family:'Courier New',monospace;font-size:10px;color:var(--text-color);opacity:0.45;white-space:pre;overflow:hidden;text-overflow:ellipsis;"> ${escHtml(op.l)}</div>`;
+                html += `<div style="padding:1px 8px;font-family:'Courier New',monospace;font-size:10px;color:var(--text-color);opacity:0.45;white-space:pre-wrap;word-break:break-all;overflow-wrap:break-word;"> ${escHtml(op.l)}</div>`;
             } else if (op.t === '-') {
                 hasChanges = true;
-                html += `<div style="padding:1px 8px;font-family:'Courier New',monospace;font-size:10px;color:#ef4444;background:rgba(239,68,68,0.1);white-space:pre;overflow:hidden;text-overflow:ellipsis;">-${escHtml(op.l)}</div>`;
+                html += `<div style="padding:1px 8px;font-family:'Courier New',monospace;font-size:10px;color:#ef4444;background:rgba(239,68,68,0.1);white-space:pre-wrap;word-break:break-all;overflow-wrap:break-word;">-${escHtml(op.l)}</div>`;
             } else {
                 hasChanges = true;
-                html += `<div style="padding:1px 8px;font-family:'Courier New',monospace;font-size:10px;color:#10b981;background:rgba(16,185,129,0.1);white-space:pre;overflow:hidden;text-overflow:ellipsis;">+${escHtml(op.l)}</div>`;
+                html += `<div style="padding:1px 8px;font-family:'Courier New',monospace;font-size:10px;color:#10b981;background:rgba(16,185,129,0.1);white-space:pre-wrap;word-break:break-all;overflow-wrap:break-word;">+${escHtml(op.l)}</div>`;
             }
         });
         return { html, hasChanges };
@@ -6102,7 +6102,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
 
     function _buildInlineEditCard(edits, targetTab) {
         const card = document.createElement('div');
-        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;';
+        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;max-width:100%;';
         const count = edits ? edits.length : 0;
 
         // Build diff preview for each edit
@@ -6145,7 +6145,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     <span style="color:#10b981;">●</span> added
                 </span>
             </div>
-            <div style="max-height:180px;overflow-y:auto;background:rgba(0,0,0,0.15);">${diffHTML || '<div style="padding:10px 12px;font-size:11px;opacity:0.5;font-family:Poppins,sans-serif;">No preview available</div>'}</div>
+            <div style="max-height:180px;overflow-y:auto;overflow-x:hidden;background:rgba(0,0,0,0.15);">${diffHTML || '<div style="padding:10px 12px;font-size:11px;opacity:0.5;font-family:Poppins,sans-serif;">No preview available</div>'}</div>
             <div style="padding:8px 12px;display:flex;gap:7px;border-top:1px solid var(--glass-border);">
                 <button onclick="_applyInlineEdits(this, ${editsJson}, ${tabId})" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--accent);color:white;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
                     <span class="material-icons-round" style="font-size:14px;pointer-events:none;">check</span>Apply
@@ -6331,7 +6331,7 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Build Split card ──
     function _buildInlineSplitCard(files) {
         const card = document.createElement('div');
-        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;';
+        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;max-width:100%;';
         const listHTML = (files||[]).map(f =>
             `<div style="display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--glass-border);">
                 <span class="material-icons-round" style="font-size:14px;color:var(--accent);">insert_drive_file</span>
@@ -6366,7 +6366,7 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Build New File card ──
     function _buildInlineNewFileCard(filename, content) {
         const card = document.createElement('div');
-        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;';
+        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;max-width:100%;';
         card.innerHTML = `
             <div style="background:rgba(16,185,129,0.08);padding:9px 12px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:8px;">
                 <span class="material-icons-round" style="font-size:15px;color:var(--accent);">add_circle</span>
