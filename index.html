@@ -2448,7 +2448,7 @@
 
     // ── STEP 1: Kill every expensive feature upfront ──
     editor.setOptions({
-        fontSize: "14px",
+        fontSize: "10px",
         showLineNumbers: true,
         showGutter: true,
         wrap: false,
@@ -2707,8 +2707,8 @@
     }
 
     const editorWrapper = document.getElementById('editor');
-    let initialDistance = null, initialFontSize = 14;
-    let _lastZoomSize = 14, _zoomFrame = null;
+    let initialDistance = null, initialFontSize = 10;
+    let _lastZoomSize = 10, _zoomFrame = null;
     editorWrapper.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
