@@ -1546,23 +1546,48 @@
 
         <!-- Inline Split Chat Panel -->
         <div id="inline-chat-panel" style="display:none;">
+
+            <!-- Header: avatar + name + model selector + settings + close -->
             <div id="inline-chat-header">
                 <div class="inline-chat-avatar">
                     <span class="material-icons-round">smart_toy</span>
                 </div>
-                <div id="inline-chat-name">AI Agent</div>
-                <div id="inline-chat-status">● Online</div>
+                <div style="flex:1;min-width:0;">
+                    <div id="inline-chat-name" style="font-size:11px;font-weight:700;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">AI Agent</div>
+                    <!-- Model selector -->
+                    <select id="inline-model-select" onchange="_inlineSwitchModel(this.value)" style="font-size:9px;font-weight:600;color:var(--accent);background:none;border:none;outline:none;cursor:pointer;max-width:120px;font-family:Poppins,sans-serif;-webkit-appearance:none;appearance:none;padding:0;"></select>
+                </div>
+                <!-- Tab/file selector -->
+                <select id="inline-tab-select" onchange="agentSelectFile(this.value)" title="Select file to work on" style="font-size:9px;font-weight:600;color:var(--text-color);background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:6px;padding:3px 5px;max-width:80px;font-family:Poppins,sans-serif;cursor:pointer;outline:none;display:none;"></select>
+                <!-- Settings button -->
+                <button onclick="openAgentModal()" title="Agent settings" style="background:none;border:none;cursor:pointer;color:var(--text-color);opacity:0.45;display:flex;align-items:center;padding:3px;">
+                    <span class="material-icons-round" style="font-size:17px;pointer-events:none;">settings</span>
+                </button>
                 <button id="inline-chat-close" onclick="closeInlineChat()">
                     <span class="material-icons-round">close</span>
                 </button>
             </div>
+
+            <!-- Messages -->
             <div id="inline-chat-messages">
                 <div id="inline-chat-empty">
                     <span class="material-icons-round">chat</span>
-                    <p>Ask me about your code.<br>I can explain, fix & apply changes.</p>
+                    <p>Ask me about your code.<br>I can explain, fix &amp; apply changes.</p>
                 </div>
             </div>
+
+            <!-- Context/attach bar — shown when attachment active -->
+            <div id="inline-attach-bar" style="display:none;align-items:center;gap:6px;padding:4px 10px;background:var(--accent-dim);border-top:1px solid var(--accent);font-size:10px;font-weight:600;color:var(--accent);">
+                <span class="material-icons-round" style="font-size:14px;">attach_file</span>
+                <span id="inline-attach-name" style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></span>
+                <span class="material-icons-round" onclick="_inlineClearAttach()" style="font-size:14px;cursor:pointer;opacity:0.6;pointer-events:auto;">close</span>
+            </div>
+
+            <!-- Input row: attach + textarea + send -->
             <div id="inline-chat-input-row">
+                <button onclick="_inlineTriggerAttach()" title="Attach file" style="width:32px;height:32px;border-radius:50%;border:none;background:rgba(128,128,128,0.12);color:var(--text-color);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:transform 0.15s;">
+                    <span class="material-icons-round" style="font-size:16px;pointer-events:none;">attach_file</span>
+                </button>
                 <textarea id="inline-chat-textarea" placeholder="Ask agent..." rows="1"></textarea>
                 <button id="inline-chat-send-btn" onclick="sendInlineChat()">
                     <span class="material-icons-round">send</span>
@@ -4587,7 +4612,6 @@ Rules:
         if (!_activeAgent()) { openAgentModal(); return; }
         _inlineChatOpen = true;
 
-        // Split the main container
         const container = document.getElementById('editor-wrapper');
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
@@ -4596,11 +4620,19 @@ Rules:
         chatPanel.style.display = 'flex';
         if (aiBtn) aiBtn.classList.add('chat-active');
 
-        // Sync agent name
+        // Sync agent name + model list
         const ag = _activeAgent();
-        if (ag) document.getElementById('inline-chat-name').textContent = ag.providerName;
+        if (ag) {
+            document.getElementById('inline-chat-name').textContent = ag.providerName;
+        }
 
-        // Resize ACE editor to fit new half-height
+        // Populate model selector
+        _inlinePopulateModels();
+
+        // Populate tab selector
+        _inlinePopulateTabs();
+
+        // Nav panel stays — just resize ACE to new height
         setTimeout(() => { editor.resize(); }, 50);
 
         // Focus textarea
@@ -4710,11 +4742,14 @@ Rules:
         // Show typing
         _inlineShowTyping();
 
-        // Get current code from active tab
+        // Get target tab — use inline tab selector if multi-tab
+        const tabSelVal = document.getElementById('inline-tab-select');
+        if (tabSelVal && tabSelVal.value) _agentTargetTabId = parseInt(tabSelVal.value) || activeTabId;
+        const targetTab = fileTabs.find(t => t.id === (_agentTargetTabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId);
         const curTab = fileTabs.find(t => t.id === activeTabId);
         if (curTab) curTab.content = editor.getValue();
-        const code = curTab ? curTab.content : editor.getValue();
-        const filename = curTab ? curTab.name : 'untitled';
+        const code = targetTab ? targetTab.content : editor.getValue();
+        const filename = targetTab ? targetTab.name : 'untitled';
 
         // Detect intents — same logic as sendChatMessage
         const splitKeywords = /\b(split|divide|separate|extract|break\s*up|break\s*into|multiple\s*files?|alag|vibhajit|tod|tod\s*do|file\s*mein|files\s*mein|parts?)\b/i;
@@ -4734,9 +4769,17 @@ Rules:
             await new Promise(r => setTimeout(r, 280));
             _inlineShowTyping();
 
+            // Include inline attachment if present
+            const attachCtxInline = _inlineAttachment
+                ? `\n\nAttached (${_inlineAttachment.name}):\n${_inlineAttachment.content.slice(0,2000)}`
+                : '';
+            // Clear attachment after use
+            _inlineClearAttach();
+
             const foundCtx = searchResult.sections.length > 0
                 ? '\n\nRELEVANT SECTIONS:\n' + searchResult.sections.slice(0,4).map(s => s.snippet).join('\n---\n')
                 : '';
+            const allCtx = foundCtx + attachCtxInline;
 
             if (isChatIntent) {
                 // CHAT MODE
@@ -4751,7 +4794,7 @@ Diagnose problems clearly. Do NOT return JSON. Just talk naturally.`;
                 const splitPrompt = `You are CodX AI. Split the code into multiple files.
 Return ONLY a JSON array: [{"filename":"name.ext","content":"full content","reason":"brief"}]
 No markdown, no backticks.`;
-                const userMsg = `Code:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`\n\nRequest: ${userRequest}`;
+                const userMsg = `Code:\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${allCtx}\n\nRequest: ${userRequest}`;
                 let raw = await _callAgentAPI(splitPrompt, userMsg);
                 let match = raw.match(/\[[\s\S]*\]/);
                 if (!match) throw new Error('Could not split code. Try again.');
@@ -4767,7 +4810,7 @@ THEN write exactly: FIXES:
 THEN return JSON array: [{"find":"exact string","replace":"new string","reason":"brief"}]
 Rules: find must be exact verbatim substring. Return [] if no changes needed.
 Only JSON after FIXES: — nothing else after it.`;
-                const userMsg = `Code (${filename}):\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${foundCtx}\n\nRequest: ${userRequest}`;
+                const userMsg = `Code (${filename}):\n\`\`\`\n${code.slice(0,10000)}\n\`\`\`${allCtx}\n\nRequest: ${userRequest}`;
                 let raw = await _callAgentAPI(systemPrompt, userMsg);
 
                 const fixIdx = raw.indexOf('FIXES:');
@@ -4816,6 +4859,78 @@ Only JSON after FIXES: — nothing else after it.`;
 
     // ── Override openAgentBar — now opens inline chat ──
     openAgentBar = function() { openInlineChat(); };
+
+
+    // ── Inline chat: populate model dropdown ──
+    function _inlinePopulateModels() {
+        const sel = document.getElementById('inline-model-select');
+        if (!sel) return;
+        sel.innerHTML = '';
+        agentList.forEach((ag, i) => {
+            const opt = document.createElement('option');
+            opt.value = i;
+            opt.textContent = ag.providerName;
+            if (i === activeAgentIdx) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        // If only one agent, hide the dropdown arrow feel — still usable
+        sel.style.display = agentList.length > 0 ? 'block' : 'none';
+    }
+
+    // ── Inline chat: switch active model from dropdown ──
+    function _inlineSwitchModel(idx) {
+        activeAgentIdx = parseInt(idx) || 0;
+        _saveAgentList();
+        const ag = _activeAgent();
+        if (ag) document.getElementById('inline-chat-name').textContent = ag.providerName;
+    }
+
+    // ── Inline chat: populate tab selector ──
+    function _inlinePopulateTabs() {
+        const sel = document.getElementById('inline-tab-select');
+        if (!sel) return;
+        if (fileTabs.length <= 1) { sel.style.display = 'none'; return; }
+        sel.style.display = 'block';
+        sel.innerHTML = '';
+        fileTabs.forEach(t => {
+            const opt = document.createElement('option');
+            opt.value = t.id;
+            opt.textContent = t.name;
+            if (t.id === activeTabId) opt.selected = true;
+            sel.appendChild(opt);
+        });
+        _agentTargetTabId = activeTabId;
+    }
+
+    // ── Inline chat: attachment handling ──
+    let _inlineAttachment = null;
+
+    function _inlineTriggerAttach() {
+        // Reuse existing hidden file input
+        const inp = document.getElementById('agent-file-input');
+        if (!inp) return;
+        // Temporarily override onchange for inline chat
+        inp.onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                _inlineAttachment = { name: file.name, content: ev.target.result };
+                const bar  = document.getElementById('inline-attach-bar');
+                const name = document.getElementById('inline-attach-name');
+                if (bar)  bar.style.display = 'flex';
+                if (name) name.textContent = file.name;
+            };
+            r.readAsText(file);
+            e.target.value = '';
+        };
+        inp.click();
+    }
+
+    function _inlineClearAttach() {
+        _inlineAttachment = null;
+        const bar = document.getElementById('inline-attach-bar');
+        if (bar) bar.style.display = 'none';
+    }
 
 
 </script>
