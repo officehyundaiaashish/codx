@@ -1462,12 +1462,25 @@
 
         /* Chat half — bottom 50% */
         #inline-chat-panel {
-            flex: 1;
-            min-height: 0;
+            position: fixed;
+            left: 0; right: 0;
+            bottom: 0;
+            z-index: 41;
+            height: 45vh;
             display: flex;
             flex-direction: column;
             background: var(--glass-bg);
+            border-top: 2px solid var(--accent);
+            border-radius: var(--panel-round) var(--panel-round) 0 0;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
             overflow: hidden;
+            transform: translateY(100%);
+            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1);
+            pointer-events: none;
+        }
+        #inline-chat-panel.chat-open {
+            transform: translateY(0);
+            pointer-events: auto;
         }
 
         /* Chat header — compact strip */
@@ -5046,12 +5059,8 @@ No markdown, no backticks, no explanation outside the array.`;
         const nav       = document.getElementById('bottom-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        // Hide navigation, show chat above it
+        // Hide navigation — chat takes its place
         if (nav) nav.style.visibility = 'hidden';
-
-        // Position chat at bottom (where nav was)
-        const navH = nav ? nav.offsetHeight : 0;
-        chatPanel.style.bottom = navH + 'px';
         chatPanel.classList.add('chat-open');
         if (aiBtn) aiBtn.classList.add('chat-active');
 
@@ -5075,12 +5084,12 @@ No markdown, no backticks, no explanation outside the array.`;
         const nav       = document.getElementById('bottom-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        // Slide chat down
+        // Slide chat down, restore navigation after animation
         chatPanel.classList.remove('chat-open');
-        // Restore navigation
-        if (nav) nav.style.visibility = 'visible';
+        setTimeout(() => {
+            if (nav) nav.style.visibility = 'visible';
+        }, 360);
         if (aiBtn) aiBtn.classList.remove('chat-active');
-        setTimeout(() => { chatPanel.style.bottom = '0'; }, 360);
     }
 
     // ── Auto resize textarea ──
