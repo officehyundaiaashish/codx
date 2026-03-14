@@ -6023,7 +6023,12 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     _agentUndoStack.push(origContent);
                     if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
                     if (targetTab) targetTab.content = parsed.content;
-                    if (!targetTab || targetTab.id === activeTabId) editor.setValue(parsed.content, -1);
+                    if (!targetTab || targetTab.id === activeTabId) {
+                        editor.setValue(parsed.content, -1);
+                    } else {
+                        switchFileTab(targetTab.id);
+                        editor.setValue(parsed.content, -1);
+                    }
                     const newLineCount = parsed.content.split('\n').length;
                     _inlineAppendMsg('agent',
                         `✅ File reorganized (${newLineCount} lines). You can undo if needed.` +
@@ -6119,7 +6124,12 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
         // Apply full file replacement
         if (snapTab) snapTab.content = newContent;
-        if (!tabId || tabId === activeTabId) editor.setValue(newContent, -1);
+        if (!tabId || tabId === activeTabId) {
+            editor.setValue(newContent, -1);
+        } else {
+            switchFileTab(tabId);
+            editor.setValue(newContent, -1);
+        }
         const undoCount = _agentUndoStack.length;
         btn.closest('div').parentElement.innerHTML = `<div style="padding:8px 12px;display:flex;align-items:center;gap:8px;background:rgba(16,185,129,0.08);border-radius:12px;">
             <span class="material-icons-round" style="font-size:15px;color:var(--accent);">check_circle</span>
@@ -6278,8 +6288,18 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
 
         // Clean up extra blank lines
         const cleaned = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+
+        // ── Write back to the correct tab ──
         if (snapTab) snapTab.content = cleaned;
-        if (!tabId || tabId === activeTabId) editor.setValue(cleaned, -1);
+
+        if (!tabId || tabId === activeTabId) {
+            // Target tab is currently visible — update editor directly
+            editor.setValue(cleaned, -1);
+        } else {
+            // Target tab is a background tab — switch to it so user sees the change
+            switchFileTab(tabId);
+            editor.setValue(cleaned, -1);
+        }
 
         const cardParent = btn.closest('div').parentElement;
 
