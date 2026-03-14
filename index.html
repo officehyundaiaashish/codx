@@ -5956,21 +5956,66 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         const cardParent = btn.closest('div').parentElement;
 
         if (failedEdits.length > 0) {
-            // ── Auto retry for failed edits ──
+            // ── Targeted retry — send ONLY context around failed blocks, not full file ──
             cardParent.innerHTML = `<div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(245,158,11,0.08);border-radius:12px;border:1px solid rgba(245,158,11,0.25);">
                 <span class="material-icons-round" style="font-size:15px;color:#f59e0b;animation:commitSpin 1s linear infinite;">refresh</span>
                 <span style="font-size:11px;font-weight:700;color:#f59e0b;font-family:'Poppins',sans-serif;">${applied} applied · Retrying ${failedEdits.length} not found...</span>
             </div>`;
 
-            // Build retry prompt — tell AI exactly which blocks failed
-            const failInfo = failedEdits.map((e, i) =>
-                `Block ${i+1} NOT FOUND in file:\n${e.find ? '"' + e.find.slice(0,100) + '"' : 'line ' + e.line_start}`
-            ).join('\n\n');
+            const allLines = cleaned.split('\n');
 
-            const currentCode = cleaned.split('\n').map((l, i) => `${i+1}| ${l}`).join('\n');
-            const retryMsg = `The following edits could NOT be applied because the blocks were not found in the current code.\n\nCurrent code:\n\`\`\`\n${currentCode}\n\`\`\`\n\nFailed blocks:\n${failInfo}\n\nPlease find the correct location in the current code and return updated edits.`;
+            // For each failed edit, extract only ±25 lines context around expected location
+            const targetedContext = failedEdits.map((e, i) => {
+                let contextLines = '';
+                if (e.line_start != null) {
+                    // Line-based: grab ±25 lines around expected location
+                    const center = Math.max(0, (e.line_start || 1) - 1);
+                    const from = Math.max(0, center - 25);
+                    const to   = Math.min(allLines.length - 1, center + 25);
+                    contextLines = allLines.slice(from, to + 1)
+                        .map((l, idx) => `${from + idx + 1}| ${l}`).join('\n');
+                } else if (e.find) {
+                    // String-based: find nearest match by normalized search
+                    const norm = s => s.replace(/\s+/g,' ').trim().slice(0,40);
+                    const needle = norm(e.find);
+                    let bestLine = -1, bestScore = 0;
+                    allLines.forEach((l, idx) => {
+                        const score = norm(l).includes(needle.slice(0,20)) ? 1 : 0;
+                        if (score > bestScore) { bestScore = score; bestLine = idx; }
+                    });
+                    const from = Math.max(0, bestLine - 25);
+                    const to   = Math.min(allLines.length - 1, (bestLine < 0 ? 25 : bestLine) + 25);
+                    contextLines = allLines.slice(from, to + 1)
+                        .map((l, idx) => `${from + idx + 1}| ${l}`).join('\n');
+                }
 
-            _callAgentAPI(_AGENT_SYSTEM_PROMPT, retryMsg).then(raw => {
+                return `## Failed Edit ${i+1}
+Original intent: "${e.find ? e.find.slice(0,80) : `lines ${e.line_start}-${e.line_end}`}"
+Replacement needed: "${(e.replace||'').slice(0,80)}"
+
+Surrounding code context (line numbers shown):
+\`\`\`
+${contextLines}
+\`\`\``;
+            }).join('\n\n---\n\n');
+
+            const retrySystemPrompt = `You are a code edit assistant. The following edits FAILED because the target location could not be found.
+
+For each failed edit, the surrounding code context is provided with line numbers.
+Find the CORRECT line range in the provided context and return updated edits.
+
+Return ONLY valid JSON:
+{
+  "type": "edit",
+  "explanation": "Corrected location for failed edits",
+  "edits": [
+    { "line_start": N, "line_end": N, "replace": "exact replacement" }
+  ]
+}
+
+Use only line numbers visible in the context. Be precise.`;
+
+            _callAgentAPI(retrySystemPrompt, targetedContext).then(raw => {
                 try {
                     const jsonMatch = raw.match(/\{[\s\S]*\}/);
                     if (!jsonMatch) throw new Error('No JSON');
@@ -5978,16 +6023,15 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     if (parsed.type === 'edit' && parsed.edits?.length) {
                         cardParent.innerHTML = '';
                         const retryCard = _buildInlineEditCard(parsed.edits, snapTab);
-                        retryCard.querySelector('.agent-retry-label') && (retryCard.querySelector('.agent-retry-label').textContent = 'Retry — ' + parsed.explanation);
                         cardParent.appendChild(retryCard);
-                        _inlineAppendMsg('agent', `⚠️ ${failedEdits.length} block${failedEdits.length>1?'s':''} not found — here are corrected edits:`);
+                        _inlineAppendMsg('agent', `↩ ${failedEdits.length} block${failedEdits.length>1?'s':''} relocated — review and apply:`);
                     } else {
                         throw new Error('no edits');
                     }
                 } catch(_) {
                     cardParent.innerHTML = `<div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(239,68,68,0.08);border-radius:12px;">
                         <span class="material-icons-round" style="font-size:15px;color:#ef4444;">error</span>
-                        <span style="font-size:11px;font-weight:700;color:#ef4444;font-family:'Poppins',sans-serif;">${applied} applied · ${failedEdits.length} could not be located — try rephrasing your request.</span>
+                        <span style="font-size:11px;font-weight:700;color:#ef4444;font-family:'Poppins',sans-serif;">${applied} applied · ${failedEdits.length} could not be located. Try rephrasing.</span>
                     </div>`;
                 }
             }).catch(() => {
