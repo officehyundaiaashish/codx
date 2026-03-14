@@ -9,7 +9,7 @@
     <meta name="theme-color" content="#f0f2f5" media="(prefers-color-scheme: light)">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>CodX Editor</title>
+    <title>CodX</title>
     
     <link rel="manifest" id="manifest-link">
     
@@ -787,7 +787,6 @@
         .chat-copy-btn:active { opacity: 1 !important; background: var(--accent-dim); color: var(--accent); }
         .chat-copy-btn.copied { opacity: 1 !important; color: var(--accent); }
 
-
         /* ── 3-Step Agent Flow Cards ── */
         .agent-step-card {
             margin-top: 8px;
@@ -1038,8 +1037,6 @@
         }
 
     </style>
-
-
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ace/1.32.3/ext-searchbox.min.js"></script>
     
@@ -2093,7 +2090,6 @@
     </div>
 </div>
 
-
 <input type="file" id="agent-file-input" accept=".html,.js,.css,.txt,.json,.md" style="display:none;">
 
 <!-- New Project Modal -->
@@ -2238,7 +2234,6 @@
         </button>
     </div>
 </div>
-
 
 <script>
     // Use dynamic viewport height to avoid Chrome bottom bar clipping
@@ -3075,7 +3070,7 @@
 
     async function ghApi(endpoint, method='GET', body=null) {
         let token = localStorage.getItem('gh_token');
-        let opts = { method, headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }};
+        let opts = { method, headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }};
         if(body) opts.body = JSON.stringify(body);
         let res = await fetch(`https://api.github.com${endpoint}`, opts);
         if(!res.ok) throw new Error(await res.text()); return res.json();
@@ -3549,7 +3544,6 @@
         });
     }
 
-
     // ===== CUSTOM DIALOG ENGINE =====
     let _cdResolve = null;
     function _showDialog(icon, title, msg, inputDef, buttons) {
@@ -4003,7 +3997,6 @@
         catch (e) { return null; }
     }
 
-
     // ════════════════════════════════════════════════
     // 3-STEP AGENT ENGINE
     // User controls every step — Reject = full stop
@@ -4285,8 +4278,6 @@ Rules:
 
         hideTyping();
     }
-
-
 
     async function sendAgentPrompt() {
         if(!_activeAgent()) { openAgentModal(); return; }
@@ -4975,7 +4966,6 @@ Rules:
     window.addEventListener('beforeinstallprompt', () => { window._logApkEvent('INFO', 'beforeinstallprompt fired — PWA installable'); });
     window.addEventListener('appinstalled', () => { window._logApkEvent('SUCCESS', 'appinstalled event fired'); });
 
-
     // ═══════════════════════ AGENT CHAT SYSTEM ═══════════════════════
 
     // ── Chat state ──
@@ -5533,7 +5523,6 @@ No markdown, no backticks, no explanation outside the array.`;
             if (nameEl) nameEl.textContent = ag.providerName;
         }
     };
-
 
     // ═══════════════════ INLINE SPLIT CHAT ═══════════════════
     // Editor upar (50%), chat neeche (50%) — seedha split screen
@@ -6582,7 +6571,6 @@ Use only line numbers visible in the context. Be precise.`;
         const bar = document.getElementById('inline-attach-bar');
         if (bar) bar.style.display = 'none';
     }
-
 
 </script>
 </body>
