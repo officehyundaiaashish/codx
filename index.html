@@ -1678,6 +1678,28 @@
         #inline-chat-empty .material-icons-round { font-size: 28px; color: var(--accent); margin-bottom: 6px; }
         #inline-chat-empty p { font-size: 11px; color: var(--text-color); line-height: 1.6; }
 
+        /* ── Ace Editor Diff Markers (agent preview) ── */
+        .ace-diff-remove-line {
+            position: absolute;
+            background: rgba(239, 68, 68, 0.18);
+            border-left: 3px solid #ef4444;
+            z-index: 4;
+        }
+        .ace-diff-add-line {
+            position: absolute;
+            background: rgba(16, 185, 129, 0.15);
+            border-left: 3px solid #10b981;
+            z-index: 4;
+        }
+        .ace_gutter-cell.ace-diff-remove {
+            background: rgba(239, 68, 68, 0.25);
+            color: #ef4444 !important;
+        }
+        .ace_gutter-cell.ace-diff-add {
+            background: rgba(16, 185, 129, 0.2);
+            color: #10b981 !important;
+        }
+
         /* AI Agent button — glowing when chat open */
         .toolbar-btn.chat-active {
             background: var(--accent-dim) !important;
@@ -5823,6 +5845,41 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
 - If the file is long, write it ALL. Do not summarize or skip any section.
 - If you cannot return the full content, use "edit" with fewer edits instead — but NEVER truncate.`;
 
+    // ── Robust JSON parser — shared across all agent response handlers ──
+    function _tryParseJSON(str) {
+        if (!str) return null;
+        // Strategy 1: strip markdown fences then parse whole string
+        let clean = str.replace(/^```json\s*/i, '').replace(/^```\s*/i, '').replace(/```\s*$/i, '').trim();
+        try { const p = JSON.parse(clean); if (p && p.type) return p; } catch(_) {}
+
+        // Strategy 2: extract outermost { } block using brace matching
+        const start = str.indexOf('{');
+        if (start !== -1) {
+            let depth = 0, end = -1;
+            for (let i = start; i < str.length; i++) {
+                if (str[i] === '{') depth++;
+                else if (str[i] === '}') { depth--; if (depth === 0) { end = i; break; } }
+            }
+            if (end !== -1) {
+                try { const p = JSON.parse(str.slice(start, end + 1)); if (p && p.type) return p; } catch(_) {}
+            }
+        }
+
+        // Strategy 3: fix common AI JSON mistakes — trailing commas, single quotes
+        try {
+            const fixed = str
+                .replace(/,\s*([}\]])/g, '$1')
+                .replace(/:\s*'([^']*)'/g, ':"$1"');
+            const s2 = fixed.indexOf('{'), e2 = fixed.lastIndexOf('}');
+            if (s2 !== -1 && e2 !== -1) {
+                const p = JSON.parse(fixed.slice(s2, e2 + 1));
+                if (p && p.type) return p;
+            }
+        } catch(_) {}
+
+        return null;
+    }
+
     async function sendInlineChat() {
         if (!_activeAgent()) {
             const box = document.getElementById('inline-chat-messages');
@@ -5928,19 +5985,18 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             _inlineChatHistory.push({ role: 'user', content: userMsg });
             _inlineChatHistory.push({ role: 'assistant', content: raw });
 
-            // Try parse JSON
+            // ── Robust JSON extraction ──
             let parsed = null;
-            try {
-                const jsonMatch = raw.match(/\{[\s\S]*\}/);
-                if (jsonMatch) parsed = JSON.parse(jsonMatch[0]);
-            } catch(e) { parsed = null; }
+            parsed = _tryParseJSON(raw);
 
             if (!parsed || !parsed.type) {
-                // Plain text — chat/explain mode
-                // Guard: if response looks like broken JSON, don't dump it raw
-                const looksLikeJson = raw.trim().startsWith('{') || raw.trim().startsWith('[');
-                if (looksLikeJson) {
-                    _inlineAppendMsg('agent', '⚠️ AI returned malformed JSON. Please try again.');
+                // Plain text response — just show it
+                // Only warn if it strongly looks like JSON that failed to parse
+                const stronglyLooksLikeJSON = raw.trim().startsWith('{') && raw.trim().endsWith('}');
+                if (stronglyLooksLikeJSON) {
+                    // Show truncated raw for debugging + retry hint
+                    const preview = raw.trim().slice(0, 120).replace(/</g,'&lt;');
+                    _inlineAppendMsg('agent', `⚠️ AI response looks like JSON but could not be parsed. Try again or switch to a smarter model.\n\nRaw preview: ${preview}...`);
                 } else {
                     _inlineAppendMsg('agent', raw.trim());
                 }
@@ -5963,8 +6019,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return the COMPLETE content for every file. Do NOT truncate or use placeholders. Write every single line.');
                     _inlineHideTyping();
                     try {
-                        const m2 = retryRaw.match(/\{[\s\S]*\}/);
-                        if (m2) parsed = JSON.parse(m2[0]);
+                        const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
                     } catch(_) {}
                 }
                 // Auto-create all split files directly — no confirmation card needed
@@ -5991,7 +6046,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     _inlineShowTyping();
                     const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE file content. No truncation, no placeholders.');
                     _inlineHideTyping();
-                    try { const m2 = retryRaw.match(/\{[\s\S]*\}/); if (m2) parsed = JSON.parse(m2[0]); } catch(_) {}
+                    const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
                 }
                 // Auto-create the file directly — no confirmation card needed
                 openFileInTab(parsed.filename, parsed.content || '', true);
@@ -6013,7 +6068,7 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT,
                         userMsg + '\n\nCRITICAL: Your previous response was truncated. Return the COMPLETE reorganized file — every single line, no shortcuts, no "rest remains same", no ellipsis.');
                     _inlineHideTyping();
-                    try { const m2 = retryRaw.match(/\{[\s\S]*\}/); if (m2) parsed = JSON.parse(m2[0]); } catch(_) {}
+                    const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
                 }
                 // Auto-apply reorganize directly — save undo snapshot first
                 if (!parsed.content) {
@@ -6178,10 +6233,87 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         return { html, hasChanges };
     }
 
+    // ── Editor diff markers — store IDs so we can remove them later ──
+    let _editorDiffMarkers = [];
+
+    function _clearEditorDiffMarkers() {
+        const session = editor.getSession();
+        _editorDiffMarkers.forEach(id => session.removeMarker(id));
+        _editorDiffMarkers = [];
+        // Clear gutter decorations
+        const lines = session.getLength();
+        for (let i = 0; i < lines; i++) {
+            session.removeGutterDecoration(i, 'ace-diff-remove');
+            session.removeGutterDecoration(i, 'ace-diff-add');
+        }
+    }
+
+    function _showEditorDiffMarkers(edits, targetTab) {
+        _clearEditorDiffMarkers();
+        const AceRange = ace.require('ace/range').Range;
+        const session = editor.getSession();
+        const currentCode = (targetTab ? targetTab.content : editor.getValue()).split('\n');
+
+        // If target tab is not active — switch to it so user sees highlights
+        if (targetTab && targetTab.id !== activeTabId) switchFileTab(targetTab.id);
+
+        (edits || []).forEach(edit => {
+            if (edit.line_start != null) {
+                const s = Math.max(0, (edit.line_start || 1) - 1);
+                const e = Math.min(currentCode.length - 1, (edit.line_end || edit.line_start || 1) - 1);
+
+                // Red: lines being removed (old lines)
+                for (let row = s; row <= e; row++) {
+                    const mid = _editorDiffMarkers.push(
+                        session.addMarker(new AceRange(row, 0, row, Infinity), 'ace-diff-remove-line', 'fullLine', false)
+                    );
+                    session.addGutterDecoration(row, 'ace-diff-remove');
+                }
+
+                // Green: show where new lines will land (highlight line after removed block)
+                const insertRow = Math.min(e + 1, currentCode.length - 1);
+                const newLineCount = (edit.replace || '').split('\n').length;
+                // Mark insertion point — one marker at the boundary
+                _editorDiffMarkers.push(
+                    session.addMarker(new AceRange(insertRow, 0, insertRow, Infinity), 'ace-diff-add-line', 'fullLine', false)
+                );
+                session.addGutterDecoration(insertRow, 'ace-diff-add');
+
+            } else if (edit.find) {
+                // find-based: search for the string in code and highlight it red
+                const full = currentCode.join('\n');
+                const idx = full.indexOf(edit.find);
+                if (idx !== -1) {
+                    const before = full.slice(0, idx);
+                    const startRow = before.split('\n').length - 1;
+                    const endRow = startRow + edit.find.split('\n').length - 1;
+                    for (let row = startRow; row <= endRow; row++) {
+                        _editorDiffMarkers.push(
+                            session.addMarker(new AceRange(row, 0, row, Infinity), 'ace-diff-remove-line', 'fullLine', false)
+                        );
+                        session.addGutterDecoration(row, 'ace-diff-remove');
+                    }
+                    _editorDiffMarkers.push(
+                        session.addMarker(new AceRange(endRow + 1, 0, endRow + 1, Infinity), 'ace-diff-add-line', 'fullLine', false)
+                    );
+                    session.addGutterDecoration(endRow + 1, 'ace-diff-add');
+                }
+            }
+        });
+
+        // Scroll editor to first changed line
+        if (edits && edits[0] && edits[0].line_start != null) {
+            editor.scrollToLine(Math.max(0, edits[0].line_start - 3), true, true);
+        }
+    }
+
     function _buildInlineEditCard(edits, targetTab) {
         const card = document.createElement('div');
         card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;max-width:100%;';
         const count = edits ? edits.length : 0;
+
+        // ── Show live diff highlights in the editor immediately ──
+        _showEditorDiffMarkers(edits, targetTab);
 
         // Build diff preview for each edit
         const currentCode = (targetTab ? targetTab.content : editor.getValue()).split('\n');
@@ -6193,7 +6325,6 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             if (edit.line_start != null) {
                 const s = Math.max(0, (edit.line_start || 1) - 1);
                 const e = Math.min(currentCode.length - 1, (edit.line_end || edit.line_start || 1) - 1);
-                // Show 2 lines context before/after
                 const ctxBefore = currentCode.slice(Math.max(0, s-2), s);
                 const ctxAfter  = currentCode.slice(e+1, Math.min(currentCode.length, e+3));
                 oldLines = [...ctxBefore, ...currentCode.slice(s, e+1), ...ctxAfter];
@@ -6225,10 +6356,10 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             </div>
             <div style="max-height:180px;overflow-y:auto;overflow-x:hidden;background:rgba(0,0,0,0.15);">${diffHTML || '<div style="padding:10px 12px;font-size:11px;opacity:0.5;font-family:Poppins,sans-serif;">No preview available</div>'}</div>
             <div style="padding:8px 12px;display:flex;gap:7px;border-top:1px solid var(--glass-border);">
-                <button onclick="_applyInlineEdits(this, ${editsJson}, ${tabId})" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--accent);color:white;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
+                <button onclick="_clearEditorDiffMarkers();_applyInlineEdits(this, ${editsJson}, ${tabId})" style="flex:1;padding:8px;border-radius:9px;border:none;background:var(--accent);color:white;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;">
                     <span class="material-icons-round" style="font-size:14px;pointer-events:none;">check</span>Apply
                 </button>
-                <button onclick="this.closest('div').parentElement.remove()" style="padding:8px 14px;border-radius:9px;border:1px solid var(--glass-border);background:none;color:var(--text-color);font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;opacity:0.6;">
+                <button onclick="_clearEditorDiffMarkers();this.closest('div').parentElement.remove()" style="padding:8px 14px;border-radius:9px;border:1px solid var(--glass-border);background:none;color:var(--text-color);font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;opacity:0.6;">
                     Cancel
                 </button>
             </div>`;
@@ -6236,17 +6367,22 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
     }
 
     function _applyInlineEdits(btn, edits, tabId) {
-        if (!edits || !edits.length) return;
-        const snapTab = fileTabs.find(t => t.id === (tabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId);
-        const original = snapTab ? snapTab.content : editor.getValue();
+        if (!edits || !edits.length) {
+            _showApplyError(btn, 'No edits provided by AI. Try asking again.');
+            return;
+        }
 
-        // Save undo snapshot before every apply
-        _agentUndoStack.push(original);
-        if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+        const snapTab = fileTabs.find(t => t.id === (tabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId);
+        if (!snapTab && !editor) {
+            _showApplyError(btn, 'Target file not found. Please select the correct file and retry.');
+            return;
+        }
+        const original = snapTab ? snapTab.content : editor.getValue();
 
         const lines = original.split('\n');
         let applied = 0;
         const failedEdits = [];
+        const failReasons = [];
 
         // Sort edits bottom-to-top so line numbers stay valid after each replacement
         const sorted = [...edits].sort((a, b) => (b.line_start || 0) - (a.line_start || 0));
@@ -6256,6 +6392,12 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             if (edit.line_start != null) {
                 const s = Math.max(0, (edit.line_start || 1) - 1);
                 const e = Math.min(lines.length - 1, (edit.line_end || edit.line_start || 1) - 1);
+                // Validate line range
+                if (s > lines.length - 1) {
+                    failedEdits.push(edit);
+                    failReasons.push(`Line ${edit.line_start} is out of range (file has ${lines.length} lines)`);
+                    return;
+                }
                 const newLines = (edit.replace || '').split('\n').map(l => l.replace(/^\t/, '  '));
                 lines.splice(s, e - s + 1, ...newLines);
                 applied++;
@@ -6277,14 +6419,33 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                             lines.splice(0, lines.length, ...updated.split('\n'));
                             applied++;
                         } else {
-                            failedEdits.push(edit); // collect for retry
+                            failedEdits.push(edit);
+                            failReasons.push(`Text not found: "${(edit.find||'').slice(0,50)}..."`);
                         }
-                    } catch(_) { failedEdits.push(edit); }
+                    } catch(regexErr) {
+                        failedEdits.push(edit);
+                        failReasons.push(`Regex error: ${regexErr.message}`);
+                    }
                 }
             } else {
                 failedEdits.push(edit);
+                failReasons.push('Edit has no line_start and no find — AI returned incomplete edit');
             }
         });
+
+        // ── If NOTHING applied at all — abort, don't touch the file ──
+        if (applied === 0 && failedEdits.length > 0) {
+            _showApplyError(btn,
+                `Nothing could be applied (${failedEdits.length} edit${failedEdits.length!==1?'s':''} failed):\n` +
+                failReasons.map((r,i) => `• Edit ${i+1}: ${r}`).join('\n') +
+                '\n\nTry rephrasing your request or switching to a smarter model.'
+            );
+            return;
+        }
+
+        // Save undo snapshot ONLY if at least something applied
+        _agentUndoStack.push(original);
+        if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
 
         // Clean up extra blank lines
         const cleaned = lines.join('\n').replace(/\n{3,}/g, '\n\n');
@@ -6293,10 +6454,8 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         if (snapTab) snapTab.content = cleaned;
 
         if (!tabId || tabId === activeTabId) {
-            // Target tab is currently visible — update editor directly
             editor.setValue(cleaned, -1);
         } else {
-            // Target tab is a background tab — switch to it so user sees the change
             switchFileTab(tabId);
             editor.setValue(cleaned, -1);
         }
@@ -6304,10 +6463,17 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         const cardParent = btn.closest('div').parentElement;
 
         if (failedEdits.length > 0) {
-            // ── Targeted retry — send ONLY context around failed blocks, not full file ──
-            cardParent.innerHTML = `<div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(245,158,11,0.08);border-radius:12px;border:1px solid rgba(245,158,11,0.25);">
-                <span class="material-icons-round" style="font-size:15px;color:#f59e0b;animation:commitSpin 1s linear infinite;">refresh</span>
-                <span style="font-size:11px;font-weight:700;color:#f59e0b;font-family:'Poppins',sans-serif;">${applied} applied · Retrying ${failedEdits.length} not found...</span>
+            // Some applied, some failed — show partial result + reasons + retry
+            const reasonHTML = failReasons.map((r,i) =>
+                `<div style="font-size:10px;font-family:'Poppins',sans-serif;color:#f59e0b;padding:2px 0;">• Edit ${i+1}: ${r}</div>`
+            ).join('');
+
+            cardParent.innerHTML = `<div style="border:1px solid rgba(245,158,11,0.3);border-radius:12px;overflow:hidden;">
+                <div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(245,158,11,0.08);">
+                    <span class="material-icons-round" style="font-size:15px;color:#f59e0b;animation:commitSpin 1s linear infinite;">refresh</span>
+                    <span style="font-size:11px;font-weight:700;color:#f59e0b;font-family:'Poppins',sans-serif;">${applied} applied · Retrying ${failedEdits.length} failed...</span>
+                </div>
+                <div style="padding:6px 12px 8px;">${reasonHTML}</div>
             </div>`;
 
             const allLines = cleaned.split('\n');
@@ -6365,9 +6531,8 @@ Use only line numbers visible in the context. Be precise.`;
 
             _callAgentAPI(retrySystemPrompt, targetedContext).then(raw => {
                 try {
-                    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-                    if (!jsonMatch) throw new Error('No JSON');
-                    const parsed = JSON.parse(jsonMatch[0]);
+                    const parsed = _tryParseJSON(raw);
+                    if (!parsed) throw new Error('No JSON');
                     if (parsed.type === 'edit' && parsed.edits?.length) {
                         cardParent.innerHTML = '';
                         const retryCard = _buildInlineEditCard(parsed.edits, snapTab);
@@ -6376,14 +6541,30 @@ Use only line numbers visible in the context. Be precise.`;
                     } else {
                         throw new Error('no edits');
                     }
-                } catch(_) {
-                    cardParent.innerHTML = `<div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(239,68,68,0.08);border-radius:12px;">
-                        <span class="material-icons-round" style="font-size:15px;color:#ef4444;">error</span>
-                        <span style="font-size:11px;font-weight:700;color:#ef4444;font-family:'Poppins',sans-serif;">${applied} applied · ${failedEdits.length} could not be located. Try rephrasing.</span>
+                } catch(parseErr) {
+                    cardParent.innerHTML = `<div style="border:1px solid rgba(239,68,68,0.3);border-radius:12px;overflow:hidden;">
+                        <div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(239,68,68,0.08);">
+                            <span class="material-icons-round" style="font-size:15px;color:#ef4444;">error</span>
+                            <span style="font-size:11px;font-weight:700;color:#ef4444;font-family:'Poppins',sans-serif;flex:1;">${applied} applied · ${failedEdits.length} block${failedEdits.length!==1?'s':''} could not be relocated</span>
+                        </div>
+                        <div style="padding:6px 12px 10px;">
+                            <div style="font-size:10px;color:var(--text-color);opacity:0.6;font-family:'Poppins',sans-serif;margin-bottom:6px;">Reason: AI retry returned invalid response</div>
+                            ${failReasons.map((r,i) => `<div style="font-size:10px;color:#ef4444;font-family:'Poppins',sans-serif;padding:1px 0;">• ${r}</div>`).join('')}
+                            <div style="font-size:10px;color:var(--text-color);opacity:0.45;font-family:'Poppins',sans-serif;margin-top:6px;">Try rephrasing your request or use a smarter model (Gemini/OpenAI).</div>
+                        </div>
                     </div>`;
                 }
-            }).catch(() => {
-                cardParent.innerHTML = `<div style="padding:9px 12px;font-size:11px;color:#ef4444;font-family:'Poppins',sans-serif;">Retry failed — network error.</div>`;
+            }).catch(netErr => {
+                cardParent.innerHTML = `<div style="border:1px solid rgba(239,68,68,0.3);border-radius:12px;overflow:hidden;">
+                    <div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(239,68,68,0.08);">
+                        <span class="material-icons-round" style="font-size:15px;color:#ef4444;">wifi_off</span>
+                        <span style="font-size:11px;font-weight:700;color:#ef4444;font-family:'Poppins',sans-serif;flex:1;">Retry failed — network error</span>
+                    </div>
+                    <div style="padding:6px 12px 10px;font-size:10px;color:var(--text-color);opacity:0.55;font-family:'Poppins',sans-serif;">
+                        ${(netErr?.message||'Connection issue').slice(0,100)}<br>
+                        Check your internet and try again.
+                    </div>
+                </div>`;
             });
 
         } else {
@@ -6423,6 +6604,25 @@ Use only line numbers visible in the context. Be precise.`;
 
             showToast(`${applied} edit${applied!==1?'s':''} applied`, 'check_circle');
         }
+    }
+
+    // ── Show apply error in card — clear markers too ──
+    function _showApplyError(btn, message) {
+        _clearEditorDiffMarkers();
+        const cardParent = btn.closest('div').parentElement;
+        const lines = message.split('\n');
+        const title = lines[0];
+        const details = lines.slice(1).filter(Boolean);
+        cardParent.innerHTML = `<div style="border:1px solid rgba(239,68,68,0.3);border-radius:12px;overflow:hidden;">
+            <div style="padding:9px 12px;display:flex;align-items:center;gap:7px;background:rgba(239,68,68,0.08);">
+                <span class="material-icons-round" style="font-size:15px;color:#ef4444;">error_outline</span>
+                <span style="font-size:11px;font-weight:700;color:#ef4444;font-family:'Poppins',sans-serif;flex:1;">${title}</span>
+            </div>
+            ${details.length ? `<div style="padding:8px 12px 10px;">
+                ${details.map(d => `<div style="font-size:10px;color:var(--text-color);opacity:0.7;font-family:'Poppins',sans-serif;padding:2px 0;line-height:1.5;">${d}</div>`).join('')}
+            </div>` : ''}
+        </div>`;
+        _inlineChatHistory.push({ role: 'assistant', content: `[APPLY FAILED] ${title}` });
     }
 
     // ── Undo last agent edit — restores most recent snapshot ──
@@ -6487,7 +6687,7 @@ Use only line numbers visible in the context. Be precise.`;
             _inlineChatHistory.push({ role: 'assistant', content: raw });
 
             let parsed = null;
-            try { const m = raw.match(/\{[\s\S]*\}/); if (m) parsed = JSON.parse(m[0]); } catch(_) {}
+            const pR = _tryParseJSON(raw); if (pR) parsed = pR;
 
             card.innerHTML = '';
 
