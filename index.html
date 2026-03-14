@@ -2110,12 +2110,17 @@
     window.visualViewport && window.visualViewport.addEventListener('resize', _setBodyHeight);
     window.addEventListener('resize', _setBodyHeight);
     window.visualViewport && window.visualViewport.addEventListener('resize', () => {
-        let kbHeight = window.innerHeight - window.visualViewport.height;
+        const vv = window.visualViewport;
+        const kbHeight = window.innerHeight - vv.height - vv.offsetTop;
         let activeModal = document.querySelector('.modal.active:not(#github-modal)');
         if (activeModal) {
-            // Find modal sits just above keyboard; other modals float at 20px
             const isFindModal = activeModal.id === 'find-modal';
-            activeModal.style.bottom = kbHeight > 0 ? (kbHeight + (isFindModal ? 4 : 10)) + 'px' : (isFindModal ? '8px' : '20px');
+            if (isFindModal) {
+                // Sit exactly above the keyboard — no gap, just 4px breathing room
+                activeModal.style.bottom = kbHeight > 10 ? (kbHeight + 4) + 'px' : '8px';
+            } else {
+                activeModal.style.bottom = kbHeight > 10 ? (kbHeight + 10) + 'px' : '20px';
+            }
         }
     });
 
@@ -2761,16 +2766,23 @@
         closeGithubModal(); 
         let isActive = findModal.classList.toggle('active'); 
         if (isActive) { 
-            findModal.style.bottom = '20px';
-            // Hide nav panel while find is open
+            // Start at bottom of screen, keyboard listener will push it up
+            findModal.style.bottom = '8px';
             _hideNavForModal();
             requestAnimationFrame(() => { 
                 const fi = document.getElementById('find-input');
                 fi.focus(); 
                 fi.setSelectionRange(fi.value.length, fi.value.length);
+                // After keyboard opens, reposition immediately above it
+                setTimeout(() => {
+                    const vv = window.visualViewport;
+                    if (vv) {
+                        const kbHeight = window.innerHeight - vv.height - vv.offsetTop;
+                        if (kbHeight > 10) findModal.style.bottom = (kbHeight + 4) + 'px';
+                    }
+                }, 350);
             });
         } else {
-            // Restore nav when find closes
             _restoreNavAfterModal();
         }
     }
