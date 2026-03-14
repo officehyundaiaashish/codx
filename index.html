@@ -5937,12 +5937,23 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
 
             if (!parsed || !parsed.type) {
                 // Plain text — chat/explain mode
-                _inlineAppendMsg('agent', raw.trim());
+                // Guard: if response looks like broken JSON, don't dump it raw
+                const looksLikeJson = raw.trim().startsWith('{') || raw.trim().startsWith('[');
+                if (looksLikeJson) {
+                    _inlineAppendMsg('agent', '⚠️ AI returned malformed JSON. Please try again.');
+                } else {
+                    _inlineAppendMsg('agent', raw.trim());
+                }
 
             } else if (parsed.type === 'edit') {
-                _inlineAppendMsg('agent', parsed.explanation || 'Ready to apply edits.');
-                const card = _buildInlineEditCard(parsed.edits, targetTab);
-                _inlineAppendMsg('agent', '', card);
+                // Guard: edits must be a non-empty array
+                if (!Array.isArray(parsed.edits) || parsed.edits.length === 0) {
+                    _inlineAppendMsg('agent', parsed.explanation || 'No changes were needed.');
+                } else {
+                    _inlineAppendMsg('agent', parsed.explanation || `${parsed.edits.length} edit${parsed.edits.length!==1?'s':''} ready — review below.`);
+                    const card = _buildInlineEditCard(parsed.edits, targetTab);
+                    _inlineAppendMsg('agent', '', card);
+                }
 
             } else if (parsed.type === 'split') {
                 const truncated = _detectTruncation(parsed.files?.map(f => f.content).join(''));
@@ -5956,9 +5967,22 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                         if (m2) parsed = JSON.parse(m2[0]);
                     } catch(_) {}
                 }
-                _inlineAppendMsg('agent', parsed.explanation || `Splitting into ${parsed.files?.length} files.`);
-                const card = _buildInlineSplitCard(parsed.files);
-                _inlineAppendMsg('agent', '', card);
+                // Auto-create all split files directly — no confirmation card needed
+                const splitFiles = parsed.files || [];
+                if (!splitFiles.length) {
+                    _inlineAppendMsg('agent', '⚠️ AI returned no files. Try again.');
+                } else {
+                    splitFiles.forEach(f => openFileInTab(f.filename, f.content || '', true));
+                    const names = splitFiles.map(f => f.filename).join(', ');
+                    _inlineAppendMsg('agent',
+                        `✅ Split into ${splitFiles.length} files: ${names}` +
+                        (parsed.explanation ? '\n' + parsed.explanation : '')
+                    );
+                    _inlineChatHistory.push({
+                        role: 'assistant',
+                        content: `[SPLIT INTO ${splitFiles.length} FILES: ${names}] ${parsed.explanation || ''}`
+                    });
+                }
 
             } else if (parsed.type === 'new_file') {
                 const truncated = _detectTruncation(parsed.content);
@@ -5991,9 +6015,26 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     _inlineHideTyping();
                     try { const m2 = retryRaw.match(/\{[\s\S]*\}/); if (m2) parsed = JSON.parse(m2[0]); } catch(_) {}
                 }
-                _inlineAppendMsg('agent', parsed.explanation || 'Reorganized file ready.');
-                const card = _buildInlineReorganizeCard(parsed.content, targetTab);
-                _inlineAppendMsg('agent', '', card);
+                // Auto-apply reorganize directly — save undo snapshot first
+                if (!parsed.content) {
+                    _inlineAppendMsg('agent', '⚠️ AI returned empty content. Try again.');
+                } else {
+                    const origContent = targetTab ? targetTab.content : editor.getValue();
+                    _agentUndoStack.push(origContent);
+                    if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+                    if (targetTab) targetTab.content = parsed.content;
+                    if (!targetTab || targetTab.id === activeTabId) editor.setValue(parsed.content, -1);
+                    const newLineCount = parsed.content.split('\n').length;
+                    _inlineAppendMsg('agent',
+                        `✅ File reorganized (${newLineCount} lines). You can undo if needed.` +
+                        (parsed.explanation ? '\n' + parsed.explanation : '')
+                    );
+                    _inlineChatHistory.push({
+                        role: 'assistant',
+                        content: `[REORGANIZED FILE — ${newLineCount} lines] ${parsed.explanation || ''}`
+                    });
+                    showToast('File reorganized', 'reorder');
+                }
             }
 
         } catch(err) {
