@@ -109,7 +109,7 @@
         .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
         .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
-        .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
@@ -151,7 +151,7 @@
         .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
         .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
-        .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
@@ -1025,7 +1025,7 @@
         .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
         .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
-        .scroll-jumpers { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
@@ -1731,8 +1731,8 @@
                 <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
             </div>
 
-            <div class="drag-handle-area" style="justify-content:center; padding:0; position:relative; z-index:50; height:0; overflow:visible;">
-                <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:var(--accent);border:none;border-radius:50%;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;box-shadow:0 2px 10px rgba(16,185,129,0.35);transition:box-shadow 0.2s;position:relative;top:-18px;">
+            <div class="drag-handle-area" style="justify-content:center; padding-top:6px; padding-bottom:6px; position:relative; z-index:50;">
+                <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:var(--accent);border:none;border-radius:50%;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;box-shadow:0 2px 10px rgba(16,185,129,0.35);transition:box-shadow 0.2s;">
                     <span class="material-icons-round" id="nav-toggle-icon" style="font-size:22px;pointer-events:none;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">expand_more</span>
                 </button>
             </div>
@@ -1781,93 +1781,104 @@
 
 <div class="modal no-select" id="find-modal">
     <!-- Header -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-        <div style="display:flex; align-items:center; gap:7px; color:var(--accent); font-weight:700; font-size:13px;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:9px;">
+        <div style="display:flex; align-items:center; gap:6px; color:var(--accent); font-weight:700; font-size:12px; font-family:'Poppins',sans-serif;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
             Find &amp; Replace
         </div>
-        <div style="display:flex; align-items:center; gap:4px;">
-            <!-- Undo -->
-            <button onclick="editorUndo()" title="Undo" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.7;transition:opacity 0.15s,background 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.7">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 6.5 13 4 18 8s5 10 1 14"/></svg>
+        <div style="display:flex; align-items:center; gap:3px;">
+            <button onclick="editorUndo()" title="Undo" style="background:rgba(128,128,128,0.1);border:none;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.65;transition:opacity 0.15s,background 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.65">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3 13C5.5 6.5 13 4 18 8s5 10 1 14"/></svg>
             </button>
-            <!-- Redo -->
-            <button onclick="editorRedo()" title="Redo" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.7;transition:opacity 0.15s,background 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.7">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M21 13C18.5 6.5 11 4 6 8s-5 10-1 14"/></svg>
+            <button onclick="editorRedo()" title="Redo" style="background:rgba(128,128,128,0.1);border:none;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.65;transition:opacity 0.15s,background 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.65">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M21 13C18.5 6.5 11 4 6 8s-5 10-1 14"/></svg>
             </button>
-            <!-- Close -->
-            <button onclick="toggleFindReplace()" title="Close" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.7;transition:opacity 0.15s,background 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.7">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            <button onclick="toggleFindReplace()" title="Close" style="background:rgba(128,128,128,0.1);border:none;border-radius:7px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.65;transition:opacity 0.15s,background 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.65">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
             </button>
         </div>
     </div>
-
     <!-- Find field -->
-    <div style="margin-bottom:8px;">
-        <div style="font-size:10px;font-weight:700;color:var(--text-color);opacity:0.5;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Find</div>
-        <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text; -webkit-user-select:text; resize:none; height:56px; font-family:'Courier New',monospace; font-size:12px;"></textarea>
-    </div>
-
+    <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.45;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Poppins',sans-serif;">Find</div>
+    <textarea id="find-input" class="no-select" placeholder="Paste exact code to find..." style="user-select:text;-webkit-user-select:text;resize:none;height:46px;font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:7px;"></textarea>
     <!-- Replace field -->
-    <div style="margin-bottom:10px;">
-        <div style="font-size:10px;font-weight:700;color:var(--text-color);opacity:0.5;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Replace</div>
-        <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text; -webkit-user-select:text; resize:none; height:56px; font-family:'Courier New',monospace; font-size:12px;"></textarea>
-    </div>
-
-    <!-- Options row -->
-    <div class="find-options" style="margin-bottom:10px;">
-        <label class="find-check-label"><input type="checkbox" id="find-case"> Case Sensitive</label>
-        <label class="find-check-label"><input type="checkbox" id="find-regex"> Regex</label>
-    </div>
-
-    <!-- Action buttons -->
-    <div class="modal-actions">
-        <button class="modal-btn secondary" onclick="clearFind()" style="display:flex;align-items:center;justify-content:center;gap:5px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Clear
-        </button>
-        <button class="modal-btn secondary" onclick="findText(true)" style="display:flex;align-items:center;justify-content:center;gap:5px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Find
-        </button>
-        <button class="modal-btn" onclick="replaceText()" style="display:flex;align-items:center;justify-content:center;gap:5px;">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/></svg>Replace
-        </button>
+    <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.45;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:3px;font-family:'Poppins',sans-serif;">Replace</div>
+    <textarea id="replace-input" class="no-select" placeholder="Paste exact code to replace..." style="user-select:text;-webkit-user-select:text;resize:none;height:46px;font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:7px;"></textarea>
+    <!-- Options + Actions in one row -->
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;">
+        <div style="display:flex;gap:10px;flex-shrink:0;">
+            <label class="find-check-label"><input type="checkbox" id="find-case"> Case</label>
+            <label class="find-check-label"><input type="checkbox" id="find-regex"> Regex</label>
+        </div>
+        <div style="display:flex;gap:5px;">
+            <button class="modal-btn secondary" onclick="clearFind()" style="padding:7px 10px;font-size:11px;display:flex;align-items:center;gap:4px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Clear
+            </button>
+            <button class="modal-btn secondary" onclick="findText(true)" style="padding:7px 10px;font-size:11px;display:flex;align-items:center;gap:4px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>Find
+            </button>
+            <button class="modal-btn" onclick="replaceText()" style="padding:7px 10px;font-size:11px;display:flex;align-items:center;gap:4px;">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 3v4a1 1 0 001 1h4"/><path d="M17 21H7a2 2 0 01-2-2V5a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z"/></svg>Replace
+            </button>
+        </div>
     </div>
 </div>
 
 <div id="gh-overlay" onclick="closeGithubModal()"></div>
 
 <div class="no-select" id="github-modal">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span class="material-icons-round" style="color:var(--accent); font-size:20px;">cloud_sync</span>
-            <span style="color:var(--text-color); font-weight:700; font-size:15px; font-family:'Poppins',sans-serif;">GitSync</span>
-        </div>
-        <span class="material-icons-round" onclick="closeGithubModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
-    </div>
-    
-    <div id="gh-login-section">
-        <div style="font-size:11px; color:var(--text-color); opacity:0.5; margin-bottom:8px; font-family:'Poppins',sans-serif;">Enter your GitHub Personal Access Token</div>
-        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxx" style="user-select:text; -webkit-user-select:text;">
-        <button class="modal-btn" onclick="saveGhToken()" style="width:100%; margin-bottom:0px;">Login & Save to Device</button>
-    </div>
-
-    <div id="gh-repo-section" style="display:none;" class="gh-section-anim">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-            <div style="font-size:11px; color:var(--accent); font-weight:700;">● Connected</div>
-            <div style="font-size:11px; color:var(--text-color); opacity:0.5; cursor:pointer; display:flex; align-items:center; gap:3px;" onclick="ghLogout()">
-                <span class="material-icons-round" style="font-size:13px;">logout</span> Logout
+    <!-- Header -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div style="display:flex;align-items:center;gap:9px;">
+            <div style="width:34px;height:34px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                <span class="material-icons-round" style="color:var(--accent);font-size:18px;">cloud_sync</span>
+            </div>
+            <div>
+                <div style="font-weight:700;font-size:14px;color:var(--text-color);font-family:'Poppins',sans-serif;">GitSync</div>
+                <div id="gh-header-status" style="font-size:10px;color:var(--accent);font-weight:600;font-family:'Poppins',sans-serif;">Not connected</div>
             </div>
         </div>
-        
-        <!-- Repo selector -->
-        <div style="display:flex; gap:8px; margin-bottom:8px;">
-            <div class="gh-select-wrap" style="flex:1; margin-bottom:0;">
+        <button onclick="closeGithubModal()" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:30px;height:30px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.6;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.6">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+    </div>
+
+    <!-- LOGIN SECTION -->
+    <div id="gh-login-section">
+        <div style="background:var(--accent-dim);border:1px solid rgba(16,185,129,0.25);border-radius:12px;padding:12px;margin-bottom:12px;font-size:11px;line-height:1.7;color:var(--text-color);font-family:'Poppins',sans-serif;">
+            <div style="font-weight:700;color:var(--accent);margin-bottom:3px;">🔑 GitHub Personal Access Token</div>
+            <div style="opacity:0.7;">Generate at github.com → Settings → Developer settings → Personal access tokens</div>
+        </div>
+        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="user-select:text;-webkit-user-select:text;margin-bottom:10px;">
+        <button class="modal-btn" onclick="saveGhToken()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
+            <span class="material-icons-round" style="font-size:16px;pointer-events:none;">login</span>Connect GitHub
+        </button>
+    </div>
+
+    <!-- CONNECTED SECTION -->
+    <div id="gh-repo-section" style="display:none;" class="gh-section-anim">
+
+        <!-- Connected status bar -->
+        <div style="display:flex;justify-content:space-between;align-items:center;background:rgba(16,185,129,0.07);border:1px solid rgba(16,185,129,0.2);border-radius:10px;padding:8px 12px;margin-bottom:12px;">
+            <div style="display:flex;align-items:center;gap:7px;">
+                <div style="width:7px;height:7px;border-radius:50%;background:#10b981;flex-shrink:0;"></div>
+                <span style="font-size:11px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;">Connected</span>
+            </div>
+            <button onclick="ghLogout()" style="background:none;border:none;cursor:pointer;display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600;color:var(--text-color);opacity:0.45;font-family:'Poppins',sans-serif;padding:0;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.45">
+                <span class="material-icons-round" style="font-size:13px;">logout</span>Logout
+            </button>
+        </div>
+
+        <!-- Repo selector row -->
+        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;font-family:'Poppins',sans-serif;">Repository</div>
+        <div style="display:flex;gap:7px;margin-bottom:10px;">
+            <div class="gh-select-wrap" style="flex:1;margin-bottom:0;">
                 <select id="gh-repo-select" onchange="fetchGhFiles()">
                     <option value="">Select Repository...</option>
                 </select>
             </div>
-            <button class="modal-btn secondary" onclick="fetchGhFiles()" style="flex:none; width:42px; padding:0; display:flex; align-items:center; justify-content:center; border-radius:10px;" title="Sync Repo">
-                <span class="material-icons-round" style="font-size:20px; pointer-events:none;">sync</span>
+            <button onclick="fetchGhFiles()" title="Refresh" style="width:38px;height:38px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(128,128,128,0.08);color:var(--text-color);display:flex;align-items:center;justify-content:center;cursor:pointer;flex-shrink:0;transition:background 0.15s;" onmouseenter="this.style.background='var(--accent-dim)'" onmouseleave="this.style.background='rgba(128,128,128,0.08)'">
+                <span class="material-icons-round" style="font-size:17px;pointer-events:none;">refresh</span>
             </button>
         </div>
 
@@ -1879,41 +1890,42 @@
             <div class="gh-tree-loading">Loading files...</div>
         </div>
 
-        <!-- Action bar -->
-        <div id="gh-action-bar" style="display:none; gap:6px; margin-top:10px; flex-wrap:wrap;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">edit</span> Open
+        <!-- File action buttons -->
+        <div id="gh-action-bar" style="display:none;gap:5px;margin-top:10px;flex-wrap:wrap;">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">edit</span>Open
             </button>
-            <button class="modal-btn secondary" id="gh-dl-btn" onclick="downloadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">download</span> Download
+            <button class="modal-btn secondary" id="gh-dl-btn" onclick="downloadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">download</span>Download
             </button>
-            <button class="modal-btn secondary" id="gh-rename-btn" onclick="renameGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">drive_file_rename_outline</span> Rename
+            <button class="modal-btn secondary" id="gh-rename-btn" onclick="renameGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">drive_file_rename_outline</span>Rename
             </button>
-            <button class="modal-btn secondary" id="gh-delete-btn" onclick="deleteGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:5px;flex:1;min-width:90px;font-size:11px;padding:8px;background:rgba(239,68,68,0.1);border-color:rgba(239,68,68,0.3);color:#ef4444;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">delete</span> Delete
-            </button>
-        </div>
-
-        <!-- Create bar -->
-        <div style="display:flex;gap:6px;margin-top:8px;" id="gh-create-bar" style="display:none;">
-            <button class="modal-btn secondary" onclick="createGhFile()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;" id="gh-new-file-btn">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add</span> New File
-            </button>
-            <button class="modal-btn secondary" onclick="createGhFolder()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">create_new_folder</span> New Folder
-            </button>
-            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:8px;border-color:var(--accent);">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">folder_zip</span> Load All
+            <button class="modal-btn secondary" id="gh-delete-btn" onclick="deleteGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);color:#ef4444;">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">delete</span>Delete
             </button>
         </div>
 
-        <!-- Commit bar -->
-        <div style="margin-top:8px;">
-            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="background:#ef4444;width:100%;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:10px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">upload</span> Commit Current File
+        <!-- Divider -->
+        <div style="height:1px;background:var(--glass-border);margin:10px 0;"></div>
+
+        <!-- Create + Load row -->
+        <div style="display:flex;gap:5px;margin-bottom:10px;" id="gh-create-bar">
+            <button class="modal-btn secondary" onclick="createGhFile()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;" id="gh-new-file-btn">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">add</span>New File
+            </button>
+            <button class="modal-btn secondary" onclick="createGhFolder()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">create_new_folder</span>New Folder
+            </button>
+            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;border-color:rgba(16,185,129,0.4);">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">folder_zip</span>Load All
             </button>
         </div>
+
+        <!-- Commit button -->
+        <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:11px;background:linear-gradient(135deg,#10b981,#059669);">
+            <span class="material-icons-round" style="font-size:16px;pointer-events:none;">upload</span>Commit to GitHub
+        </button>
     </div>
 </div>
 
@@ -2449,7 +2461,7 @@
         if (e.touches.length < 2) { initialDistance = null; _zoomFrame = null; }
     }, {passive: true});
 
-    const bottomPanel = document.getElementById('bottom-panel'), restoreBtn = document.getElementById('restore-btn');
+    const bottomPanel = document.getElementById('bottom-panel');
 
     let _inPreview = false;
     let _navMini = false; // false = full rows visible, true = only cursor row
@@ -2702,7 +2714,13 @@
     function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
 
     // --- GITHUB MANAGER ---
-    let ghCurrentRepo = "", ghCurrentFile = "", ghCurrentSha = "";
+    let ghCurrentRepo = localStorage.getItem('gh_last_repo') || "", ghCurrentFile = "", ghCurrentSha = "";
+
+    function _ghUpdateHeaderStatus() {
+        const el = document.getElementById('gh-header-status');
+        if (!el) return;
+        el.textContent = ghCurrentRepo ? ghCurrentRepo.split('/').pop() : 'Connected';
+    }
 
     function openGithubModal() {
         findModal.classList.remove('active'); 
@@ -2725,11 +2743,14 @@
         let token = localStorage.getItem('gh_token');
         let loginSec = document.getElementById('gh-login-section');
         let repoSec = document.getElementById('gh-repo-section');
+        const statusEl = document.getElementById('gh-header-status');
         if(token) {
             loginSec.style.display = 'none'; repoSec.style.display = 'block'; repoSec.className = 'gh-section-anim';
+            if(statusEl) statusEl.textContent = ghCurrentRepo ? ghCurrentRepo.split('/').pop() : 'Connected';
             if(!_ghReposLoaded) { _ghReposLoaded = true; fetchGhRepos(); }
         } else {
             loginSec.style.display = 'block'; repoSec.style.display = 'none';
+            if(statusEl) statusEl.textContent = 'Not connected';
             _ghReposLoaded = false;
         }
     }
@@ -2737,7 +2758,13 @@
     function saveGhToken() { let tk = document.getElementById('gh-token').value.trim(); if(tk) { localStorage.setItem('gh_token', tk); checkGhLogin(); } }
     function ghLogout() { 
         cdConfirm('Logout', 'Disconnect GitHub and remove your token from this device?', 'Logout', 'Cancel', (ok) => {
-            if (ok) { localStorage.removeItem('gh_token'); _ghReposLoaded = false; checkGhLogin(); }
+            if (ok) { 
+                localStorage.removeItem('gh_token'); 
+                localStorage.removeItem('gh_last_repo');
+                ghCurrentRepo = ''; ghCurrentFile = ''; ghCurrentSha = '';
+                _ghReposLoaded = false; 
+                checkGhLogin(); 
+            }
         });
     }
 
@@ -2755,18 +2782,28 @@
     async function fetchGhRepos() {
         try {
             let repos = await ghApi('/user/repos?sort=updated&per_page=100');
-            renderGhCustomSelect('gh-repo-select', repos.map(r => ({ value: r.full_name, label: r.name, icon: 'folder' })), 'Select Repository...', (val) => {
+            const lastRepo = localStorage.getItem('gh_last_repo') || '';
+            renderGhCustomSelect('gh-repo-select', repos.map(r => ({ value: r.full_name, label: r.name, icon: 'folder' })), lastRepo ? (lastRepo.split('/').pop()) : 'Select Repository...', (val) => {
                 document.getElementById('gh-repo-select')._value = val;
                 ghCurrentRepo = val;
+                localStorage.setItem('gh_last_repo', val);
+                _ghUpdateHeaderStatus();
                 _ghTree = []; _ghCurrentPath = ''; _ghSelectedItem = null;
                 fetchGhFiles();
             });
+            // Auto-restore last repo
+            if (lastRepo) {
+                const el = document.getElementById('gh-repo-select');
+                if (el) { el._value = lastRepo; ghCurrentRepo = lastRepo; _ghUpdateHeaderStatus(); fetchGhFiles(); }
+            }
         } catch(e) { cdAlert('GitHub', 'Failed to load repos. Check your token.', 'error'); ghLogout(); }
     }
 
     async function fetchGhFiles() {
-        ghCurrentRepo = document.getElementById('gh-repo-select')._value || '';
+        ghCurrentRepo = document.getElementById('gh-repo-select')._value || ghCurrentRepo || '';
         if(!ghCurrentRepo) return;
+        localStorage.setItem('gh_last_repo', ghCurrentRepo);
+        _ghUpdateHeaderStatus();
         const tree = document.getElementById('gh-file-tree');
         const breadcrumb = document.getElementById('gh-breadcrumb');
         const actionBar = document.getElementById('gh-action-bar');
@@ -2996,35 +3033,39 @@
 
     // COMMIT WARNING AND BACKUP
     async function commitGhFile() {
-        if(!ghCurrentFile) return cdAlert('GitHub', 'Please open a file first before committing.', 'warn');
-        cdConfirm('Backup First?', 'Download a backup before committing?', 'Download Backup', 'Skip', async (doBackup) => {
-            if(doBackup) await saveFile();
-            cdPrompt('Commit Message', 'Enter a commit message:', 'Update ' + ghCurrentFile, async (msg) => {
-                if(msg === null) return;
-                try {
-                    document.getElementById('gh-commit-btn').disabled = true;
-                    
-                    let latestSha; // Fetch absolute latest SHA right before committing
-                    try { let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`); latestSha = fileData.sha; } 
-                    catch(err) { latestSha = ghCurrentSha; }
-
-                    let contentB64 = encodeB64(editor.getValue());
-                    let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: latestSha });
-                    
-                    ghCurrentSha = res.content.sha;
-                    _ghTree = []; // Clear tree cache
-                    if(document.getElementById('gh-repo-select').value) fetchGhFiles(); // Realtime visual refresh
-                    
-                    cdAlert('Success', 'Committed to GitHub!', 'success');
-                    document.getElementById('gh-commit-btn').disabled = false; closeGithubModal();
-                } catch(e) { 
-                    let errStr = e.message || 'Commit failed.';
-                    try { let j = JSON.parse(errStr); if(j.message) errStr = j.message; } catch(ex){} // Clean JSON error UI
-                    cdAlert('Commit Failed', errStr, 'error'); 
-                    document.getElementById('gh-commit-btn').disabled = false; 
-                }
-            });
-        });
+        if(!ghCurrentFile) return cdAlert('Commit', 'No file selected. Open a file from the tree first.', 'warn');
+        const fileName = ghCurrentFile.split('/').pop();
+        const repoName = ghCurrentRepo.split('/').pop();
+        cdConfirm(
+            '⚠️ Confirm Commit',
+            `You are about to commit:\n\n📄 File: ${fileName}\n📦 Repo: ${repoName}\n\nThis will overwrite the file on GitHub. Continue?`,
+            'Commit', 'Cancel',
+            (ok) => {
+                if (!ok) return;
+                cdPrompt('Commit Message', `Committing "${fileName}" to ${repoName}`, `Update ${fileName}`, async (msg) => {
+                    if (msg === null) return;
+                    try {
+                        document.getElementById('gh-commit-btn').disabled = true;
+                        let latestSha;
+                        try { let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`); latestSha = fileData.sha; }
+                        catch(err) { latestSha = ghCurrentSha; }
+                        let contentB64 = encodeB64(editor.getValue());
+                        let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', { message: msg, content: contentB64, sha: latestSha });
+                        ghCurrentSha = res.content.sha;
+                        _ghTree = [];
+                        if(document.getElementById('gh-repo-select')._value) fetchGhFiles();
+                        cdAlert('Success', `✓ "${fileName}" committed to ${repoName}`, 'success');
+                        document.getElementById('gh-commit-btn').disabled = false;
+                        closeGithubModal();
+                    } catch(e) {
+                        let errStr = e.message || 'Commit failed.';
+                        try { let j = JSON.parse(errStr); if(j.message) errStr = j.message; } catch(ex){}
+                        cdAlert('Commit Failed', errStr, 'error');
+                        document.getElementById('gh-commit-btn').disabled = false;
+                    }
+                });
+            }
+        );
     }
 
     // LOAD ENTIRE REPO
@@ -4201,27 +4242,19 @@ Rules:
     async function saveFileToRepo() {
         const token = localStorage.getItem('gh_token');
         if (!token) { cdAlert('Commit', 'Please connect GitHub first via GitSync.', 'warn'); return; }
-        if (!ghCurrentRepo || !ghCurrentFile) { cdAlert('Commit', 'Please open a file from GitSync first.', 'warn'); return; }
-        cdPrompt('Commit Message', `Committing: ${ghCurrentFile}`, 'Update via CodX', async (msg) => {
-            if (msg === null) return;
-            try {
-                let latestSha; // Fetch absolute latest SHA right before committing to prevent 409 errors
-                try { let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`); latestSha = fileData.sha; } 
-                catch(err) { latestSha = ghCurrentSha; }
-                
-                const contentB64 = encodeB64(editor.getValue());
-                let res = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}`, 'PUT', {
-                    message: msg, content: contentB64, sha: latestSha
-                });
-                ghCurrentSha = res.content.sha;
-                _ghTree = []; // Clear tree cache
-                cdAlert('Success', `Committed to ${ghCurrentRepo}/${ghCurrentFile}`, 'success');
-            } catch (e) {
-                let errStr = e.message || 'Check connection and try again.';
-                try { let j = JSON.parse(errStr); if(j.message) errStr = j.message; } catch(ex){} // Clean JSON error UI
-                cdAlert('Commit Failed', errStr, 'error');
-            }
-        });
+        if (!ghCurrentRepo) {
+            // No repo selected — open GitSync so user can pick one
+            openGithubModal();
+            cdAlert('GitSync', 'Select a repository and open a file, then click Commit.', 'info');
+            return;
+        }
+        if (!ghCurrentFile) {
+            openGithubModal();
+            cdAlert('GitSync', 'Open a file from the tree first, then commit.', 'info');
+            return;
+        }
+        // Has everything — go straight to commit with warning
+        commitGhFile();
     }
 
     // ===== NEW PROJECT MODAL =====
