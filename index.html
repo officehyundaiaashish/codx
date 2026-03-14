@@ -191,19 +191,7 @@
         .toolbar-btn:active { background: var(--accent-dim); color: var(--accent); opacity: 1; transform: scale(0.94); }
 
         
-        /* ──────────────────────── Restore Button ──────────────────────── */
-.restore-btn { 
-            position: absolute; bottom: 12px; right: 16px; 
-            background: var(--accent); color: white; 
-            width: 38px; height: 38px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            box-shadow: none; 
-            border: none; z-index: 30; 
-            opacity: 1; pointer-events: auto; transform: scale(1); 
-            transition: opacity 0.15s, transform 0.15s; 
-        }
-        .restore-btn.hidden-btn { opacity: 0 !important; pointer-events: none !important; transform: scale(0.7) !important; }
-        .restore-btn .material-icons-round { font-size: 20px; pointer-events: none; }
+        /* restore-btn removed */
 
         
         /* ──────────────────────── Shared Modal ──────────────────────── */
@@ -1077,18 +1065,7 @@
         .toolbar-btn .material-icons-round { font-size: 19px; pointer-events: none; }
         .toolbar-btn:active { background: var(--accent-dim); color: var(--accent); opacity: 1; transform: scale(0.94); }
 
-        .restore-btn { 
-            position: absolute; bottom: 70px; right: 16px; 
-            background: var(--accent); color: white; 
-            width: 42px; height: 42px; border-radius: 50%; 
-            display: flex; align-items: center; justify-content: center; 
-            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); 
-            border: none; z-index: 50; 
-            opacity: 1; pointer-events: auto; transform: scale(1); 
-            transition: opacity 0.25s cubic-bezier(0.34,1.56,0.64,1), transform 0.25s cubic-bezier(0.34,1.56,0.64,1); 
-        }
-        .restore-btn.hidden-btn { opacity: 0 !important; pointer-events: none !important; transform: scale(0.7) !important; }
-        .restore-btn .material-icons-round { font-size: 24px; pointer-events: none; }
+        /* restore-btn removed */
 
         /* Shared Modal CSS */
         .modal { 
@@ -1732,10 +1709,6 @@
 
             <!-- AGENT BAR — legacy compat, hidden -->
 
-    <button class="restore-btn no-select hidden-btn" id="restore-btn" onclick="toggleNavSize()">
-        <span class="material-icons-round">keyboard_arrow_up</span>
-    </button>
-
     <div class="bottom-wrapper no-select" id="bottom-panel">
         <div class="bottom-area">
             <!-- AGENT BAR — compact strip, sits at top of nav panel -->
@@ -1758,9 +1731,9 @@
                 <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
             </div>
 
-            <div class="drag-handle-area" style="justify-content:center; padding-top:8px; padding-bottom:12px; position:relative; z-index:50;">
-                <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:var(--editor-bg);border:1px solid var(--glass-border);border-radius:12px;cursor:pointer;color:var(--text-color);display:flex;align-items:center;justify-content:center;padding:4px 36px;transition:transform 0.2s, background 0.2s;">
-                    <span class="material-icons-round" id="nav-toggle-icon" style="font-size:24px;pointer-events:none;">expand_more</span>
+            <div class="drag-handle-area" style="justify-content:center; padding-top:8px; padding-bottom:10px; position:relative; z-index:50;">
+                <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:var(--accent);border:none;border-radius:50%;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;box-shadow:0 2px 10px rgba(16,185,129,0.35);transition:transform 0.2s, box-shadow 0.2s;">
+                    <span class="material-icons-round" id="nav-toggle-icon" style="font-size:22px;pointer-events:none;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">expand_more</span>
                 </button>
             </div>
 
@@ -2448,12 +2421,9 @@
         _navMini = !_navMini;
         bottomPanel.classList.toggle('nav-mini', _navMini);
         const icon = document.getElementById('nav-toggle-icon');
-        if (icon) icon.textContent = _navMini ? 'expand_less' : 'expand_more';
-        
-        const rBtn = document.getElementById('restore-btn');
-        if (rBtn) {
-            if (_navMini) rBtn.classList.remove('hidden-btn');
-            else rBtn.classList.add('hidden-btn');
+        if (icon) {
+            icon.textContent = 'expand_more';
+            icon.style.transform = _navMini ? 'rotate(180deg)' : 'rotate(0deg)';
         }
         setTimeout(() => editor.resize(), 300);
     }
