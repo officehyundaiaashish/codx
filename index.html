@@ -1679,7 +1679,7 @@
     <div class="bottom-wrapper no-select" id="bottom-outer">
         <div class="bottom-area">
                 <!-- Inline Split Chat Panel -->
-        <div id="inline-chat-panel" style="display:none;flex-direction:column;background:var(--glass-bg);border-top:2px solid var(--accent);height:45vh;flex-shrink:0;">
+        <div id="inline-chat-panel">
 
             <!-- Header: avatar + name + model selector + settings + close -->
             <div id="inline-chat-header">
@@ -5309,10 +5309,9 @@ No markdown, no backticks, no explanation outside the array.`;
         }
     }
 
-    // ── Override openAgentBar to open chat panel instead ──
-    const _origOpenAgentBar = openAgentBar;
+    // ── Override openAgentBar to open inline chat instead ──
     openAgentBar = function() {
-        openChatPanel();
+        openInlineChat();
     };
 
     // ── Keep openAgentModal working (for settings) ──
@@ -5622,10 +5621,6 @@ No markdown, no backticks.`;
             sendBtn.disabled = false;
         }
     }
-
-    // ── Override openAgentBar — now opens inline chat ──
-    openAgentBar = function() { openInlineChat(); };
-
 
     // ── Inline chat: populate model dropdown ──
     function _inlinePopulateModels() {
