@@ -2857,6 +2857,7 @@
             if(inner) { inner.style.transition = t; inner.style.transform = 'translateY(100%)'; }
             document.getElementById('find-modal').classList.remove('active');
             closeGithubModal();
+            if (typeof closeInlineChat === 'function' && _inlineChatOpen) closeInlineChat();
             _refreshPreview();
         } else {
             _inPreview = false;
@@ -5642,9 +5643,12 @@ No markdown, no backticks, no explanation outside the array.`;
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        // Open chat panel — nav stays visible
+        // Open chat panel and hide navigation panel
         chatPanel.classList.add('chat-open');
         if (aiBtn) aiBtn.classList.add('chat-active');
+        
+        const inner = document.getElementById('bottom-panel');
+        if(inner) { inner.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)'; inner.style.transform = 'translateY(100%)'; }
 
         // Sync agent name
         const ag = _activeAgent();
@@ -5678,6 +5682,9 @@ No markdown, no backticks, no explanation outside the array.`;
         const aiBtn     = document.getElementById('ai-agent-btn');
         chatPanel.classList.remove('chat-open');
         if (aiBtn) aiBtn.classList.remove('chat-active');
+        
+        const inner = document.getElementById('bottom-panel');
+        if(inner && !_navHidden && !_inPreview) { inner.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)'; inner.style.transform = ''; }
     }
 
     // ── Auto resize textarea ──
