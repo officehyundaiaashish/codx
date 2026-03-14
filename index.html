@@ -5451,18 +5451,64 @@ No markdown, no backticks, no explanation outside the array.`;
     }
 
     // ── Typing indicator ──
+    // ── Progressive status messages — cycles while AI is thinking ──
+    const _AGENT_STATUS_STEPS = [
+        { icon: '🔍', text: 'Reading your code...' },
+        { icon: '📖', text: 'Understanding context...' },
+        { icon: '🧠', text: 'Analysing the issue...' },
+        { icon: '⚙️', text: 'Planning changes...' },
+        { icon: '✍️', text: 'Preparing edits...' },
+        { icon: '🔎', text: 'Verifying accuracy...' },
+    ];
+    let _statusTimer = null;
+    let _statusStep = 0;
+
     function _inlineShowTyping() {
         const box = document.getElementById('inline-chat-messages');
         const empty = document.getElementById('inline-chat-empty');
         if (empty) empty.remove();
+
+        // Remove existing if any
+        const existing = document.getElementById('inline-typing');
+        if (existing) existing.remove();
+
         const wrap = document.createElement('div');
         wrap.className = 'chat-msg agent';
         wrap.id = 'inline-typing';
-        wrap.innerHTML = '<div class="chat-typing-bubble"><span></span><span></span><span></span></div>';
+        wrap.innerHTML = `<div class="chat-bubble" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
+            <span id="inline-status-icon" style="font-size:14px;transition:all 0.3s;">${_AGENT_STATUS_STEPS[0].icon}</span>
+            <span id="inline-status-text" style="font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;color:var(--text-color);opacity:0.75;transition:opacity 0.2s;">${_AGENT_STATUS_STEPS[0].text}</span>
+            <div style="display:flex;gap:3px;margin-left:4px;">
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);animation:agentBounce 0.8s infinite;display:inline-block;"></span>
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);animation:agentBounce 0.8s 0.2s infinite;display:inline-block;"></span>
+                <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);animation:agentBounce 0.8s 0.4s infinite;display:inline-block;"></span>
+            </div>
+        </div>`;
         box.appendChild(wrap);
         _inlineChatScroll();
+
+        // Cycle through status messages
+        _statusStep = 0;
+        clearInterval(_statusTimer);
+        _statusTimer = setInterval(() => {
+            _statusStep = (_statusStep + 1) % _AGENT_STATUS_STEPS.length;
+            const iconEl = document.getElementById('inline-status-icon');
+            const textEl = document.getElementById('inline-status-text');
+            if (!iconEl || !textEl) { clearInterval(_statusTimer); return; }
+            // Fade out → update → fade in
+            textEl.style.opacity = '0';
+            setTimeout(() => {
+                if (!document.getElementById('inline-status-icon')) return;
+                iconEl.textContent = _AGENT_STATUS_STEPS[_statusStep].icon;
+                textEl.textContent = _AGENT_STATUS_STEPS[_statusStep].text;
+                textEl.style.opacity = '0.75';
+            }, 200);
+        }, 2200);
     }
+
     function _inlineHideTyping() {
+        clearInterval(_statusTimer);
+        _statusTimer = null;
         const t = document.getElementById('inline-typing');
         if (t) t.remove();
     }
