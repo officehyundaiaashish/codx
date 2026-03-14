@@ -1962,6 +1962,7 @@
                     <button class="toolbar-btn" onclick="copyClipboard()"><span class="material-icons-round">content_copy</span>Copy</button>
                     <button class="toolbar-btn" onclick="cutClipboard()"><span class="material-icons-round">content_cut</span>Cut</button>
                     <button class="toolbar-btn" onclick="pasteClipboard()"><span class="material-icons-round">content_paste</span>Paste</button>
+                    <button class="toolbar-btn" onclick="deleteSelection()"><span class="material-icons-round">delete</span>Delete</button>
                     <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">find_replace</span>Find</button>
                     <button class="toolbar-btn" id="ai-agent-btn" onclick="toggleInlineChat()"><span class="material-icons-round">smart_toy</span>AI Agent</button>
                 </div>
@@ -2667,6 +2668,7 @@
     async function pasteClipboard() { try { const text = await navigator.clipboard.readText(); if(text) { editor.insert(text); showToast('Pasted', 'content_paste'); } } catch (err) { /* fallback silent */ } }
     async function copyClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); showToast('Copied', 'content_copy'); } else { cdAlert('Copy', 'Double-tap text to select it first.', 'info'); } } catch (err) { cdAlert('Copy', 'Copy failed.', 'error'); } }
     async function cutClipboard() { try { const text = editor.getSelectedText(); if(text) { await navigator.clipboard.writeText(text); editor.insert(''); showToast('Cut', 'content_cut'); } else { cdAlert('Cut', 'Double-tap text to select it first.', 'info'); } } catch (err) { cdAlert('Cut', 'Cut failed.', 'error'); } }
+    function deleteSelection() { const text = editor.getSelectedText(); if(text) { editor.insert(''); showToast('Deleted', 'delete'); } else { cdAlert('Delete', 'Double-tap text to select it first.', 'info'); } }
 
     function showToast(msg, iconName) {
         let toast = document.getElementById('action-toast');
@@ -4015,6 +4017,11 @@
                 if (!res.ok) throw new Error(d.error?.message || `HTTP ${res.status}`);
                 text = d.choices?.[0]?.message?.content;
                 if (!text) throw new Error('Model returned empty response. Try again.');
+                // Store meta for badge display in inline chat
+                window._lastCallMeta = {
+                    model: d.model || cfg.model || '',
+                    reasoning_tokens: d.usage?.completion_tokens_details?.reasoning_tokens || 0
+                };
                 return text.trim();
             }
         } catch (e) {
@@ -5697,6 +5704,17 @@ No markdown, no backticks, no explanation outside the array.`;
         const ts = document.createElement('div');
         ts.className = 'chat-time';
         ts.textContent = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+
+        // Model badge — only for agent messages when meta is available
+        if (role === 'agent' && window._lastCallMeta?.model) {
+            const meta = window._lastCallMeta;
+            const shortModel = meta.model.split('/').pop(); // e.g. "qwen3-235b-a22b"
+            const isThinking = meta.reasoning_tokens > 0;
+            const badge = document.createElement('div');
+            badge.style.cssText = 'font-size:9px;font-weight:600;color:var(--accent);opacity:0.75;font-family:Poppins,sans-serif;display:flex;align-items:center;gap:3px;';
+            badge.innerHTML = (isThinking ? '🧠 ' : '⚡ ') + shortModel + (isThinking ? ' · ' + meta.reasoning_tokens + ' think tokens' : '');
+            footer.appendChild(badge);
+        }
 
         const copyBtn = document.createElement('button');
         copyBtn.className = 'chat-copy-btn';
