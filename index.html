@@ -1912,25 +1912,6 @@
             <div class="gh-tree-loading">Loading files...</div>
         </div>
 
-        <!-- File action buttons -->
-        <div id="gh-action-bar" style="display:none;gap:5px;margin-top:10px;flex-wrap:wrap;">
-            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">edit</span>Open
-            </button>
-            <button class="modal-btn secondary" id="gh-dl-btn" onclick="downloadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">download</span>Download
-            </button>
-            <button class="modal-btn secondary" id="gh-rename-btn" onclick="renameGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">drive_file_rename_outline</span>Rename
-            </button>
-            <button class="modal-btn secondary" id="gh-delete-btn" onclick="deleteGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:4px;flex:1;min-width:80px;font-size:11px;padding:8px 6px;background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.25);color:#ef4444;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">delete</span>Delete
-            </button>
-        </div>
-
-        <!-- Divider -->
-        <div style="height:1px;background:var(--glass-border);margin:10px 0;"></div>
-
         <!-- Create + Load row -->
         <div style="display:flex;gap:5px;margin-bottom:10px;" id="gh-create-bar">
             <button class="modal-btn secondary" onclick="createGhFile()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;" id="gh-new-file-btn">
@@ -1939,7 +1920,10 @@
             <button class="modal-btn secondary" onclick="createGhFolder()" style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;">
                 <span class="material-icons-round" style="font-size:14px;pointer-events:none;">create_new_folder</span>New Folder
             </button>
-            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;border-color:rgba(16,185,129,0.4);">
+            <button class="modal-btn secondary" id="gh-load-btn" onclick="loadGhFile()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;border-color:rgba(16,185,129,0.4);">
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">file_open</span>Load Selected
+            </button>
+            <button class="modal-btn secondary" id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;font-size:11px;padding:8px 6px;">
                 <span class="material-icons-round" style="font-size:14px;pointer-events:none;">folder_zip</span>Load All
             </button>
         </div>
@@ -2916,12 +2900,10 @@
         _ghUpdateHeaderStatus();
         const tree = document.getElementById('gh-file-tree');
         const breadcrumb = document.getElementById('gh-breadcrumb');
-        const actionBar = document.getElementById('gh-action-bar');
         const createBar = document.getElementById('gh-create-bar');
         tree.style.display = 'block';
         tree.innerHTML = '<div class="gh-tree-loading">Loading repository...</div>';
         breadcrumb.style.display = 'flex';
-        actionBar.style.display = 'flex';
         createBar.style.display = 'flex';
         document.getElementById('gh-load-repo-btn').disabled = false;
         _ghSelectedItem = null;
@@ -3016,11 +2998,9 @@
         _ghSelectedItem = { path, name, type, sha };
         ghCurrentFile = path;
         if (type === 'blob') localStorage.setItem('gh_last_file', path);
-        // Enable/disable action buttons
-        document.getElementById('gh-load-btn').disabled = type !== 'blob';
-        document.getElementById('gh-dl-btn').disabled = type !== 'blob';
-        document.getElementById('gh-rename-btn').disabled = false;
-        document.getElementById('gh-delete-btn').disabled = false;
+        // Enable Load Selected only for files not folders
+        const loadBtn = document.getElementById('gh-load-btn');
+        if(loadBtn) loadBtn.disabled = type !== 'blob';
         // Enable commit button and notify user when a file is selected
         if (type === 'blob') {
             const commitBtn = document.getElementById('gh-commit-btn');
@@ -3030,9 +3010,8 @@
     }
 
     function _ghDisableFileActions() {
-        ['gh-load-btn','gh-dl-btn','gh-rename-btn','gh-delete-btn'].forEach(id => {
-            const el = document.getElementById(id); if(el) el.disabled = true;
-        });
+        const el = document.getElementById('gh-load-btn');
+        if(el) el.disabled = true;
     }
 
     function enableLoadBtn() { /* compat shim */ }
