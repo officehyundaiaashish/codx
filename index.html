@@ -5883,7 +5883,16 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         const filename = targetTab ? targetTab.name : 'untitled';
 
         // Add line numbers so AI can reference precise locations
-        const numberedCode = code.split('\n').map((l, i) => `${i+1}| ${l}`).join('\n');
+        // Limit to 10000 chars for free models (Groq context window)
+        const MAX_CODE_CHARS = 10000;
+        let numberedCode = code.split('\n').map((l, i) => `${i+1}| ${l}`).join('\n');
+        if (numberedCode.length > MAX_CODE_CHARS) {
+            const lines = numberedCode.split('\n');
+            const half = Math.floor(MAX_CODE_CHARS / 2 / 50); // approx lines
+            const head = lines.slice(0, half).join('\n');
+            const tail = lines.slice(-half).join('\n');
+            numberedCode = head + `\n\n... [middle truncated — file too large for free model] ...\n\n` + tail;
+        }
 
         // Build/refresh index for this file
         if (!_codeIndex || _codeIndexFile !== filename) _buildCodeIndex();
