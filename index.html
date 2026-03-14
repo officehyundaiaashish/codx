@@ -1709,6 +1709,9 @@
                     <div id="inline-file-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;min-width:160px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
                     </div>
                 </div>
+                <button onclick="_inlineClearChatUI()" title="Clear conversation" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.5;flex-shrink:0;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.5">
+                    <span class="material-icons-round" style="font-size:15px;pointer-events:none;">delete_sweep</span>
+                </button>
                 <button id="inline-chat-close" onclick="closeInlineChat()" style="background:rgba(239,68,68,0.1);border:none;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ef4444;flex-shrink:0;">
                     <span class="material-icons-round" style="font-size:16px;pointer-events:none;">close</span>
                 </button>
@@ -2437,8 +2440,68 @@
 
     editor.session.on("change", function() {
         if(_changeDebounce) return;
-        _changeDebounce = setTimeout(() => { checkScrollable(); saveSession(); _changeDebounce = null; }, 250);
+        _changeDebounce = setTimeout(() => { checkScrollable(); saveSession(); _buildCodeIndex(); _changeDebounce = null; }, 250);
     });
+
+    // ── CODE INDEX — lightweight client-side map of the file ──
+    // Builds silently on every edit. Used to give AI a map before sending full code.
+    let _codeIndex = null;
+    let _codeIndexFile = '';
+
+    function _buildCodeIndex() {
+        try {
+            const code = editor.getValue();
+            const filename = (typeof currentFileName !== 'undefined' ? currentFileName : '') || '';
+            const lines = code.split('\n');
+            const index = {
+                file: filename,
+                lines: lines.length,
+                size: (code.length / 1024).toFixed(1) + 'KB',
+                functions: [],
+                ids: [],
+                cssClasses: [],
+                sections: []
+            };
+
+            lines.forEach((line, i) => {
+                const n = i + 1;
+                const t = line.trim();
+
+                // JS/CSS functions
+                const fnMatch = t.match(/^(?:function\s+(\w+)|(?:const|let|var)\s+(\w+)\s*=\s*(?:async\s+)?(?:function|\([^)]*\)\s*=>))/);
+                if (fnMatch) index.functions.push({ name: fnMatch[1] || fnMatch[2], line: n });
+
+                // HTML id attributes
+                const idMatch = line.match(/id=["']([^"']+)["']/g);
+                if (idMatch) idMatch.forEach(m => {
+                    const id = m.match(/id=["']([^"']+)["']/)?.[1];
+                    if (id) index.ids.push({ id, line: n });
+                });
+
+                // CSS class definitions
+                const cssMatch = t.match(/^\.[\w-]+(?:\s*[,{:])/);
+                if (cssMatch) index.cssClasses.push({ name: cssMatch[0].replace(/[\s{:,]/g,''), line: n });
+
+                // HTML section comments
+                const commentMatch = t.match(/<!--+\s*(.{3,40}?)\s*-+-->/);
+                if (commentMatch) index.sections.push({ label: commentMatch[1], line: n });
+            });
+
+            _codeIndex = index;
+            _codeIndexFile = filename;
+        } catch(e) { _codeIndex = null; }
+    }
+
+    function _getCodeIndexSummary() {
+        if (!_codeIndex) return '';
+        const idx = _codeIndex;
+        let summary = `\n\n── FILE MAP (${idx.file}, ${idx.lines} lines, ${idx.size}) ──`;
+        if (idx.sections.length)  summary += `\nSections: ${idx.sections.slice(0,8).map(s=>`"${s.label}" (L${s.line})`).join(' · ')}`;
+        if (idx.functions.length) summary += `\nFunctions: ${idx.functions.slice(0,12).map(f=>`${f.name}() L${f.line}`).join(' · ')}`;
+        if (idx.ids.length)       summary += `\nKey IDs: ${idx.ids.slice(0,12).map(d=>`#${d.id} L${d.line}`).join(' · ')}`;
+        if (idx.cssClasses.length)summary += `\nCSS: ${idx.cssClasses.slice(0,10).map(c=>`${c.name} L${c.line}`).join(' · ')}`;
+        return summary;
+    }
 
     // ── STEP 9: Initial content ──
     // Example code removed. Content is loaded later by the session manager.
@@ -2684,6 +2747,7 @@
             _setEditorValueFast(tab.content);
             _setEditorMode(tab.name, tab.content);
             currentFileName = tab.name;
+            setTimeout(_buildCodeIndex, 100); // rebuild index for new tab
         }
         renderFileTabs();
         // If currently in preview, auto-refresh with new tab's content
@@ -3710,7 +3774,7 @@
         _removeAgentNavTab();
     }
 
-    async function _callAgentAPI(systemPrompt, userMsg) {
+    async function _callAgentAPI(systemPrompt, userMsg, conversationHistory = []) {
         const cfg = _activeAgent();
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 600000);
@@ -3718,9 +3782,7 @@
         // ── Helper: extract best JSON array from raw text ──
         function _extractJSON(raw) {
             if (!raw) return null;
-            // Strip markdown code fences
             raw = raw.replace(/```json\s*/gi, '').replace(/```\s*/g, '');
-            // Find the outermost [ ... ] with bracket counting
             let start = raw.indexOf('[');
             if (start === -1) return null;
             let depth = 0, end = -1;
@@ -3732,6 +3794,12 @@
             return raw.slice(start, end + 1);
         }
 
+        // Build messages array: history + current user message
+        const messages = [
+            ...conversationHistory,
+            { role: 'user', content: userMsg }
+        ];
+
         try {
             let res, d, text;
 
@@ -3739,23 +3807,28 @@
                 res = await fetch(cfg.url, {
                     method: 'POST', signal: controller.signal,
                     headers: { 'Content-Type': 'application/json', 'x-api-key': cfg.key, 'anthropic-version': '2023-06-01' },
-                    body: JSON.stringify({ model: cfg.model, max_tokens: 6000, system: systemPrompt, messages: [{ role: 'user', content: userMsg }] })
+                    body: JSON.stringify({ model: cfg.model, max_tokens: 6000, system: systemPrompt, messages })
                 });
                 d = await res.json();
                 if (!res.ok) throw new Error(d.error?.message || `HTTP ${res.status}`);
-                // Extract only text blocks (skip thinking blocks)
                 const textBlock = (d.content || []).find(b => b.type === 'text');
                 if (!textBlock?.text) throw new Error('Anthropic returned no text. Try again.');
                 return textBlock.text.trim();
 
             } else if (cfg.provider === 'gemini') {
+                // Gemini uses contents[] format
+                const contents = messages.map(m => ({
+                    role: m.role === 'assistant' ? 'model' : 'user',
+                    parts: [{ text: m.role === 'system' ? systemPrompt + '\n\n' + m.content : m.content }]
+                }));
+                // Prepend system prompt to first user message if no prior history
+                if (contents.length > 0 && contents[0].role === 'user') {
+                    contents[0].parts[0].text = systemPrompt + '\n\n' + contents[0].parts[0].text;
+                }
                 res = await fetch(cfg.url + '?key=' + cfg.key, {
                     method: 'POST', signal: controller.signal,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: systemPrompt + '\n\n' + userMsg }] }],
-                        generationConfig: { maxOutputTokens: 6000, temperature: 0.2 }
-                    })
+                    body: JSON.stringify({ contents, generationConfig: { maxOutputTokens: 6000, temperature: 0.2 } })
                 });
                 d = await res.json();
                 if (!res.ok) throw new Error(d.error?.message || d.error?.status || `HTTP ${res.status}`);
@@ -3771,7 +3844,7 @@
                 res = await fetch(cfg.url, {
                     method: 'POST', signal: controller.signal,
                     headers,
-                    body: JSON.stringify({ model: cfg.model, max_tokens: 6000, messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMsg }] })
+                    body: JSON.stringify({ model: cfg.model, max_tokens: 6000, messages: [{ role: 'system', content: systemPrompt }, ...messages] })
                 });
                 d = await res.json();
                 if (!res.ok) throw new Error(d.error?.message || `HTTP ${res.status}`);
@@ -5340,6 +5413,44 @@ No markdown, no backticks, no explanation outside the array.`;
 
     let _inlineChatOpen = false;
 
+    // ── Conversation history for inline chat ──
+    // Stores {role, content} pairs — sent with every API call
+    let _inlineChatHistory = [];
+    const _HISTORY_MAX_MESSAGES = 10;   // max pairs to keep
+    const _HISTORY_MAX_CHARS    = 8000; // total char budget for history
+
+    // Smart trim: keep recent messages, strip large code blocks from older ones
+    function _buildHistoryForAPI(currentFileCode) {
+        if (!_inlineChatHistory.length) return [];
+
+        // Take last N messages
+        let history = _inlineChatHistory.slice(-_HISTORY_MAX_MESSAGES);
+
+        // Strip full file code blocks from older messages (keep last 2 only)
+        // This prevents sending 5000-line file 5 times
+        const codeBlockRx = /```[\s\S]{500,}```/g;
+        history = history.map((msg, i) => {
+            if (i < history.length - 2 && msg.role === 'user') {
+                // Replace large code blocks with a summary
+                const trimmed = msg.content.replace(codeBlockRx, '[code file — see current version above]');
+                return { ...msg, content: trimmed };
+            }
+            return msg;
+        });
+
+        // Enforce char budget — drop oldest pairs if over limit
+        let totalChars = history.reduce((s, m) => s + m.content.length, 0);
+        while (totalChars > _HISTORY_MAX_CHARS && history.length > 2) {
+            const removed = history.shift();
+            totalChars -= removed.content.length;
+        }
+
+        return history;
+    }
+
+    // Clear history when chat is closed
+    function _inlineClearHistory() { _inlineChatHistory = []; }
+
     // ── Open / close toggle ──
     function toggleInlineChat() {
         if (_inlineChatOpen) {
@@ -5373,12 +5484,23 @@ No markdown, no backticks, no explanation outside the array.`;
         }, 150);
     }
 
+    // ── Clear conversation UI + memory ──
+    function _inlineClearChatUI() {
+        _inlineClearHistory();
+        const box = document.getElementById('inline-chat-messages');
+        if (!box) return;
+        box.innerHTML = `<div id="inline-chat-empty">
+            <span class="material-icons-round">chat</span>
+            <p>Ask me about your code.<br>I can explain, fix &amp; apply changes.</p>
+        </div>`;
+        showToast('Conversation cleared', 'delete_sweep');
+    }
+
     function closeInlineChat() {
         _inlineChatOpen = false;
-
+        _inlineClearHistory(); // reset conversation on close
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
-
         chatPanel.classList.remove('chat-open');
         if (aiBtn) aiBtn.classList.remove('chat-active');
     }
@@ -5636,17 +5758,28 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         // Add line numbers so AI can reference precise locations
         const numberedCode = code.split('\n').map((l, i) => `${i+1}| ${l}`).join('\n');
 
+        // Build/refresh index for this file
+        if (!_codeIndex || _codeIndexFile !== filename) _buildCodeIndex();
+        const indexSummary = _getCodeIndexSummary();
+
         // Attachment context
         const attachCtx = _inlineAttachment
             ? `\n\nAttached file (${_inlineAttachment.name}):\n${_inlineAttachment.content.slice(0, 2000)}`
             : '';
         _inlineClearAttach();
 
-        const userMsg = `File: ${filename}\n\`\`\`\n${numberedCode}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
+        const userMsg = `File: ${filename}${indexSummary}\n\`\`\`\n${numberedCode}\n\`\`\`${attachCtx}\n\nRequest: ${userRequest}`;
+
+        // Build history for this call (smart trimmed)
+        const historyForAPI = _buildHistoryForAPI(code);
 
         try {
-            const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg);
+            const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
             _inlineHideTyping();
+
+            // Save this exchange to history
+            _inlineChatHistory.push({ role: 'user', content: userMsg });
+            _inlineChatHistory.push({ role: 'assistant', content: raw });
 
             // Try parse JSON
             let parsed = null;
