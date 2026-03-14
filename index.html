@@ -1690,7 +1690,16 @@
                     <div id="inline-chat-name" style="font-size:11px;font-weight:700;color:var(--text-color);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">AI Agent</div>
                     <select id="inline-model-select" onchange="_inlineSwitchModel(this.value)" style="font-size:9px;font-weight:600;color:var(--accent);background:none;border:none;outline:none;cursor:pointer;max-width:120px;font-family:Poppins,sans-serif;-webkit-appearance:none;appearance:none;padding:0;"></select>
                 </div>
-                <select id="inline-tab-select" onchange="agentSelectFile(this.value)" title="Select file" style="font-size:9px;font-weight:600;color:var(--text-color);background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);border-radius:6px;padding:3px 5px;max-width:80px;font-family:Poppins,sans-serif;cursor:pointer;outline:none;display:none;"></select>
+                <!-- Custom file selector -->
+                <div id="inline-file-selector" style="position:relative;flex-shrink:0;">
+                    <button id="inline-file-trigger" onclick="_inlineToggleFileDropdown()" style="background:rgba(128,128,128,0.1);border:1px solid var(--glass-border);border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-color);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;transition:all 0.15s;">
+                        <span class="material-icons-round" style="font-size:13px;pointer-events:none;color:var(--accent);">description</span>
+                        <span id="inline-file-label" style="max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">Current File</span>
+                        <span class="material-icons-round" id="inline-file-chevron" style="font-size:12px;pointer-events:none;transition:transform 0.2s;">expand_more</span>
+                    </button>
+                    <div id="inline-file-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);right:0;min-width:160px;background:var(--glass-bg);border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.3);">
+                    </div>
+                </div>
                 <button onclick="openAgentModal()" title="Agent settings" style="background:none;border:none;cursor:pointer;color:var(--text-color);opacity:0.45;display:flex;align-items:center;padding:3px;">
                     <span class="material-icons-round" style="font-size:17px;pointer-events:none;">settings</span>
                 </button>
@@ -2076,7 +2085,7 @@
                 <span style="display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-icons-round" style="font-size:14px;">logout</span>Remove All</span>
             </button>
             <button class="modal-btn" onclick="closeAgentModal();openAgentBar();" style="flex:1;font-size:11px;padding:8px;display:flex;align-items:center;justify-content:center;gap:4px;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">psychology</span> Open Bar
+                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">chat</span> Open Chat
             </button>
         </div>
         <div style="height:1px;background:var(--glass-border);margin:12px 0;"></div>
@@ -5342,8 +5351,7 @@ No markdown, no backticks, no explanation outside the array.`;
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        // Hide navigation — chat takes its place
-        _hideNavForModal();
+        // Open chat panel — nav stays visible
         chatPanel.classList.add('chat-open');
         if (aiBtn) aiBtn.classList.add('chat-active');
 
@@ -5366,9 +5374,7 @@ No markdown, no backticks, no explanation outside the array.`;
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        // Slide chat down, restore navigation after animation
         chatPanel.classList.remove('chat-open');
-        setTimeout(() => _restoreNavAfterModal(), 360);
         if (aiBtn) aiBtn.classList.remove('chat-active');
     }
 
@@ -5478,9 +5484,8 @@ No markdown, no backticks, no explanation outside the array.`;
         // Show typing
         _inlineShowTyping();
 
-        // Get target tab — use inline tab selector if multi-tab
-        const tabSelVal = document.getElementById('inline-tab-select');
-        if (tabSelVal && tabSelVal.value) _agentTargetTabId = parseInt(tabSelVal.value) || activeTabId;
+        // Get target tab — use custom file selector
+        if (_inlineSelectedTabId) _agentTargetTabId = _inlineSelectedTabId;
         const targetTab = fileTabs.find(t => t.id === (_agentTargetTabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId);
         const curTab = fileTabs.find(t => t.id === activeTabId);
         if (curTab) curTab.content = editor.getValue();
@@ -5646,21 +5651,74 @@ No markdown, no backticks.`;
         if (ag) document.getElementById('inline-chat-name').textContent = ag.providerName;
     }
 
-    // ── Inline chat: populate tab selector ──
+    // ── Inline chat: custom file selector dropdown ──
+    let _inlineSelectedTabId = null;
+
     function _inlinePopulateTabs() {
-        const sel = document.getElementById('inline-tab-select');
-        if (!sel) return;
-        if (fileTabs.length <= 1) { sel.style.display = 'none'; return; }
-        sel.style.display = 'block';
-        sel.innerHTML = '';
+        _inlineSelectedTabId = activeTabId;
+        _inlineRenderFileDropdown();
+    }
+
+    function _inlineToggleFileDropdown() {
+        const dd = document.getElementById('inline-file-dropdown');
+        const chevron = document.getElementById('inline-file-chevron');
+        const trigger = document.getElementById('inline-file-trigger');
+        if (!dd) return;
+        const isOpen = dd.style.display === 'block';
+        if (isOpen) {
+            dd.style.display = 'none';
+            if(chevron) chevron.style.transform = 'rotate(0deg)';
+            if(trigger) { trigger.style.borderColor = 'var(--glass-border)'; trigger.style.background = 'rgba(128,128,128,0.1)'; }
+        } else {
+            _inlineRenderFileDropdown();
+            dd.style.display = 'block';
+            if(chevron) chevron.style.transform = 'rotate(180deg)';
+            if(trigger) { trigger.style.borderColor = 'var(--accent)'; trigger.style.background = 'var(--accent-dim)'; }
+            // Close on outside tap
+            setTimeout(() => {
+                document.addEventListener('click', _inlineCloseFileDropdown, { once: true });
+            }, 50);
+        }
+    }
+
+    function _inlineCloseFileDropdown() {
+        const dd = document.getElementById('inline-file-dropdown');
+        const chevron = document.getElementById('inline-file-chevron');
+        const trigger = document.getElementById('inline-file-trigger');
+        if(dd) dd.style.display = 'none';
+        if(chevron) chevron.style.transform = 'rotate(0deg)';
+        if(trigger) { trigger.style.borderColor = 'var(--glass-border)'; trigger.style.background = 'rgba(128,128,128,0.1)'; }
+    }
+
+    function _inlineRenderFileDropdown() {
+        const dd = document.getElementById('inline-file-dropdown');
+        const label = document.getElementById('inline-file-label');
+        if (!dd) return;
+        dd.innerHTML = '';
         fileTabs.forEach(t => {
-            const opt = document.createElement('option');
-            opt.value = t.id;
-            opt.textContent = t.name;
-            if (t.id === activeTabId) opt.selected = true;
-            sel.appendChild(opt);
+            const isSelected = t.id === _inlineSelectedTabId;
+            const row = document.createElement('div');
+            row.style.cssText = `display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--glass-border);transition:background 0.15s;background:${isSelected ? 'var(--accent-dim)' : 'transparent'};`;
+            row.innerHTML = `
+                <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;">insert_drive_file</span>
+                <span style="flex:1;font-size:11px;font-weight:600;color:var(--text-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">${t.name}</span>
+                <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;opacity:${isSelected ? '1' : '0'};">check_circle</span>`;
+            row.ontouchstart = () => row.style.background = 'var(--accent-dim)';
+            row.onclick = (e) => {
+                e.stopPropagation();
+                _inlineSelectedTabId = t.id;
+                _agentTargetTabId = t.id;
+                if(label) label.textContent = t.name;
+                _inlineCloseFileDropdown();
+                _inlineRenderFileDropdown();
+            };
+            dd.appendChild(row);
         });
-        _agentTargetTabId = activeTabId;
+        // Remove border from last item
+        if(dd.lastChild) dd.lastChild.style.borderBottom = 'none';
+        // Update label
+        const activeTab = fileTabs.find(t => t.id === _inlineSelectedTabId) || fileTabs.find(t => t.id === activeTabId);
+        if(label && activeTab) label.textContent = activeTab.name;
     }
 
     // ── Inline chat: attachment handling ──
