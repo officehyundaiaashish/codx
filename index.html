@@ -1964,7 +1964,9 @@
                     <button class="toolbar-btn" onclick="pasteClipboard()"><span class="material-icons-round">content_paste</span>Paste</button>
                     <button class="toolbar-btn" onclick="deleteSelection()"><span class="material-icons-round">delete</span>Delete</button>
                     <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">find_replace</span>Find</button>
-                    <button class="toolbar-btn" id="ai-agent-btn" onclick="toggleInlineChat()"><span class="material-icons-round">smart_toy</span>AI Agent</button>
+                </div>
+                <div style="display: flex; justify-content: center; width: 100%; margin-top: 4px;">
+                    <button class="toolbar-btn" id="ai-agent-btn" onclick="toggleInlineChat()" style="width: 80px;"><span class="material-icons-round">smart_toy</span>AI Agent</button>
                 </div>
             </div>
         </div>
@@ -2735,11 +2737,22 @@
     const bottomPanel = document.getElementById('bottom-panel');
 
     let _inPreview = false;
-    let _navMini = false; // false = full rows visible, true = only cursor row
+    let _navMini = true; // Set to true so it starts collapsed by default
+
+    // Initialize the UI state on load
+    document.addEventListener('DOMContentLoaded', () => {
+        const bottomPanel = document.getElementById('bottom-panel');
+        if (bottomPanel) {
+            bottomPanel.classList.add('nav-mini');
+            const icon = document.getElementById('nav-toggle-icon');
+            if (icon) icon.style.transform = 'rotate(180deg)';
+        }
+    });
 
     // ── NAV TOGGLE: full ↔ mini (single cursor row) ──
     function toggleNavSize() {
         _navMini = !_navMini;
+        const bottomPanel = document.getElementById('bottom-panel');
         bottomPanel.classList.toggle('nav-mini', _navMini);
         const icon = document.getElementById('nav-toggle-icon');
         if (icon) {
