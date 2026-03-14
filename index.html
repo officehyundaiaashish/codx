@@ -165,7 +165,8 @@
         .bottom-area { 
             background: var(--glass-bg); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; 
             padding-bottom: max(env(safe-area-inset-bottom), 12px);
-            box-shadow: none; 
+            box-shadow: none;
+            position: relative;
         }
         .drag-handle-area { width: 100%; height: 16px; display: flex; justify-content: center; align-items: center; }
         .drag-pill { width: 30px; height: 4px; background: var(--text-color); opacity: 0.25; border-radius: 10px; }
@@ -225,17 +226,18 @@
         }
         #nav-toggle-btn {
             border-radius: 50% !important;
-            width: 32px !important;
-            height: 32px !important;
-            background: var(--accent-dim) !important;
-            justify-content: center !important;
-            transition: background 0.2s, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-            animation: navBtnPulse 2.5s ease-out 1s 2;
-        }
-        #nav-toggle-btn:active {
-            transform: scale(0.85) !important;
+            width: 30px !important;
+            height: 30px !important;
             background: var(--accent) !important;
             color: white !important;
+            justify-content: center !important;
+            transition: background 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s !important;
+            animation: navBtnPulse 2.5s ease-out 1s 2;
+            opacity: 0.85;
+        }
+        #nav-toggle-btn:active {
+            transform: scale(0.82) !important;
+            opacity: 1 !important;
         }
         
         /* ──────────────────────── Shared Modal ──────────────────────── */
@@ -1373,14 +1375,27 @@
             border-bottom: 2px solid var(--accent);
         }
 
-        /* Chat half — bottom 50% */
+        /* Chat panel floats above navigation bar */
         #inline-chat-panel {
-            flex: 1;
-            min-height: 0;
+            position: fixed;
+            left: 0; right: 0;
+            bottom: -45vh;
+            z-index: 39;
             display: flex;
             flex-direction: column;
             background: var(--glass-bg);
+            border-top: 2px solid var(--accent);
+            border-radius: var(--panel-round) var(--panel-round) 0 0;
+            box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
             overflow: hidden;
+            height: 45vh;
+            transition: bottom 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        #inline-chat-panel.chat-open {
+            opacity: 1;
+            pointer-events: auto;
         }
 
         /* Chat header — compact strip */
@@ -1578,7 +1593,10 @@
     <div class="bottom-wrapper no-select" id="bottom-panel">
         <div class="bottom-area">
                 <!-- Inline Split Chat Panel -->
-        <div id="inline-chat-panel" style="display:none;flex-direction:column;background:var(--glass-bg);border-top:2px solid var(--accent);height:45vh;flex-shrink:0;">
+            <!-- AGENT BAR — legacy compat, hidden -->
+
+    <!-- Chat panel floats ABOVE navigation, outside bottom-wrapper -->
+    <div id="inline-chat-panel">
 
             <!-- Header: avatar + name + model selector + settings + close -->
             <div id="inline-chat-header">
@@ -1621,8 +1639,6 @@
                 </button>
             </div>
         </div>
-
-            <!-- AGENT BAR — legacy compat, hidden -->
 
     <button class="restore-btn no-select" id="restore-btn" onclick="restoreBottomPanel()">
         <span class="material-icons-round">keyboard_arrow_up</span>
@@ -4607,8 +4623,10 @@ Rules:
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        // Show chat panel inside bottom-area (above nav rows)
-        chatPanel.style.display = 'flex';
+        // Position chat panel exactly above navigation bar
+        const navHeight = document.getElementById('bottom-panel').offsetHeight;
+        chatPanel.style.bottom = navHeight + 'px';
+        chatPanel.classList.add('chat-open');
         if (aiBtn) aiBtn.classList.add('chat-active');
 
         // Sync agent name
@@ -4630,7 +4648,8 @@ Rules:
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        chatPanel.style.display = 'none';
+        chatPanel.classList.remove('chat-open');
+        setTimeout(() => { chatPanel.style.bottom = ''; }, 350);
         if (aiBtn) aiBtn.classList.remove('chat-active');
     }
 
