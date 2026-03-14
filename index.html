@@ -160,13 +160,13 @@
         /* Nav panel — always visible, never collapses away */
         .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; }
         /* mini mode: only cursor-nav row shows */
-        .bottom-wrapper.nav-mini .toolbar-rows { max-height: 0 !important; opacity: 0; pointer-events: none; overflow: hidden; }
+        .bottom-wrapper.nav-mini .toolbar-rows { display: none; }
+        .bottom-wrapper.nav-mini .drag-handle-area { display: none; }
         .bottom-wrapper.nav-mini #agent-bar { display: none; }
         .bottom-area { 
             background: var(--glass-bg); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; 
             padding-bottom: max(env(safe-area-inset-bottom), 12px);
-            box-shadow: none;
-            position: relative;
+            box-shadow: none; 
         }
         .drag-handle-area { width: 100%; height: 16px; display: flex; justify-content: center; align-items: center; }
         .drag-pill { width: 30px; height: 4px; background: var(--text-color); opacity: 0.25; border-radius: 10px; }
@@ -179,7 +179,7 @@
         .icon-btn .material-icons-round { font-size: 18px; pointer-events: none; }
 
         /* Ultra-Compact 3-Row Grid (No Scroll) */
-        .toolbar-rows { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px 8px 6px; max-height: 300px; opacity: 1; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
+        .toolbar-rows { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px 8px 6px; }
         .toolbar-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; width: 100%; }
         .toolbar-btn { 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -206,39 +206,6 @@
         .restore-btn.hidden-btn { opacity: 0 !important; pointer-events: none !important; transform: scale(0.7) !important; }
         .restore-btn .material-icons-round { font-size: 20px; pointer-events: none; }
 
-
-        /* ──────────────────────── Nav Toggle Arrow Animation ──────────────────────── */
-        .toolbar-rows {
-            transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            transform-origin: bottom center;
-        }
-        #nav-toggle-icon {
-            transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
-            display: inline-block;
-        }
-        .nav-mini #nav-toggle-icon {
-            transform: rotate(180deg);
-        }
-        @keyframes navBtnPulse {
-            0%   { box-shadow: 0 0 0 0 rgba(16,185,129,0.5); }
-            70%  { box-shadow: 0 0 0 7px rgba(16,185,129,0); }
-            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
-        }
-        #nav-toggle-btn {
-            border-radius: 50% !important;
-            width: 30px !important;
-            height: 30px !important;
-            background: var(--accent) !important;
-            color: white !important;
-            justify-content: center !important;
-            transition: background 0.2s, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.2s !important;
-            animation: navBtnPulse 2.5s ease-out 1s 2;
-            opacity: 0.85;
-        }
-        #nav-toggle-btn:active {
-            transform: scale(0.82) !important;
-            opacity: 1 !important;
-        }
         
         /* ──────────────────────── Shared Modal ──────────────────────── */
 /* Shared Modal CSS */
@@ -799,6 +766,35 @@
             cursor: pointer; transition: opacity 0.15s, background 0.15s;
         }
         .agent-step-reject:active { background: rgba(239,68,68,0.1); color: #ef4444; opacity: 1; }
+        .agent-step-refine-btn {
+            padding: 8px 12px; border: 1px solid var(--accent); border-radius: 8px;
+            background: none; color: var(--accent);
+            font-family: 'Poppins', sans-serif; font-size: 12px; font-weight: 700;
+            cursor: pointer; transition: background 0.15s, opacity 0.15s;
+            white-space: nowrap;
+        }
+        .agent-step-refine-btn:active { background: var(--accent-dim); }
+        .agent-step-refine-area {
+            padding: 8px 12px;
+            border-top: 1px solid var(--glass-border);
+            background: rgba(0,0,0,0.1);
+            display: flex; gap: 8px; align-items: flex-end;
+        }
+        .agent-step-refine-input {
+            flex: 1; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border);
+            border-radius: 8px; color: var(--text-color); font-family: 'Poppins', sans-serif;
+            font-size: 12px; padding: 7px 10px; resize: none; outline: none;
+            line-height: 1.4; min-height: 34px; max-height: 80px;
+        }
+        .agent-step-refine-input:focus { border-color: var(--accent); }
+        .agent-step-refine-send {
+            width: 32px; height: 32px; border-radius: 8px; border: none; flex-shrink: 0;
+            background: var(--accent); color: white; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+        .agent-step-refine-send:active { opacity: 0.8; transform: scale(0.9); }
+        .agent-step-refine-send .material-icons-round { font-size: 16px; pointer-events: none; }
         .agent-step-done {
             font-size: 10px; font-weight: 700; color: var(--text-color);
             opacity: 0.4; padding: 9px 12px;
@@ -1051,7 +1047,8 @@
         /* Nav panel — always visible, never collapses away */
         .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; }
         /* mini mode: only cursor-nav row shows */
-        .bottom-wrapper.nav-mini .toolbar-rows { max-height: 0 !important; opacity: 0; pointer-events: none; overflow: hidden; }
+        .bottom-wrapper.nav-mini .toolbar-rows { display: none; }
+        .bottom-wrapper.nav-mini .drag-handle-area { display: none; }
         .bottom-wrapper.nav-mini #agent-bar { display: none; }
         .bottom-area { 
             background: var(--glass-bg); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; 
@@ -1069,7 +1066,7 @@
         .icon-btn .material-icons-round { font-size: 18px; pointer-events: none; }
 
         /* Ultra-Compact 3-Row Grid (No Scroll) */
-        .toolbar-rows { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px 8px 6px; max-height: 300px; opacity: 1; overflow: hidden; transition: max-height 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease; }
+        .toolbar-rows { display: flex; flex-direction: column; gap: 4px; padding: 4px 6px 8px 6px; }
         .toolbar-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 2px; width: 100%; }
         .toolbar-btn { 
             display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -1463,27 +1460,14 @@
             border-bottom: 2px solid var(--accent);
         }
 
-        /* Chat panel floats above navigation bar */
+        /* Chat half — bottom 50% */
         #inline-chat-panel {
-            position: fixed;
-            left: 0; right: 0;
-            z-index: 41;
+            flex: 1;
+            min-height: 0;
             display: flex;
             flex-direction: column;
             background: var(--glass-bg);
-            border-top: 2px solid var(--accent);
-            border-radius: var(--panel-round) var(--panel-round) 0 0;
-            box-shadow: 0 -4px 24px rgba(0,0,0,0.3);
             overflow: hidden;
-            height: 45vh;
-            bottom: 0;
-            transform: translateY(100%);
-            transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), bottom 0s;
-            pointer-events: none;
-        }
-        #inline-chat-panel.chat-open {
-            transform: translateY(0);
-            pointer-events: auto;
         }
 
         /* Chat header — compact strip */
@@ -1681,10 +1665,7 @@
     <div class="bottom-wrapper no-select" id="bottom-panel">
         <div class="bottom-area">
                 <!-- Inline Split Chat Panel -->
-            <!-- AGENT BAR — legacy compat, hidden -->
-
-    <!-- Chat panel floats ABOVE navigation, outside bottom-wrapper -->
-    <div id="inline-chat-panel">
+        <div id="inline-chat-panel" style="display:none;flex-direction:column;background:var(--glass-bg);border-top:2px solid var(--accent);height:45vh;flex-shrink:0;">
 
             <!-- Header: avatar + name + model selector + settings + close -->
             <div id="inline-chat-header">
@@ -1728,6 +1709,8 @@
             </div>
         </div>
 
+            <!-- AGENT BAR — legacy compat, hidden -->
+
     <button class="restore-btn no-select" id="restore-btn" onclick="restoreBottomPanel()">
         <span class="material-icons-round">keyboard_arrow_up</span>
     </button>
@@ -1754,9 +1737,9 @@
                 <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
             </div>
 
-            <div class="drag-handle-area" style="justify-content:center;">
+            <div class="drag-handle-area" style="justify-content:flex-end;padding-right:10px;">
                 <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:none;border:none;cursor:pointer;color:var(--accent);display:flex;align-items:center;padding:2px 4px;opacity:0.7;">
-                    <span class="material-icons-round" id="nav-toggle-icon" style="font-size:22px;pointer-events:none;">expand_less</span>
+                    <span class="material-icons-round" id="nav-toggle-icon" style="font-size:18px;pointer-events:none;">expand_less</span>
                 </button>
             </div>
 
@@ -2449,15 +2432,9 @@
     function toggleNavSize() {
         _navMini = !_navMini;
         bottomPanel.classList.toggle('nav-mini', _navMini);
-        // Animate arrow icon rotation (CSS handles it via .nav-mini class)
-        // Also do a little button bounce
-        const btn = document.getElementById('nav-toggle-btn');
-        if (btn) {
-            btn.style.transform = 'scale(0.82)';
-            setTimeout(() => { btn.style.transform = ''; }, 180);
-        }
-        // Resize editor after animation completes
-        setTimeout(() => editor.resize(), 360);
+        const icon = document.getElementById('nav-toggle-icon');
+        if (icon) icon.textContent = _navMini ? 'expand_less' : 'expand_more';
+        editor.resize();
     }
 
     // Legacy stubs — kept so existing calls dont break
@@ -3513,177 +3490,283 @@
     // ════════════════════════════════════════════════
     async function _runThreeStepAgent({ code, userRequest, attachCtx, appendMsg, showTyping, hideTyping, scrollBottom, onApply }) {
 
-        const RULES = `You are a professional software engineering agent.
-The COMPLETE code is provided. Read and analyse every line. Never assume.
-Only perform the exact task requested. Do not add extra features.
-Preserve original structure unless modification is required.`;
+        // ══════════════════════════════════════════════════════
+        // STEP 1+2 MERGED: Analyse code AND identify problem blocks
+        // One call — AI gets full picture, returns analysis + blocks
+        // ══════════════════════════════════════════════════════
+        showTyping('🔍 Analysing code and planning fixes...');
 
-        // ── STEP 1: ANALYSE ──
-        showTyping('🔍 Step 1 of 3 — Analysing code...');
-        let analysis;
-        try {
-            const s1Prompt = RULES + `
+        const mergedPrompt = `You are a professional software engineering agent.
 
-TASK: Analyse the code and the user's request.
-Return a SHORT plain-language summary (3-5 sentences):
+TASK: Read the full code and the user request carefully.
+
+Do two things in one response:
+
+PART 1 — ANALYSIS (plain text, 3-5 sentences):
 - What the user wants
-- Which part of the code is affected (function/section name)
-- Root cause or what needs to change
-- Nothing else. No code. No JSON.`;
-            const s1Msg = `Code:
-\`\`\`
-${code}
-\`\`\`${attachCtx}
+- What is wrong or what needs to change
+- Which parts of the code are affected and why
 
-User request: ${userRequest}`;
-            analysis = await _callAgentAPI(s1Prompt, s1Msg);
-        } catch(e) { hideTyping(); appendMsg('agent', '⚠️ ' + (e.message || 'Analysis failed.')); return; }
-        hideTyping();
+PART 2 — BLOCKS (JSON array):
+Identify every block that needs to be changed. A block = one complete function, CSS rule, or logical section.
 
-        // Show analysis card with Accept/Reject
-        await new Promise(resolve => {
-            const card = document.createElement('div');
-            card.className = 'agent-step-card';
-            card.innerHTML = `
-                <div class="agent-step-header">
-                    <div class="agent-step-num">1</div>
-                    <div class="agent-step-label">Analysis</div>
-                </div>
-                <div class="agent-step-body">${analysis.replace(/\n/g,'<br>')}</div>
-                <div class="agent-step-actions" id="s1-actions">
-                    <button class="agent-step-accept" id="s1-accept">
-                        <span class="material-icons-round">check</span> Looks right, continue
-                    </button>
-                    <button class="agent-step-reject" id="s1-reject">Reject</button>
-                </div>`;
-            appendMsg('agent', '', card);
-            scrollBottom();
-            document.getElementById('s1-accept').onclick = () => {
-                document.getElementById('s1-actions').outerHTML = '<div class="agent-step-done">✓ Analysis accepted</div>';
-                resolve(true);
-            };
-            document.getElementById('s1-reject').onclick = () => {
-                document.getElementById('s1-actions').outerHTML = '<div class="agent-step-done" style="color:#ef4444;opacity:0.7;">✗ Rejected — process stopped</div>';
-                resolve(false);
-            };
-        }).then(accepted => { if (!accepted) throw new Error('__REJECTED__'); });
+For each block return:
+[{
+  "num": 1,
+  "problem": "exactly what is wrong in this block",
+  "what_to_do": "exactly what the new block must do differently",
+  "location": "function name or CSS selector",
+  "block_start": "copy the EXACT first 15+ characters of this block verbatim from the code"
+}]
 
-        // ── STEP 2: PLAN ──
-        showTyping('📋 Step 2 of 3 — Planning changes...');
-        let planItems;
-        try {
-            const s2Prompt = RULES + `
-
-TASK: Based on the analysis below, create a numbered change plan.
-Return ONLY a JSON array of plan items:
-[{"step": 1, "action": "what will be changed", "location": "function/section name", "reason": "why"}]
-No markdown, no backticks, only the JSON array.`;
-            const s2Msg = `Code:
-\`\`\`
-${code}
-\`\`\`${attachCtx}
-
-User request: ${userRequest}
-
-Analysis:
-${analysis}`;
-            const s2Raw = await _callAgentAPI(s2Prompt, s2Msg);
-            planItems = _safeExtractJSON(s2Raw);
-            if (!planItems || !planItems.length) throw new Error('Could not generate plan.');
-        } catch(e) {
-            if (e.message === '__REJECTED__') throw e;
-            hideTyping(); appendMsg('agent', '⚠️ ' + (e.message || 'Planning failed.')); return;
-        }
-        hideTyping();
-
-        // Show plan card with Accept/Reject
-        await new Promise(resolve => {
-            const planHTML = planItems.map(p =>
-                `<div class="agent-plan-item">
-                    <div class="agent-plan-num">${p.step}.</div>
-                    <div><strong>${p.action}</strong><br><span style="opacity:0.6;font-size:10px;">${p.location} — ${p.reason}</span></div>
-                </div>`
-            ).join('');
-            const card = document.createElement('div');
-            card.className = 'agent-step-card';
-            card.innerHTML = `
-                <div class="agent-step-header">
-                    <div class="agent-step-num">2</div>
-                    <div class="agent-step-label">Change Plan (${planItems.length} change${planItems.length>1?'s':''})</div>
-                </div>
-                <div class="agent-step-body">${planHTML}</div>
-                <div class="agent-step-actions" id="s2-actions">
-                    <button class="agent-step-accept" id="s2-accept">
-                        <span class="material-icons-round">check</span> Apply this plan
-                    </button>
-                    <button class="agent-step-reject" id="s2-reject">Reject</button>
-                </div>`;
-            appendMsg('agent', '', card);
-            scrollBottom();
-            document.getElementById('s2-accept').onclick = () => {
-                document.getElementById('s2-actions').outerHTML = '<div class="agent-step-done">✓ Plan accepted</div>';
-                resolve(true);
-            };
-            document.getElementById('s2-reject').onclick = () => {
-                document.getElementById('s2-actions').outerHTML = '<div class="agent-step-done" style="color:#ef4444;opacity:0.7;">✗ Rejected — process stopped</div>';
-                resolve(false);
-            };
-        }).then(accepted => { if (!accepted) throw new Error('__REJECTED__'); });
-
-        // ── STEP 3: EXECUTE ──
-        showTyping('⚙️ Step 3 of 3 — Executing changes...');
-        let edits;
-        try {
-            const s3Prompt = RULES + `
-
-TASK: Execute exactly the plan below. No extra changes.
-Return ONLY a JSON array of find/replace edits:
-[{"find":"exact verbatim substring from code","replace":"new string","reason":"brief"}]
 Rules:
-- "find" must be exact copy-paste accurate substring including all whitespace/newlines.
-- Each "find" must be unique — add surrounding lines as context if needed.
-- Return [] if nothing to change.
-- ONLY the JSON array. No markdown, no backticks.`;
-            const s3Msg = `Code:
-\`\`\`
-${code}
-\`\`\`${attachCtx}
+- block_start must be copy-paste exact from the code — it is used to find the block.
+- what_to_do must be specific enough that AI can rewrite the block without seeing anything else.
+- Only list blocks that actually need changing.
+- Return PART 1 as plain text, then write exactly: BLOCKS: then the JSON array.`;
 
-User request: ${userRequest}
+        const mergedMsg = `Code:\n\`\`\`\n${code}\n\`\`\`${attachCtx}\n\nUser request: ${userRequest}`;
 
-Analysis:
-${analysis}
+        let analysis = '';
+        let planItems = [];
 
-Approved plan:
-${JSON.stringify(planItems, null, 2)}`;
-            const s3Raw = await _callAgentAPI(s3Prompt, s3Msg);
-            edits = _safeExtractJSON(s3Raw);
-            if (!edits) throw new Error('Could not generate edits.');
+        try {
+            const raw = await _callAgentAPI(mergedPrompt, mergedMsg);
+            hideTyping();
+
+            // Split at BLOCKS:
+            const blocksIdx = raw.indexOf('BLOCKS:');
+            if (blocksIdx !== -1) {
+                analysis = raw.slice(0, blocksIdx).trim();
+                const jsonPart = raw.slice(blocksIdx + 7).trim();
+                planItems = _safeExtractJSON(jsonPart) || [];
+            } else {
+                analysis = raw.trim();
+            }
+
+            if (!analysis) throw new Error('No analysis returned. Try again.');
+
         } catch(e) {
-            if (e.message === '__REJECTED__') throw e;
-            hideTyping(); appendMsg('agent', '⚠️ ' + (e.message || 'Execution failed.')); return;
-        }
-        hideTyping();
-
-        // Validate edits against actual code
-        const valid = edits.filter(e => {
-            if (!e.find) return false;
-            if (code.includes(e.find)) return true;
-            const t = e.find.trim();
-            if (t && code.includes(t)) { e.find = t; return true; }
-            return false;
-        });
-
-        if (valid.length === 0) {
-            appendMsg('agent', edits.length > 0
-                ? '⚠️ Changes planned but exact code sections not found. Try rephrasing your request.'
-                : '✓ No changes needed.');
+            hideTyping();
+            appendMsg('agent', '⚠️ ' + (e.message || 'Analysis failed.'));
             return;
         }
 
-        // Hand off to caller (chat UI shows its own Apply/Reject card)
-        onApply(valid);
+        // ── Show merged Analysis + Plan card — Accept / Refine / Reject ──
+        const result = await new Promise(resolve => {
+            function _renderCard(currentAnalysis, currentPlan, refined) {
+                const planHTML = currentPlan.length > 0
+                    ? currentPlan.map(p =>
+                        '<div class="agent-plan-item">' +
+                            '<div class="agent-plan-num">' + p.num + '.</div>' +
+                            '<div>' +
+                                '<strong>' + (p.problem||'Fix') + '</strong>' +
+                                '<br><span style="opacity:0.6;font-size:10px;">📌 ' + p.location + '</span>' +
+                                '<br><span style="opacity:0.55;font-size:10px;">→ ' + (p.what_to_do||'') + '</span>' +
+                            '</div>' +
+                        '</div>'
+                    ).join('')
+                    : '<div style="opacity:0.5;font-size:11px;padding:4px 0;">No code changes needed.</div>';
+
+                const card = document.createElement('div');
+                card.className = 'agent-step-card';
+                card.innerHTML =
+                    '<div class="agent-step-header">' +
+                        '<div class="agent-step-num">1</div>' +
+                        '<div class="agent-step-label">Analysis + Plan' + (refined ? ' (Refined)' : '') +
+                            (currentPlan.length ? ' — ' + currentPlan.length + ' fix' + (currentPlan.length>1?'es':'') : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="agent-step-body">' +
+                        '<div style="font-size:11px;line-height:1.6;margin-bottom:' + (currentPlan.length?'10px':'0') + ';">' +
+                            currentAnalysis.replace(/\n/g,'<br>') +
+                        '</div>' +
+                        (currentPlan.length ? planHTML : '') +
+                    '</div>' +
+                    '<div class="agent-step-actions" id="sp-actions">' +
+                        '<button class="agent-step-accept" id="sp-accept">' +
+                            '<span class="material-icons-round">check</span> Looks right' +
+                        '</button>' +
+                        '<button class="agent-step-refine-btn" id="sp-refine">✏️ Refine</button>' +
+                        '<button class="agent-step-reject" id="sp-reject">Reject</button>' +
+                    '</div>';
+
+                appendMsg('agent', '', card);
+                scrollBottom();
+
+                document.getElementById('sp-accept').onclick = () => {
+                    document.getElementById('sp-actions').outerHTML = '<div class="agent-step-done">✓ Plan accepted</div>';
+                    resolve({ accepted: true, analysis: currentAnalysis, plan: currentPlan });
+                };
+
+                document.getElementById('sp-reject').onclick = () => {
+                    document.getElementById('sp-actions').outerHTML = '<div class="agent-step-done" style="color:#ef4444;opacity:0.7;">✗ Rejected — process stopped</div>';
+                    resolve({ accepted: false });
+                };
+
+                document.getElementById('sp-refine').onclick = () => {
+                    document.getElementById('sp-actions').outerHTML =
+                        '<div class="agent-step-refine-area" id="sp-refine-area">' +
+                            '<textarea class="agent-step-refine-input" id="sp-refine-input" placeholder="Tell AI what is wrong, what to change, what to avoid..." rows="2"></textarea>' +
+                            '<button class="agent-step-refine-send" id="sp-refine-send"><span class="material-icons-round">send</span></button>' +
+                        '</div>';
+                    const inp = document.getElementById('sp-refine-input');
+                    inp.focus();
+                    document.getElementById('sp-refine-send').onclick = async () => {
+                        const fb = inp.value.trim();
+                        if (!fb) return;
+                        document.getElementById('sp-refine-area').outerHTML = '<div class="agent-step-done" style="opacity:0.5;">↻ Re-analysing with your feedback...</div>';
+                        showTyping('🔍 Re-analysing...');
+                        try {
+                            const rePrompt = mergedPrompt + '\n\nUser feedback on previous analysis: ' + fb + '\nRevise both the analysis and the block plan accordingly.';
+                            const reRaw = await _callAgentAPI(rePrompt, mergedMsg);
+                            hideTyping();
+                            let newAnalysis = reRaw.trim(), newPlan = [];
+                            const bi = reRaw.indexOf('BLOCKS:');
+                            if (bi !== -1) {
+                                newAnalysis = reRaw.slice(0, bi).trim();
+                                newPlan = _safeExtractJSON(reRaw.slice(bi + 7)) || [];
+                            }
+                            _renderCard(newAnalysis, newPlan, true);
+                        } catch(e) {
+                            hideTyping();
+                            resolve({ accepted: false });
+                        }
+                    };
+                };
+            }
+            _renderCard(analysis, planItems, false);
+        });
+
+        if (!result.accepted) throw new Error('__REJECTED__');
+        analysis  = result.analysis;
+        planItems = result.plan;
+
+        if (!planItems.length) {
+            appendMsg('agent', '✓ No code changes needed — analysis complete.');
+            return;
+        }
+
+        // ══════════════════════════════════════════════════════
+        // STEP 2: EXECUTE — per block, AI knows full context
+        // ══════════════════════════════════════════════════════
+
+        // Extract the full block from code using block_start as anchor
+        function _extractBlock(fullCode, blockStart) {
+            if (!blockStart) return null;
+            const idx = fullCode.indexOf(blockStart);
+            if (idx === -1) return null;
+            // Walk back to start of line
+            let begin = idx;
+            while (begin > 0 && fullCode[begin-1] !== '\n') begin--;
+            // Walk forward counting braces
+            let depth = 0, end = begin, hasBrace = false;
+            for (let i = begin; i < fullCode.length; i++) {
+                if (fullCode[i] === '{') { depth++; hasBrace = true; }
+                else if (fullCode[i] === '}') {
+                    depth--;
+                    if (hasBrace && depth === 0) { end = i + 1; break; }
+                }
+            }
+            if (!hasBrace) {
+                // No braces — take 30 lines
+                const lines = fullCode.slice(begin).split('\n').slice(0, 30).join('\n');
+                end = begin + lines.length;
+            }
+            const block = fullCode.slice(begin, end).trim();
+            return block.length > 5 ? block : null;
+        }
+
+        for (let i = 0; i < planItems.length; i++) {
+            const p = planItems[i];
+            const fixLabel = p.problem || ('Fix ' + (i+1));
+
+            const oldBlock = _extractBlock(code, p.block_start);
+            if (!oldBlock || !code.includes(oldBlock)) {
+                appendMsg('agent', '⚠️ Fix ' + (i+1) + ' (' + (p.location||'') + '): Block not found in code — skipping.');
+                continue;
+            }
+
+            showTyping('⚙️ Fix ' + (i+1) + ' of ' + planItems.length + ' — rewriting ' + (p.location||'block') + '...');
+
+            // Give AI FULL context — it must know everything about this fix
+            const execPrompt =
+                'You are a surgical code editor executing one specific fix.\n\n' +
+                '=== FULL CONTEXT ===\n' +
+                'User request: ' + userRequest + '\n\n' +
+                'Analysis of the problem:\n' + analysis + '\n\n' +
+                'All planned fixes:\n' +
+                planItems.map(x => x.num + '. ' + x.problem + ' in ' + x.location + ' → ' + x.what_to_do).join('\n') + '\n\n' +
+                '=== YOUR SPECIFIC FIX ===\n' +
+                'Fix number: ' + (i+1) + ' of ' + planItems.length + '\n' +
+                'Problem in this block: ' + fixLabel + '\n' +
+                'What the new block must do: ' + (p.what_to_do||'Fix the problem') + '\n' +
+                'Location: ' + (p.location||'') + '\n\n' +
+                'Rules:\n' +
+                '- Rewrite ONLY this block to fix the stated problem.\n' +
+                '- Keep all variable names, event listeners, IDs, and structure intact.\n' +
+                '- Do NOT add extra features. Do NOT change unrelated lines.\n' +
+                '- Return ONLY the corrected block. No explanation. No markdown. No backticks.';
+
+            const execMsg = 'Block to fix:\n```\n' + oldBlock + '\n```';
+
+            try {
+                let newBlock = await _callAgentAPI(execPrompt, execMsg);
+                hideTyping();
+                newBlock = newBlock.replace(/^```[\w]*\n?/, '').replace(/\n?```$/, '').trim();
+
+                if (!newBlock || newBlock === oldBlock.trim()) {
+                    appendMsg('agent', 'ℹ️ Fix ' + (i+1) + ' (' + (p.location||'') + '): No change needed.');
+                    continue;
+                }
+
+                // Show old vs new — user applies or skips
+                await new Promise(resolve => {
+                    const uid = 'fix' + i + '_' + Date.now();
+                    const esc = s => (s||'').slice(0,180).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const card = document.createElement('div');
+                    card.className = 'agent-step-card';
+                    card.innerHTML =
+                        '<div class="agent-step-header">' +
+                            '<div class="agent-step-num">' + (i+1) + '</div>' +
+                            '<div class="agent-step-label">Fix ' + (i+1) + ' of ' + planItems.length + ' — ' + (p.location||'') + '</div>' +
+                        '</div>' +
+                        '<div class="agent-step-body">' +
+                            '<div style="font-size:11px;font-weight:700;margin-bottom:8px;">' + fixLabel + '</div>' +
+                            '<div style="font-size:10px;opacity:0.6;margin-bottom:8px;">→ ' + (p.what_to_do||'') + '</div>' +
+                            '<div class="chat-fix-preview">' +
+                                '<div class="chat-fix-side remove"><div class="chat-fix-side-label">OLD</div><div class="chat-fix-code">' + esc(oldBlock) + (oldBlock.length>180?'...':'') + '</div></div>' +
+                                '<div class="chat-fix-side insert"><div class="chat-fix-side-label">NEW</div><div class="chat-fix-code">' + esc(newBlock) + (newBlock.length>180?'...':'') + '</div></div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="agent-step-actions" id="' + uid + '-act">' +
+                            '<button class="agent-step-accept" id="' + uid + '-ok"><span class="material-icons-round">check</span> Apply</button>' +
+                            '<button class="agent-step-reject" id="' + uid + '-skip">Skip</button>' +
+                        '</div>';
+                    appendMsg('agent', '', card);
+                    scrollBottom();
+                    document.getElementById(uid+'-ok').onclick = () => {
+                        document.getElementById(uid+'-act').outerHTML = '<div class="agent-step-done">✓ Applied</div>';
+                        onApply([{ find: oldBlock, replace: newBlock, reason: fixLabel }]);
+                        resolve();
+                    };
+                    document.getElementById(uid+'-skip').onclick = () => {
+                        document.getElementById(uid+'-act').outerHTML = '<div class="agent-step-done" style="color:#ef4444;opacity:0.7;">✗ Skipped</div>';
+                        resolve();
+                    };
+                });
+
+            } catch(e) {
+                hideTyping();
+                if (e.message === '__REJECTED__') throw e;
+                appendMsg('agent', '⚠️ Fix ' + (i+1) + ': ' + (e.message||'Failed') + ' — skipping.');
+            }
+        }
+
+        hideTyping();
     }
+
+
 
     async function sendAgentPrompt() {
         if(!_activeAgent()) { openAgentModal(); return; }
@@ -4961,13 +5044,9 @@ No markdown, no backticks, no explanation outside the array.`;
 
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
-        const nav       = document.getElementById('bottom-panel');
 
-        // Place chat exactly above navigation bar, editor untouched
-        const navH = nav ? nav.offsetHeight : 0;
-        chatPanel.style.paddingBottom = '';
-        chatPanel.style.bottom = navH + 'px';
-        chatPanel.classList.add('chat-open');
+        // Show chat panel inside bottom-area (above nav rows)
+        chatPanel.style.display = 'flex';
         if (aiBtn) aiBtn.classList.add('chat-active');
 
         // Sync agent name
@@ -4989,10 +5068,8 @@ No markdown, no backticks, no explanation outside the array.`;
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
-        chatPanel.classList.remove('chat-open');
+        chatPanel.style.display = 'none';
         if (aiBtn) aiBtn.classList.remove('chat-active');
-        // Reset after animation so it doesn't block nav
-        setTimeout(() => { chatPanel.style.bottom = '0'; }, 360);
     }
 
     // ── Auto resize textarea ──
