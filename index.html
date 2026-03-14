@@ -203,9 +203,9 @@
             bottom: -150%; opacity: 0; pointer-events: none; transform: scale(0.96);
         }
         .modal.active { bottom: 20px; opacity: 1; pointer-events: auto; transform: scale(1); }
-        /* Find modal — never transitions bottom, JS controls position above keyboard */
-        #find-modal { left: 2%; width: 96%; bottom: -150% !important; transition: opacity 0.15s, transform 0.15s; }
-        #find-modal.active { bottom: 0 !important; opacity: 1; pointer-events: auto; transform: scale(1); }
+        /* Find modal — JS positions via top, no bottom transition */
+        #find-modal { left: 2%; width: 96%; bottom: auto !important; transition: opacity 0.2s, transform 0.2s; }
+        #find-modal.active { opacity: 1; pointer-events: auto; transform: scale(1); }
         
         .modal textarea, .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
@@ -2109,18 +2109,25 @@
     _setBodyHeight();
     window.visualViewport && window.visualViewport.addEventListener('resize', _setBodyHeight);
     window.addEventListener('resize', _setBodyHeight);
-    window.visualViewport && window.visualViewport.addEventListener('resize', () => {
+    function _positionFindModal() {
         const vv = window.visualViewport;
-        const kbHeight = window.innerHeight - vv.height - vv.offsetTop;
-        let activeModal = document.querySelector('.modal.active:not(#github-modal)');
+        if (!vv || !findModal.classList.contains('active')) return;
+        const modalH = findModal.offsetHeight || 260;
+        // visibleBottom = top of keyboard in fixed coords
+        const visibleBottom = vv.offsetTop + vv.height;
+        // Place modal so bottom edge is 6px above keyboard
+        const topPos = visibleBottom - modalH - 6;
+        findModal.style.top = Math.max(vv.offsetTop + 4, topPos) + 'px';
+        findModal.style.bottom = 'auto';
+    }
+
+    window.visualViewport && window.visualViewport.addEventListener('resize', () => {
+        _positionFindModal();
+        const vv = window.visualViewport;
+        const kbHeight = window.innerHeight - vv.height - (vv.offsetTop || 0);
+        let activeModal = document.querySelector('.modal.active:not(#github-modal):not(#find-modal)');
         if (activeModal) {
-            const isFindModal = activeModal.id === 'find-modal';
-            if (isFindModal) {
-                // Sit exactly above the keyboard — no gap, just 4px breathing room
-                activeModal.style.bottom = kbHeight > 10 ? (kbHeight + 4) + 'px' : '8px';
-            } else {
-                activeModal.style.bottom = kbHeight > 10 ? (kbHeight + 10) + 'px' : '20px';
-            }
+            activeModal.style.bottom = kbHeight > 10 ? (kbHeight + 10) + 'px' : '20px';
         }
     });
 
@@ -2766,28 +2773,18 @@
         closeGithubModal(); 
         const isActive = !findModal.classList.contains('active');
         if (isActive) {
-            // Position BEFORE making active so it never appears in wrong place
-            const vv = window.visualViewport;
-            const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
-            findModal.style.bottom = (kbHeight > 10 ? kbHeight + 4 : 8) + 'px';
             findModal.classList.add('active');
-            _hideNavForModal();
             requestAnimationFrame(() => { 
                 const fi = document.getElementById('find-input');
                 fi.focus(); 
                 fi.setSelectionRange(fi.value.length, fi.value.length);
-                // Re-check position after keyboard fully opens
-                setTimeout(() => {
-                    const vv2 = window.visualViewport;
-                    if (vv2) {
-                        const kb = Math.max(0, window.innerHeight - vv2.height - (vv2.offsetTop || 0));
-                        if (kb > 10) findModal.style.bottom = (kb + 4) + 'px';
-                    }
-                }, 400);
+                _positionFindModal();
+                setTimeout(_positionFindModal, 400);
             });
         } else {
             findModal.classList.remove('active');
-            _restoreNavAfterModal();
+            findModal.style.top = '';
+            findModal.style.bottom = '';
         }
     }
     function findText(showErrorAlert = true) { 
