@@ -5913,12 +5913,14 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
         _inlineShowTyping();
 
         // Get target file content
-        if (_inlineSelectedTabId) _agentTargetTabId = _inlineSelectedTabId;
-        const targetTab = fileTabs.find(t => t.id === (_agentTargetTabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId);
+        // 'new' = user wants AI to create a brand new file — don't send any existing code as target
+        const _isNewFileMode = _inlineSelectedTabId === 'new';
+        if (!_isNewFileMode && _inlineSelectedTabId) _agentTargetTabId = _inlineSelectedTabId;
+        const targetTab = _isNewFileMode ? null : (fileTabs.find(t => t.id === (_agentTargetTabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId));
         const curTab = fileTabs.find(t => t.id === activeTabId);
         if (curTab) curTab.content = editor.getValue();
-        const code = targetTab ? targetTab.content : editor.getValue();
-        const filename = targetTab ? targetTab.name : 'untitled';
+        const code = (!_isNewFileMode && targetTab) ? targetTab.content : '';
+        const filename = (!_isNewFileMode && targetTab) ? targetTab.name : 'new file';
 
         // Add line numbers so AI can reference precise locations
         // Per-provider safe limits (chars, not tokens — 1 token ≈ 4 chars):
@@ -5960,20 +5962,22 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             : '';
         _inlineClearAttach();
 
-        // ── Build other open files context ──
-        // All open tabs (except current target) are included as reference context
-        // Each file is truncated to avoid overloading context window
-        const _CTX_PER_FILE = Math.floor(_MAX_CHARS * 0.15); // max 15% of budget per context file
+        // ── Build context files — ONLY files user explicitly ticked in dropdown ──
+        // _inlineContextTabIds = Set of tab IDs user has marked as context
+        const _CTX_PER_FILE = Math.floor(_MAX_CHARS * 0.15);
         let otherFilesCtx = '';
-        fileTabs.forEach(t => {
-            if (t.id === (targetTab ? targetTab.id : activeTabId)) return; // skip target file
-            if (!t.content || !t.content.trim()) return; // skip empty files
-            let preview = t.content;
-            if (preview.length > _CTX_PER_FILE) {
-                preview = preview.slice(0, _CTX_PER_FILE) + `\n// ... [${t.name} truncated for context]`;
-            }
-            otherFilesCtx += `\n\n── OPEN FILE: ${t.name} ──\n\`\`\`\n${preview}\n\`\`\``;
-        });
+        if (_inlineContextTabIds && _inlineContextTabIds.size > 0) {
+            _inlineContextTabIds.forEach(tid => {
+                if (tid === (targetTab ? targetTab.id : activeTabId)) return; // skip target
+                const t = fileTabs.find(f => f.id === tid);
+                if (!t || !t.content || !t.content.trim()) return;
+                let preview = t.content;
+                if (preview.length > _CTX_PER_FILE) {
+                    preview = preview.slice(0, _CTX_PER_FILE) + `\n// ... [${t.name} truncated for context]`;
+                }
+                otherFilesCtx += `\n\n── CONTEXT FILE: ${t.name} ──\n\`\`\`\n${preview}\n\`\`\``;
+            });
+        }
 
         // ── Build full structured context message ──
         // Every call gets: full current code + all open files + session events
@@ -5989,7 +5993,16 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
             ? `\n\n── SESSION EVENTS (changes made so far) ──\n${sessionEvents}`
             : '';
 
-        const userMsg = `── CURRENT FILE: ${filename} ──${indexSummary}${sessionSummaryBlock}\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\`${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
+        // In new-file mode: don't send any existing code as target — just context files + request
+        const newFileModePrefix = _isNewFileMode
+            ? `── MODE: CREATE NEW FILE ──\nUser wants a brand new file created from scratch. Do NOT edit any existing file. Respond ONLY with action type "new_file".\n\n`
+            : '';
+
+        const codeBlock = _isNewFileMode
+            ? ''   // no "FULL CODE" section — there is no target file
+            : `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\``;
+
+        const userMsg = `${newFileModePrefix}── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
 
         try {
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
@@ -6064,12 +6077,35 @@ User wants to restructure, reorder, or reorganize the code layout (move sections
                     _inlineHideTyping();
                     const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
                 }
-                // Auto-create the file directly — no confirmation card needed
-                openFileInTab(parsed.filename, parsed.content || '', true);
-                _inlineAppendMsg('agent',
-                    `✅ "${parsed.filename}" created and opened.` +
-                    (parsed.explanation ? '\n' + parsed.explanation : '')
-                );
+                // new_file mode: paste content directly into current active tab (replace)
+                // Normal mode: open in new tab
+                if (_isNewFileMode) {
+                    const curActiveTab = fileTabs.find(t => t.id === activeTabId);
+                    const newContent = parsed.content || '';
+                    // Save undo snapshot
+                    _agentUndoStack.push(curActiveTab ? curActiveTab.content : editor.getValue());
+                    if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+                    // Replace content in current tab
+                    if (curActiveTab) curActiveTab.content = newContent;
+                    editor.setValue(newContent, -1);
+                    _inlineAppendMsg('agent',
+                        `✅ Code pasted into current file.` +
+                        (parsed.explanation ? '\n' + parsed.explanation : '')
+                    );
+                    // Reset to normal file mode
+                    _inlineSelectedTabId = activeTabId;
+                    _agentTargetTabId = activeTabId;
+                    _inlineRenderFileDropdown();
+                } else {
+                    openFileInTab(parsed.filename, parsed.content || '', true);
+                    _inlineAppendMsg('agent',
+                        `✅ "${parsed.filename}" created and opened.` +
+                        (parsed.explanation ? '\n' + parsed.explanation : '')
+                    );
+                    _inlineSelectedTabId = activeTabId;
+                    _agentTargetTabId = activeTabId;
+                    _inlineRenderFileDropdown();
+                }
                 _inlineChatHistory.push({
                     role: 'assistant',
                     content: `[CREATED FILE: ${parsed.filename}] ${parsed.explanation || ''}`
@@ -6921,35 +6957,95 @@ Use only line numbers visible in the context. Be precise.`;
         if(trigger) { trigger.style.borderColor = 'var(--glass-border)'; trigger.style.background = 'rgba(128,128,128,0.1)'; }
     }
 
+    // ── Context tab IDs — files user has explicitly ticked as context ──
+    let _inlineContextTabIds = new Set();
+
     function _inlineRenderFileDropdown() {
         const dd = document.getElementById('inline-file-dropdown');
         const label = document.getElementById('inline-file-label');
         if (!dd) return;
         dd.innerHTML = '';
+
+        // ── Section header ──
+        const header = document.createElement('div');
+        header.style.cssText = 'padding:6px 12px 4px;font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.6px;border-bottom:1px solid var(--glass-border);';
+        header.textContent = 'Target File';
+        dd.appendChild(header);
+
+        // ── "New File" option ──
+        const isNewSelected = _inlineSelectedTabId === 'new';
+        const newRow = document.createElement('div');
+        newRow.style.cssText = `display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--glass-border);transition:background 0.15s;background:${isNewSelected ? 'rgba(16,185,129,0.12)' : 'transparent'};`;
+        newRow.innerHTML = `
+            <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;">add_circle</span>
+            <span style="flex:1;font-size:11px;font-weight:700;color:var(--accent);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">✦ New File</span>
+            <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;opacity:${isNewSelected ? '1' : '0'};">radio_button_checked</span>`;
+        newRow.ontouchstart = () => newRow.style.background = 'rgba(16,185,129,0.12)';
+        newRow.onclick = (e) => {
+            e.stopPropagation();
+            _inlineSelectedTabId = 'new';
+            _agentTargetTabId = null;
+            if(label) label.textContent = '✦ New File';
+            _inlineCloseFileDropdown();
+            _inlineRenderFileDropdown();
+        };
+        dd.appendChild(newRow);
+
+        // ── Existing file tabs — tap = set as target, long context icon = toggle context ──
         fileTabs.forEach(t => {
-            const isSelected = t.id === _inlineSelectedTabId;
+            const isTarget = t.id === _inlineSelectedTabId;
+            const isCtx = _inlineContextTabIds.has(t.id) && !isTarget;
             const row = document.createElement('div');
-            row.style.cssText = `display:flex;align-items:center;gap:8px;padding:9px 12px;cursor:pointer;border-bottom:1px solid var(--glass-border);transition:background 0.15s;background:${isSelected ? 'var(--accent-dim)' : 'transparent'};`;
+            row.style.cssText = `display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;border-bottom:1px solid var(--glass-border);transition:background 0.15s;background:${isTarget ? 'var(--accent-dim)' : isCtx ? 'rgba(16,185,129,0.05)' : 'transparent'};`;
             row.innerHTML = `
-                <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;">insert_drive_file</span>
+                <span class="material-icons-round" style="font-size:14px;color:${isTarget ? 'var(--accent)' : 'var(--text-color)'};opacity:${isTarget ? '1' : '0.45'};pointer-events:none;">insert_drive_file</span>
                 <span style="flex:1;font-size:11px;font-weight:600;color:var(--text-color);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">${t.name}</span>
-                <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;opacity:${isSelected ? '1' : '0'};">check_circle</span>`;
-            row.ontouchstart = () => row.style.background = 'var(--accent-dim)';
+                <span title="Add as context" style="display:flex;align-items:center;padding:3px 5px;border-radius:5px;cursor:pointer;pointer-events:auto;background:${isCtx ? 'var(--accent-dim)' : 'transparent'};" id="ctx-btn-${t.id}">
+                    <span class="material-icons-round" style="font-size:13px;color:${isCtx ? 'var(--accent)' : 'var(--text-color)'};opacity:${isCtx ? '1' : '0.3'};pointer-events:none;">library_books</span>
+                </span>
+                <span class="material-icons-round" style="font-size:14px;color:var(--accent);pointer-events:none;opacity:${isTarget ? '1' : '0'};">radio_button_checked</span>`;
+
+            // Tap row = set as target file
+            row.ontouchstart = () => { if(!event?.target?.closest('[id^="ctx-btn"]')) row.style.background = 'var(--accent-dim)'; };
             row.onclick = (e) => {
                 e.stopPropagation();
+                if (e.target.closest(`[id="ctx-btn-${t.id}"]`)) {
+                    // Toggle context
+                    if (_inlineContextTabIds.has(t.id)) _inlineContextTabIds.delete(t.id);
+                    else _inlineContextTabIds.add(t.id);
+                    _inlineRenderFileDropdown();
+                    return;
+                }
+                // Set as target
                 _inlineSelectedTabId = t.id;
                 _agentTargetTabId = t.id;
+                _inlineContextTabIds.delete(t.id); // target can't also be context
                 if(label) label.textContent = t.name;
                 _inlineCloseFileDropdown();
                 _inlineRenderFileDropdown();
             };
             dd.appendChild(row);
         });
-        // Remove border from last item
-        if(dd.lastChild) dd.lastChild.style.borderBottom = 'none';
+
+        // ── Context legend ──
+        const legend = document.createElement('div');
+        const ctxCount = _inlineContextTabIds.size;
+        legend.style.cssText = 'padding:6px 12px;font-size:9px;color:var(--text-color);opacity:0.4;font-family:Poppins,sans-serif;border-top:1px solid var(--glass-border);';
+        legend.innerHTML = ctxCount > 0
+            ? `<span style="color:var(--accent);opacity:0.8;">📚 ${ctxCount} context file${ctxCount>1?'s':''} added</span> &nbsp;— tap 🎯 to set target, tap 📚 to toggle context`
+            : `Tap row = set target &nbsp;|&nbsp; Tap 📚 = add as context`;
+        dd.appendChild(legend);
+
         // Update label
-        const activeTab = fileTabs.find(t => t.id === _inlineSelectedTabId) || fileTabs.find(t => t.id === activeTabId);
-        if(label && activeTab) label.textContent = activeTab.name;
+        if (label) {
+            if (_inlineSelectedTabId === 'new') {
+                label.textContent = '✦ New File';
+            } else {
+                const activeTab = fileTabs.find(t => t.id === _inlineSelectedTabId) || fileTabs.find(t => t.id === activeTabId);
+                const ctxTxt = ctxCount > 0 ? ` +${ctxCount}ctx` : '';
+                if (activeTab) label.textContent = activeTab.name + ctxTxt;
+            }
+        }
     }
 
     // ── Inline chat: attachment handling ──
