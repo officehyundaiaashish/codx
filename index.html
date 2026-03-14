@@ -109,7 +109,7 @@
         .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
         .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
-        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 35; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
@@ -151,7 +151,7 @@
         .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
         .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
-        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 35; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
@@ -164,10 +164,11 @@
         .bottom-wrapper.nav-mini #agent-bar { display: none; }
         .bottom-area { 
             background: var(--glass-bg); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; 
+            padding-top: 20px;
             padding-bottom: max(env(safe-area-inset-bottom), 12px);
             box-shadow: none; 
         }
-        .drag-handle-area { width: 100%; height: 16px; display: flex; justify-content: center; align-items: center; }
+        .drag-handle-area { width: 100%; height: 0; display: flex; justify-content: center; align-items: center; }
         .drag-pill { width: 30px; height: 4px; background: var(--text-color); opacity: 0.25; border-radius: 10px; }
 
         /* Cursor nav row — compact */
@@ -1026,7 +1027,7 @@
         .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
         .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
 
-        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 45; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 35; opacity: 0; transition: opacity 0.3s; }
         .scroll-jumpers.visible { opacity: 1; }
         .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
         .jumper-btn:active { transform: scale(0.9); opacity: 1; }
@@ -1040,10 +1041,11 @@
         .bottom-wrapper.nav-mini #agent-bar { display: none; }
         .bottom-area { 
             background: var(--glass-bg); border-top: 1px solid var(--glass-border); border-radius: var(--panel-round) var(--panel-round) 0 0; 
+            padding-top: 20px;
             padding-bottom: max(env(safe-area-inset-bottom), 12px);
             box-shadow: none; 
         }
-        .drag-handle-area { width: 100%; height: 16px; display: flex; justify-content: center; align-items: center; }
+        .drag-handle-area { width: 100%; height: 0; display: flex; justify-content: center; align-items: center; }
         .drag-pill { width: 30px; height: 4px; background: var(--text-color); opacity: 0.25; border-radius: 10px; }
 
         /* Cursor nav row — compact */
@@ -1741,8 +1743,8 @@
                 <div id="agent-thinking"><div class="agent-dots"><span></span><span></span><span></span></div> Analysing...</div>
             </div>
 
-            <div class="drag-handle-area" style="justify-content:center; padding-top:6px; padding-bottom:6px; position:relative; z-index:50;">
-                <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:var(--accent);border:none;border-radius:50%;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;box-shadow:0 2px 10px rgba(16,185,129,0.35);transition:box-shadow 0.2s;">
+            <div class="drag-handle-area" style="justify-content:center; padding:0; position:relative; z-index:50; height:0; overflow:visible; display:flex; align-items:center;">
+                <button id="nav-toggle-btn" onclick="toggleNavSize()" style="background:var(--accent);border:2px solid var(--glass-bg);border-radius:50%;cursor:pointer;color:white;display:flex;align-items:center;justify-content:center;width:36px;height:36px;flex-shrink:0;box-shadow:0 2px 10px rgba(16,185,129,0.35);transition:box-shadow 0.2s;position:absolute;top:-18px;">
                     <span class="material-icons-round" id="nav-toggle-icon" style="font-size:22px;pointer-events:none;transition:transform 0.3s cubic-bezier(0.4,0,0.2,1);">expand_more</span>
                 </button>
             </div>
@@ -1880,7 +1882,12 @@
         </div>
 
         <!-- Repo selector row -->
-        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:5px;font-family:'Poppins',sans-serif;">Repository</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
+            <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.6px;font-family:'Poppins',sans-serif;">Repository</div>
+            <button onclick="_ghRenameRepo()" title="Rename repository" style="background:none;border:none;cursor:pointer;padding:3px;opacity:0.45;color:var(--text-color);display:flex;align-items:center;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.45">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            </button>
+        </div>
         <div style="display:flex;gap:7px;margin-bottom:10px;">
             <div class="gh-select-wrap" style="flex:1;margin-bottom:0;">
                 <select id="gh-repo-select" onchange="fetchGhFiles()">
@@ -2703,6 +2710,25 @@
 
     const findModal = document.getElementById('find-modal');
 
+    // ── Nav hide/restore for modals (find, agent) ──
+    const _T = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+    function _hideNavForModal() {
+        if (_navHidden) return; // already hidden by user, don't interfere
+        const outer = document.getElementById('bottom-outer');
+        const inner = document.getElementById('bottom-panel');
+        if(outer) { outer.style.transition = _T; outer.style.transform = 'translateY(100%)'; }
+        if(inner) { inner.style.transition = _T; inner.style.transform = 'translateY(100%)'; }
+        setTimeout(() => editor.resize(), 350);
+    }
+    function _restoreNavAfterModal() {
+        if (_navHidden) return; // user chose to keep it hidden, respect that
+        const outer = document.getElementById('bottom-outer');
+        const inner = document.getElementById('bottom-panel');
+        if(outer) { outer.style.transition = _T; outer.style.transform = ''; }
+        if(inner) { inner.style.transition = _T; inner.style.transform = ''; }
+        setTimeout(() => editor.resize(), 350);
+    }
+
     // Replace field: strip leading/trailing whitespace and prevent extra newlines on paste
     document.getElementById('replace-input').addEventListener('paste', function(e) {
         e.preventDefault();
@@ -2716,13 +2742,17 @@
         closeGithubModal(); 
         let isActive = findModal.classList.toggle('active'); 
         if (isActive) { 
-            findModal.style.bottom = '20px'; 
-            // Focus find input to push keyboard up smoothly
+            findModal.style.bottom = '20px';
+            // Hide nav panel while find is open
+            _hideNavForModal();
             requestAnimationFrame(() => { 
                 const fi = document.getElementById('find-input');
                 fi.focus(); 
                 fi.setSelectionRange(fi.value.length, fi.value.length);
             });
+        } else {
+            // Restore nav when find closes
+            _restoreNavAfterModal();
         }
     }
     function findText(showErrorAlert = true) { 
@@ -2971,6 +3001,26 @@
 
     function enableLoadBtn() { /* compat shim */ }
     function _enableRepoBtn() { document.getElementById('gh-load-repo-btn').disabled = false; }
+
+    function _ghRenameRepo() {
+        if (!ghCurrentRepo) { cdAlert('Rename Repo', 'No repository selected.', 'warn'); return; }
+        const currentName = ghCurrentRepo.split('/').pop();
+        cdPrompt('Rename Repository', `Enter new name for "${currentName}":`, currentName, async (newName) => {
+            if (!newName || newName === currentName) return;
+            try {
+                await ghApi(`/repos/${ghCurrentRepo}`, 'PATCH', { name: newName });
+                const owner = ghCurrentRepo.split('/')[0];
+                ghCurrentRepo = `${owner}/${newName}`;
+                localStorage.setItem('gh_last_repo', ghCurrentRepo);
+                _ghUpdateHeaderStatus();
+                _ghReposLoaded = false;
+                fetchGhRepos();
+                cdAlert('Renamed', `Repository renamed to "${newName}"`, 'success');
+            } catch(e) {
+                cdAlert('Rename Failed', 'Could not rename. Check permissions.', 'error');
+            }
+        });
+    }
 
     async function _ghQuickOpen(path) {
         try {
@@ -5236,11 +5286,10 @@ No markdown, no backticks, no explanation outside the array.`;
         _inlineChatOpen = true;
 
         const chatPanel = document.getElementById('inline-chat-panel');
-        const nav       = document.getElementById('bottom-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
         // Hide navigation — chat takes its place
-        if (nav) nav.style.visibility = 'hidden';
+        _hideNavForModal();
         chatPanel.classList.add('chat-open');
         if (aiBtn) aiBtn.classList.add('chat-active');
 
@@ -5261,14 +5310,11 @@ No markdown, no backticks, no explanation outside the array.`;
         _inlineChatOpen = false;
 
         const chatPanel = document.getElementById('inline-chat-panel');
-        const nav       = document.getElementById('bottom-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
         // Slide chat down, restore navigation after animation
         chatPanel.classList.remove('chat-open');
-        setTimeout(() => {
-            if (nav) nav.style.visibility = 'visible';
-        }, 360);
+        setTimeout(() => _restoreNavAfterModal(), 360);
         if (aiBtn) aiBtn.classList.remove('chat-active');
     }
 
