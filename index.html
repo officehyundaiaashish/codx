@@ -203,9 +203,9 @@
             bottom: -150%; opacity: 0; pointer-events: none; transform: scale(0.96);
         }
         .modal.active { bottom: 20px; opacity: 1; pointer-events: auto; transform: scale(1); }
-        /* Find modal — sits flush above keyboard */
-        #find-modal { left: 2%; width: 96%; }
-        #find-modal.active { bottom: 8px; }
+        /* Find modal — never transitions bottom, JS controls position above keyboard */
+        #find-modal { left: 2%; width: 96%; bottom: -150% !important; transition: opacity 0.15s, transform 0.15s; }
+        #find-modal.active { bottom: 0 !important; opacity: 1; pointer-events: auto; transform: scale(1); }
         
         .modal textarea, .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
@@ -1864,7 +1864,7 @@
             <div style="font-weight:700;color:var(--accent);margin-bottom:3px;">🔑 GitHub Personal Access Token</div>
             <div style="opacity:0.7;">Generate at github.com → Settings → Developer settings → Personal access tokens</div>
         </div>
-        <input type="password" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" style="user-select:text;-webkit-user-select:text;margin-bottom:10px;">
+        <input type="text" id="gh-token" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" inputmode="text" style="user-select:text;-webkit-user-select:text;margin-bottom:10px;">
         <button class="modal-btn" onclick="saveGhToken()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
             <span class="material-icons-round" style="font-size:16px;pointer-events:none;">login</span>Connect GitHub
         </button>
@@ -1969,7 +1969,7 @@
         <!-- Blank File Pane -->
         <div class="np-pane active" id="np-pane-blank">
             <div class="np-section-label">File Name</div>
-            <input type="text" id="np-filename" placeholder="e.g. index.html, app.js" value="index.html">
+            <input type="text" id="np-filename" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="e.g. index.html, app.js" value="index.html">
             <div class="np-section-label">Save To</div>
             <div class="np-save-options">
                 <div class="np-save-opt selected" id="np-save-local" onclick="npSelectSave('local')">
@@ -2000,9 +2000,9 @@
                 &#9888; Please connect GitHub first via GitSync &#8594; Login
             </div>
             <div class="np-section-label">Repository Name</div>
-            <input type="text" id="np-repo-name" placeholder="my-awesome-project">
+            <input type="text" id="np-repo-name" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="my-awesome-project">
             <div class="np-section-label">Description (optional)</div>
-            <input type="text" id="np-repo-desc" placeholder="Short description of your project">
+            <input type="text" id="np-repo-desc" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="Short description of your project">
             <div class="np-section-label">Visibility</div>
             <div class="np-repo-visibility">
                 <div class="np-vis-opt selected" id="np-vis-public" onclick="npSelectVis('public')">
@@ -2040,7 +2040,7 @@
         <div id="custom-dialog-icon"></div>
         <div id="custom-dialog-title"></div>
         <div id="custom-dialog-msg"></div>
-        <input type="text" id="custom-dialog-input" style="display:none;">
+        <input type="text" id="custom-dialog-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="display:none;">
         <div id="custom-dialog-btns"></div>
     </div>
 </div>
@@ -2082,7 +2082,7 @@
     <!-- Add new agent -->
     <div id="agent-setup-section">
         <div style="font-size:11px; font-weight:700; color:var(--text-color); margin-bottom:8px;">Add Agent — Paste API Key</div>
-        <input type="text" id="agent-api-key" placeholder="AIza... / gsk_... / sk-or-... / sk-..."
+        <input type="text" id="agent-api-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="AIza... / gsk_... / sk-or-... / sk-..."
             style="width:100%; padding:11px 12px; border-radius:10px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); color:var(--text-color); font-family:'Poppins',sans-serif; font-size:13px; margin-bottom:8px; user-select:text; -webkit-user-select:text; transition:border-color 0.15s;"
             oninput="agentKeyPreview(this.value)">
         <div id="agent-detect-badge" style="display:none; align-items:center; gap:8px; background:var(--accent-dim); border:1px solid var(--accent); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:11px; font-weight:600; color:var(--accent);">
@@ -2764,25 +2764,29 @@
     });
     function toggleFindReplace() { 
         closeGithubModal(); 
-        let isActive = findModal.classList.toggle('active'); 
-        if (isActive) { 
-            // Start at bottom of screen, keyboard listener will push it up
-            findModal.style.bottom = '8px';
+        const isActive = !findModal.classList.contains('active');
+        if (isActive) {
+            // Position BEFORE making active so it never appears in wrong place
+            const vv = window.visualViewport;
+            const kbHeight = vv ? Math.max(0, window.innerHeight - vv.height - (vv.offsetTop || 0)) : 0;
+            findModal.style.bottom = (kbHeight > 10 ? kbHeight + 4 : 8) + 'px';
+            findModal.classList.add('active');
             _hideNavForModal();
             requestAnimationFrame(() => { 
                 const fi = document.getElementById('find-input');
                 fi.focus(); 
                 fi.setSelectionRange(fi.value.length, fi.value.length);
-                // After keyboard opens, reposition immediately above it
+                // Re-check position after keyboard fully opens
                 setTimeout(() => {
-                    const vv = window.visualViewport;
-                    if (vv) {
-                        const kbHeight = window.innerHeight - vv.height - vv.offsetTop;
-                        if (kbHeight > 10) findModal.style.bottom = (kbHeight + 4) + 'px';
+                    const vv2 = window.visualViewport;
+                    if (vv2) {
+                        const kb = Math.max(0, window.innerHeight - vv2.height - (vv2.offsetTop || 0));
+                        if (kb > 10) findModal.style.bottom = (kb + 4) + 'px';
                     }
-                }, 350);
+                }, 400);
             });
         } else {
+            findModal.classList.remove('active');
             _restoreNavAfterModal();
         }
     }
@@ -2808,7 +2812,7 @@
     function clearFind() { document.getElementById('find-input').value = ''; document.getElementById('replace-input').value = ''; editor.clearSelection(); }
 
     // --- GITHUB MANAGER ---
-    let ghCurrentRepo = localStorage.getItem('gh_last_repo') || "", ghCurrentFile = "", ghCurrentSha = "";
+    let ghCurrentRepo = localStorage.getItem('gh_last_repo') || "", ghCurrentFile = localStorage.getItem('gh_last_file') || "", ghCurrentSha = "";
 
     function _ghUpdateHeaderStatus() {
         const el = document.getElementById('gh-header-status');
@@ -2855,6 +2859,7 @@
             if (ok) { 
                 localStorage.removeItem('gh_token'); 
                 localStorage.removeItem('gh_last_repo');
+                localStorage.removeItem('gh_last_file');
                 ghCurrentRepo = ''; ghCurrentFile = ''; ghCurrentSha = '';
                 _ghReposLoaded = false; 
                 checkGhLogin(); 
@@ -3011,6 +3016,7 @@
         rowEl.classList.add('selected');
         _ghSelectedItem = { path, name, type, sha };
         ghCurrentFile = path;
+        if (type === 'blob') localStorage.setItem('gh_last_file', path);
         // Enable/disable action buttons
         document.getElementById('gh-load-btn').disabled = type !== 'blob';
         document.getElementById('gh-dl-btn').disabled = type !== 'blob';
@@ -3057,6 +3063,7 @@
         try {
             let fileData = await ghApi(`/repos/${ghCurrentRepo}/contents/${path}`);
             ghCurrentSha = fileData.sha; ghCurrentFile = path;
+            localStorage.setItem('gh_last_file', path);
             let name = path.split('/').pop();
             let content = decodeB64(fileData.content);
             closeGithubModal();
@@ -3203,7 +3210,7 @@
             </div>
             <!-- Commit message -->
             <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.45;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:4px;">Commit Message</div>
-            <input id="commit-msg-input" type="text" value="Update ${fileName}" placeholder="Describe your changes..." style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:12px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'">
+            <input id="commit-msg-input" type="text" autocomplete="off" autocorrect="off" spellcheck="false" value="Update ${fileName}" placeholder="Describe your changes..." style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:12px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'">
             <!-- Action row -->
             <div style="display:flex;gap:7px;">
                 <button onclick="_commitAnotherFile()" style="flex:1;padding:10px 8px;border-radius:10px;border:1px solid var(--glass-border);background:rgba(128,128,128,0.08);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:background 0.15s;" onmouseenter="this.style.background='var(--accent-dim)'" onmouseleave="this.style.background='rgba(128,128,128,0.08)'">
