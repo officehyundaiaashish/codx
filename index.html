@@ -1243,6 +1243,161 @@
             opacity: 1 !important;
         }
 
+        /* ══════════════════════════════════════════
+           DESKTOP LAYOUT  ≥ 768px
+           bottom-panel becomes a left sidebar
+        ══════════════════════════════════════════ */
+        @media (min-width: 768px) {
+
+            /* Sidebar fixed on left */
+            #bottom-panel {
+                position: fixed !important;
+                left: 0; top: 0; bottom: 0;
+                width: 188px;
+                height: 100% !important;
+                transform: none !important;
+                transition: transform 0.3s cubic-bezier(0.4,0,0.2,1) !important;
+                z-index: 40;
+                display: flex !important;
+                flex-direction: column;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            #bottom-panel::-webkit-scrollbar { display: none; }
+
+            /* When hidden — slide left */
+            #bottom-panel.nav-hidden-desktop {
+                transform: translateX(-100%) !important;
+            }
+
+            /* bottom-area fills full height in sidebar */
+            #bottom-panel .bottom-area {
+                flex: 1;
+                border-top: none !important;
+                border-right: 1px solid var(--glass-border);
+                border-radius: 0 !important;
+                padding-top: 12px;
+                padding-bottom: 12px;
+                box-shadow: 2px 0 12px rgba(0,0,0,0.08);
+                display: flex;
+                flex-direction: column;
+                overflow-y: auto;
+                overflow-x: hidden;
+            }
+            #bottom-panel .bottom-area::-webkit-scrollbar { display: none; }
+
+            /* Nav toggle pill — hide on desktop */
+            #nav-toggle-btn { display: none !important; }
+
+            /* Cursor nav row — useless on desktop (keyboard exists) */
+            .cursor-nav { display: none !important; }
+
+            /* Toolbar rows — vertical flow, full width */
+            .toolbar-rows-wrap {
+                max-height: none !important;
+                overflow: visible !important;
+                flex: 1;
+            }
+            .toolbar-rows {
+                flex-direction: column;
+                gap: 2px;
+                padding: 0 8px 8px 8px;
+                opacity: 1 !important;
+                transform: none !important;
+                pointer-events: auto !important;
+            }
+            .bottom-wrapper.nav-mini .toolbar-rows {
+                opacity: 1 !important;
+                transform: none !important;
+                pointer-events: auto !important;
+            }
+            .bottom-wrapper.nav-mini .toolbar-rows-wrap {
+                max-height: none !important;
+            }
+
+            /* Toolbar rows — single column full width */
+            .toolbar-row {
+                grid-template-columns: 1fr;
+                gap: 1px;
+            }
+
+            /* Desktop toolbar buttons — horizontal icon+label, compact */
+            .toolbar-btn {
+                flex-direction: row !important;
+                justify-content: flex-start !important;
+                gap: 8px;
+                padding: 7px 10px !important;
+                border-radius: 8px !important;
+                font-size: 11px !important;
+                opacity: 0.75;
+                width: 100%;
+            }
+            .toolbar-btn:hover { background: rgba(128,128,128,0.1); opacity: 1; }
+            .toolbar-btn .material-icons-round { font-size: 16px !important; flex-shrink: 0; }
+
+            /* Section label dividers between groups */
+            .toolbar-row::before {
+                display: none;
+            }
+
+            /* Last misc row — also single column */
+            #bottom-panel .bottom-area > div[style*="justify-content: center"] {
+                display: flex !important;
+                flex-direction: column !important;
+                gap: 1px;
+                padding: 0 8px;
+                margin-top: 4px;
+            }
+            #bottom-panel .bottom-area > div[style*="justify-content: center"] .toolbar-btn {
+                width: 100% !important;
+            }
+
+            /* Show section labels only on desktop */
+            .dt-section-label { display: block !important; }
+
+            /* Tools row — override inline styles for desktop */
+            #bottom-panel .toolbar-rows > div[style*="justify-content: center"] {
+                flex-direction: column !important;
+                width: 100% !important;
+                margin-top: 0 !important;
+                padding: 0 8px !important;
+            }
+            #bottom-panel .toolbar-rows > div[style*="justify-content: center"] .toolbar-btn {
+                width: 100% !important;
+            }
+
+            /* Sidebar section header labels */
+            .dt-section-label {
+                font-size: 8px;
+                font-weight: 700;
+                color: var(--text-color);
+                opacity: 0.35;
+                text-transform: uppercase;
+                letter-spacing: 0.7px;
+                padding: 10px 10px 3px;
+            }
+
+            /* Push editor + header right to make room for sidebar */
+            .app-layout {
+                padding-left: 188px;
+            }
+
+            /* Inline chat panel — account for sidebar */
+            #inline-chat-panel {
+                left: 188px !important;
+            }
+
+            /* Find modal — account for sidebar */
+            #find-modal {
+                left: calc(188px + 2%) !important;
+                width: calc(96% - 188px) !important;
+            }
+
+            /* Nav hide button in header — on desktop toggles sidebar */
+            /* (JS already calls toggleNavVisibility which uses translateY,
+                we override that with CSS transform for desktop) */
+        }
+
     </style>
 </head>
 <body class="dark-theme no-select">
@@ -1501,6 +1656,7 @@
 
             <div class="toolbar-rows-wrap"><div class="toolbar-rows">
                 <!-- ROW 1: File & Project -->
+                <div class="dt-section-label" style="display:none;">File</div>
                 <div class="toolbar-row">
                     <button class="toolbar-btn" onclick="openNewProjectModal()"><span class="material-icons-round">add_box</span>New</button>
                     <button class="toolbar-btn" onclick="document.getElementById('file-input').click()"><span class="material-icons-round">folder_open</span>Open</button>
@@ -1510,6 +1666,7 @@
                     <button class="toolbar-btn" onclick="openGithubModal()"><span class="material-icons-round">hub</span>GitHub</button>
                 </div>
                 <!-- ROW 2: Edit -->
+                <div class="dt-section-label" style="display:none;">Edit</div>
                 <div class="toolbar-row">
                     <button class="toolbar-btn" onclick="editor.selectAll()"><span class="material-icons-round">select_all</span>Select All</button>
                     <button class="toolbar-btn" onclick="copyClipboard()"><span class="material-icons-round">content_copy</span>Copy</button>
@@ -1518,6 +1675,7 @@
                     <button class="toolbar-btn" onclick="deleteSelection()"><span class="material-icons-round">delete</span>Delete</button>
                     <button class="toolbar-btn" onclick="toggleFindReplace()"><span class="material-icons-round">find_replace</span>Find</button>
                 </div>
+                <div class="dt-section-label" style="display:none;">Tools</div>
                 <div style="display: flex; justify-content: center; width: 100%; margin-top: 4px; gap: 4px;">
                     <button class="toolbar-btn" id="ai-agent-btn" onclick="toggleInlineChat()" style="width: 68px;"><span class="material-icons-round">smart_toy</span>AI Agent</button>
                     <button class="toolbar-btn" onclick="location.reload()" title="Restart app" style="width: 60px;"><span class="material-icons-round">refresh</span>Refresh</button>
@@ -2447,14 +2605,17 @@
         const inner = document.getElementById('bottom-panel');
         const icon = document.getElementById('nav-hide-icon');
         const t = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)';
+        const isDesktop = window.innerWidth >= 768;
         if (_navHidden) {
             if(outer) { outer.style.transition = t; outer.style.transform = 'translateY(100%)'; }
-            if(inner) { inner.style.transition = t; inner.style.transform = 'translateY(100%)'; }
+            if(inner) { inner.style.transition = t; inner.style.transform = isDesktop ? 'translateX(-100%)' : 'translateY(100%)'; }
             if(icon)  { icon.style.opacity = '0.4'; icon.style.transform = 'scale(0.85)'; }
+            if(isDesktop) document.querySelector('.app-layout').style.paddingLeft = '0';
         } else {
             if(outer) { outer.style.transition = t; outer.style.transform = ''; }
             if(inner) { inner.style.transition = t; inner.style.transform = ''; }
             if(icon)  { icon.style.opacity = '1'; icon.style.transform = 'scale(1)'; }
+            if(isDesktop) document.querySelector('.app-layout').style.paddingLeft = '';
         }
         setTimeout(() => editor.resize(), 380);
     }
