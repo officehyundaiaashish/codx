@@ -1667,6 +1667,18 @@
         }
         #inline-chat-send-btn:active { transform: scale(0.88); }
         #inline-chat-send-btn .material-icons-round { font-size: 16px; pointer-events: none; }
+        .prompt-preview-card { background: rgba(16,185,129,0.06); border: 1px solid rgba(16,185,129,0.2); border-radius: 10px; margin: 4px 0; overflow: hidden; font-family: 'Poppins', sans-serif; }
+        .prompt-preview-header { display: flex; align-items: center; gap: 6px; padding: 7px 10px; cursor: pointer; user-select: none; }
+        .prompt-preview-header:active { background: rgba(16,185,129,0.08); }
+        .prompt-preview-title { font-size: 10px; font-weight: 700; color: var(--accent); flex: 1; }
+        .prompt-preview-size { font-size: 9px; color: var(--accent); opacity: 0.6; }
+        .prompt-preview-chevron { font-size: 14px; color: var(--accent); opacity: 0.7; transition: transform 0.2s; pointer-events: none; }
+        .prompt-preview-body { display: none; padding: 0 10px 8px; }
+        .prompt-preview-body.open { display: block; }
+        .prompt-preview-row { display: flex; gap: 6px; align-items: flex-start; padding: 3px 0; border-bottom: 1px solid rgba(16,185,129,0.08); font-size: 10px; }
+        .prompt-preview-row:last-child { border-bottom: none; }
+        .prompt-preview-label { color: var(--accent); font-weight: 700; opacity: 0.7; min-width: 70px; flex-shrink: 0; }
+        .prompt-preview-val { color: var(--text-color); opacity: 0.8; word-break: break-word; line-height: 1.4; }
 
         /* Empty state inside inline chat */
         #inline-chat-empty {
@@ -5801,59 +5813,47 @@ No markdown, no backticks, no explanation outside the array.`;
     }
 
     // ── Typing indicator ──
-    // ── Progressive status messages — cycles while AI is thinking ──
-    const _AGENT_STATUS_STEPS = [
-        { icon: '🔍', text: 'Reading your code...' },
-        { icon: '📖', text: 'Understanding context...' },
-        { icon: '🧠', text: 'Analysing the issue...' },
-        { icon: '⚙️', text: 'Planning changes...' },
-        { icon: '✍️', text: 'Preparing edits...' },
-        { icon: '🔎', text: 'Verifying accuracy...' },
-    ];
     let _statusTimer = null;
-    let _statusStep = 0;
 
     function _inlineShowTyping() {
         const box = document.getElementById('inline-chat-messages');
         const empty = document.getElementById('inline-chat-empty');
         if (empty) empty.remove();
-
-        // Remove existing if any
         const existing = document.getElementById('inline-typing');
         if (existing) existing.remove();
-
         const wrap = document.createElement('div');
         wrap.className = 'chat-msg agent';
         wrap.id = 'inline-typing';
         wrap.innerHTML = `<div class="chat-bubble" style="display:flex;align-items:center;gap:8px;padding:8px 12px;">
-            <span id="inline-status-icon" style="font-size:14px;transition:all 0.3s;">${_AGENT_STATUS_STEPS[0].icon}</span>
-            <span id="inline-status-text" style="font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;color:var(--text-color);opacity:0.75;transition:opacity 0.2s;">${_AGENT_STATUS_STEPS[0].text}</span>
+            <span id="inline-status-icon" style="font-size:14px;">⚙️</span>
+            <span id="inline-status-text" style="font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;color:var(--text-color);opacity:0.75;transition:opacity 0.15s;">Building prompt...</span>
             <div style="display:flex;gap:3px;margin-left:4px;">
                 <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);animation:agentBounce 0.8s infinite;display:inline-block;"></span>
                 <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);animation:agentBounce 0.8s 0.2s infinite;display:inline-block;"></span>
                 <span style="width:4px;height:4px;border-radius:50%;background:var(--accent);animation:agentBounce 0.8s 0.4s infinite;display:inline-block;"></span>
             </div>
+            <span id="inline-prompt-size" style="font-size:9px;font-family:'Poppins',sans-serif;color:var(--accent);opacity:0.6;margin-left:2px;"></span>
         </div>`;
         box.appendChild(wrap);
         _inlineChatScroll();
+    }
 
-        // Cycle through status messages
-        _statusStep = 0;
-        clearInterval(_statusTimer);
-        _statusTimer = setInterval(() => {
-            _statusStep = (_statusStep + 1) % _AGENT_STATUS_STEPS.length;
-            const iconEl = document.getElementById('inline-status-icon');
-            const textEl = document.getElementById('inline-status-text');
-            if (!iconEl || !textEl) { clearInterval(_statusTimer); return; }
-            // Fade out → update → fade in
-            textEl.style.opacity = '0';
-            setTimeout(() => {
-                if (!document.getElementById('inline-status-icon')) return;
-                iconEl.textContent = _AGENT_STATUS_STEPS[_statusStep].icon;
-                textEl.textContent = _AGENT_STATUS_STEPS[_statusStep].text;
-                textEl.style.opacity = '0.75';
-            }, 200);
-        }, 2200);
+    function _inlineUpdateTypingStatus(icon, text, promptChars) {
+        const iconEl = document.getElementById('inline-status-icon');
+        const textEl = document.getElementById('inline-status-text');
+        const sizeEl = document.getElementById('inline-prompt-size');
+        if (!textEl) return;
+        textEl.style.opacity = '0';
+        setTimeout(() => {
+            if (!document.getElementById('inline-status-text')) return;
+            if (iconEl) iconEl.textContent = icon;
+            textEl.textContent = text;
+            textEl.style.opacity = '0.75';
+            if (sizeEl && promptChars != null) {
+                const kb = (promptChars / 1024).toFixed(1);
+                sizeEl.textContent = kb + 'k';
+            }
+        }, 150);
     }
 
     function _inlineHideTyping() {
@@ -6064,9 +6064,48 @@ STRICT RULES:
 
         const userMsg = `${newFileModePrefix}── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}${editRules}`;
 
+        _inlineUpdateTypingStatus('📤', 'Prompt ready — sending to AI...', userMsg.length);
+
         try {
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
             _inlineHideTyping();
+
+            // ── Prompt preview card ──
+            (function() {
+                const box = document.getElementById('inline-chat-messages');
+                if (!box) return;
+                const sizeKb = (userMsg.length / 1024).toFixed(1);
+                const ctxFiles = [];
+                if (!_isNewFileMode && targetTab) ctxFiles.push({ label: '📄 Target', val: targetTab.name + '  (' + (targetTab.content ? (targetTab.content.length/1024).toFixed(1) + 'k chars' : '0k') + ')' });
+                if (_inlineContextTabIds && _inlineContextTabIds.size > 0) {
+                    _inlineContextTabIds.forEach(tid => {
+                        const t = fileTabs.find(f => f.id === tid);
+                        if (t) ctxFiles.push({ label: '📚 Context', val: t.name + '  (' + (t.content ? (t.content.length/1024).toFixed(1) + 'k chars' : '0k') + ')' });
+                    });
+                }
+                if (_inlineAttachment) ctxFiles.push({ label: '📎 Attach', val: _inlineAttachment.name });
+                const histLen = historyForAPI.length;
+                const rows = [
+                    { label: 'Request', val: userRequest.length > 120 ? userRequest.slice(0,120) + '…' : userRequest },
+                    ...ctxFiles,
+                    { label: 'History', val: histLen > 0 ? histLen + ' prev message' + (histLen > 1 ? 's' : '') : 'none' },
+                    { label: 'Rules', val: _isNewFileMode ? 'New file mode (minimal)' : 'Edit mode (full)' },
+                    { label: 'Total size', val: sizeKb + 'k chars → ' + (_AGENT_SYSTEM_PROMPT.length/1024).toFixed(1) + 'k system + ' + sizeKb + 'k user' },
+                ];
+                const id = 'ppc_' + Date.now();
+                const card = document.createElement('div');
+                card.className = 'prompt-preview-card';
+                card.innerHTML = '<div class="prompt-preview-header" onclick="(function(el){var b=el.parentElement.querySelector('.prompt-preview-body');var c=el.querySelector('.prompt-preview-chevron');b.classList.toggle('open');c.style.transform=b.classList.contains('open')?'rotate(180deg)':'rotate(0deg)';})(this)">' +
+                    '<span class="material-icons-round prompt-preview-chevron">expand_more</span>' +
+                    '<span class="prompt-preview-title">📋 Prompt sent to AI</span>' +
+                    '<span class="prompt-preview-size">' + sizeKb + 'k</span>' +
+                    '</div>' +
+                    '<div class="prompt-preview-body">' +
+                    rows.map(r => '<div class="prompt-preview-row"><span class="prompt-preview-label">' + r.label + '</span><span class="prompt-preview-val">' + r.val + '</span></div>').join('') +
+                    '</div>';
+                box.appendChild(card);
+                _inlineChatScroll();
+            })();
 
             // Save this exchange to history
             // Store user message WITH full code so history is accurate
