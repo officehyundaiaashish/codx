@@ -5874,12 +5874,27 @@ No markdown, no backticks, no explanation outside the array.`;
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
 
+        // Always reset position before opening — clears any stale values from keyboard/nav resize
+        chatPanel.style.bottom = '';
+        chatPanel.style.height = '';
+        chatPanel.style.top = '';
+
         // Open chat panel and hide navigation panel
         chatPanel.classList.add('chat-open');
         if (aiBtn) aiBtn.classList.add('chat-active');
-        
+
         const inner = document.getElementById('bottom-panel');
         if(inner) { inner.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)'; inner.style.transform = 'translateY(100%)'; }
+
+        // Re-apply keyboard position if keyboard is already open
+        const vv = window.visualViewport;
+        if (vv) {
+            const kbHeight = window.innerHeight - vv.height - (vv.offsetTop || 0);
+            if (kbHeight > 50) {
+                chatPanel.style.bottom = kbHeight + 'px';
+                chatPanel.style.height = (vv.height * 0.5) + 'px';
+            }
+        }
 
         // Sync agent name
         const ag = _activeAgent();
