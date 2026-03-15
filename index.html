@@ -1896,9 +1896,14 @@
         <!-- Repo selector row -->
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;">
             <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.6px;font-family:'Poppins',sans-serif;">Repository</div>
-            <button onclick="_ghRenameRepo()" title="Rename repository" style="background:none;border:none;cursor:pointer;padding:3px;opacity:0.45;color:var(--text-color);display:flex;align-items:center;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.45">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
-            </button>
+            <div style="display:flex;align-items:center;gap:2px;">
+                <button onclick="_ghDownloadRepo()" title="Download repository as ZIP" style="background:none;border:none;cursor:pointer;padding:3px;opacity:0.45;color:var(--text-color);display:flex;align-items:center;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.45">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                </button>
+                <button onclick="_ghRenameRepo()" title="Rename repository" style="background:none;border:none;cursor:pointer;padding:3px;opacity:0.45;color:var(--text-color);display:flex;align-items:center;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.45">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+                </button>
+            </div>
         </div>
         <div style="display:flex;gap:7px;margin-bottom:10px;">
             <div class="gh-select-wrap" style="flex:1;margin-bottom:0;">
@@ -1940,10 +1945,12 @@
             <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:11px;background:linear-gradient(135deg,#10b981,#059669);">
                 <span class="material-icons-round" style="font-size:16px;pointer-events:none;">upload</span>Commit
             </button>
-            <button class="modal-btn secondary" id="gh-undo-btn" onclick="undoLastCommit()" disabled title="Undo last commit for selected file" style="width:80px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:11px;">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">undo</span>Undo
+            <button class="modal-btn" id="gh-undo-btn" onclick="undoLastCommit()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:11px;background:linear-gradient(135deg,#10b981,#059669);">
+                <span class="material-icons-round" style="font-size:16px;pointer-events:none;">history</span>Undo
             </button>
         </div>
+        <!-- Commit history dropdown (shown when Undo clicked) -->
+        <div id="gh-commit-history" style="display:none;margin-top:8px;border-radius:12px;border:1px solid var(--glass-border);overflow:hidden;background:var(--glass-bg);max-height:180px;overflow-y:auto;"></div>
     </div>
 </div>
 
@@ -3295,6 +3302,34 @@
     }
 
 
+    function _ghDownloadRepo() {
+        if (!ghCurrentRepo) { cdAlert('Download', 'Select a repository first.', 'warn'); return; }
+        const token = localStorage.getItem('gh_token');
+        const repoName = ghCurrentRepo.split('/').pop();
+        // GitHub API: download ZIP archive of default branch
+        const url = `https://api.github.com/repos/${ghCurrentRepo}/zipball`;
+        // Create a temporary anchor with auth header via fetch → blob
+        cdConfirm('Download Repo', `Download "${repoName}" as ZIP?`, 'Download', 'Cancel', async (ok) => {
+            if (!ok) return;
+            showToast('Downloading...', 'download');
+            try {
+                const resp = await fetch(url, {
+                    headers: token ? { 'Authorization': `token ${token}` } : {}
+                });
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const blob = await resp.blob();
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = `${repoName}.zip`;
+                a.click();
+                URL.revokeObjectURL(a.href);
+                showToast(`"${repoName}.zip" downloaded`, 'download_done');
+            } catch(e) {
+                cdAlert('Download Failed', e.message || 'Could not download repository.', 'error');
+            }
+        });
+    }
+
     function _ghRenameRepo() {
         if (!ghCurrentRepo) { cdAlert('Rename Repo', 'No repository selected.', 'warn'); return; }
         const currentName = ghCurrentRepo.split('/').pop();
@@ -3603,38 +3638,80 @@
             cdAlert('Undo Commit', 'Please select a file first.', 'warn');
             return;
         }
+        const histBox = document.getElementById('gh-commit-history');
+        if (!histBox) return;
+
+        // Toggle — if already open, close it
+        if (histBox.style.display !== 'none') {
+            histBox.style.display = 'none';
+            return;
+        }
+
         const fname = ghCurrentFile.split('/').pop();
-        cdConfirm(
-            'Undo Last Commit',
-            `Revert "${fname}" to the state before its last commit?\n\nThis will load the previous version into the editor. You can then commit again to save the revert.`,
-            'Revert File', 'Cancel',
-            async (ok) => {
-                if (!ok) return;
-                try {
-                    // Get commit history for this file
-                    const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=2`);
-                    if (!commits || commits.length < 2) {
-                        cdAlert('Undo Commit', 'No previous commit found for this file — it may be the first commit.', 'info');
-                        return;
-                    }
-                    const prevSha = commits[1].sha;
-                    // Get file content at previous commit
-                    const prevFile = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}?ref=${prevSha}`);
-                    const prevContent = decodeB64(prevFile.content);
-                    // Load into editor
-                    const curTab = fileTabs.find(t => t.id === activeTabId);
-                    if (curTab) curTab.content = prevContent;
-                    editor.setValue(prevContent, -1);
-                    closeGithubModal();
-                    showToast(`"${fname}" reverted to previous version`, 'undo');
-                    cdAlert('Reverted', `"${fname}" has been reverted.\n\nThe previous version is now in the editor. Click Commit to save this revert to GitHub.`, 'success');
-                } catch (e) {
-                    let err = e.message || 'Failed to undo.';
-                    try { const j = JSON.parse(err); if (j.message) err = j.message; } catch(_) {}
-                    cdAlert('Undo Failed', err, 'error');
-                }
+        histBox.style.display = 'block';
+        histBox.innerHTML = `<div style="padding:10px 12px;font-size:11px;color:var(--accent);font-family:'Poppins',sans-serif;display:flex;align-items:center;gap:6px;">
+            <span class="material-icons-round" style="font-size:14px;animation:commitSpin 0.8s linear infinite;">refresh</span>Loading commits...
+        </div>`;
+
+        try {
+            const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=10`);
+            if (!commits || commits.length === 0) {
+                histBox.innerHTML = `<div style="padding:10px 12px;font-size:11px;opacity:0.5;font-family:'Poppins',sans-serif;">No commits found for this file.</div>`;
+                return;
             }
-        );
+
+            const header = `<div style="padding:6px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;opacity:0.4;font-family:'Poppins',sans-serif;border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--glass-bg);">
+                Last ${commits.length} commits — tap to restore
+            </div>`;
+
+            const rows = commits.map((c, i) => {
+                const msg   = (c.commit.message || '').split('\n')[0].slice(0, 38);
+                const date  = new Date(c.commit.author.date).toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+                const sha7  = c.sha.slice(0, 7);
+                const isCurrent = i === 0;
+                return `<div onclick="${isCurrent ? '' : `_restoreCommit('${c.sha}','${fname.replace(/'/g,"\\'")}',this)`}"
+                    style="padding:6px 10px;border-bottom:1px solid var(--glass-border);cursor:${isCurrent ? 'default' : 'pointer'};
+                    display:flex;align-items:center;gap:6px;transition:background 0.15s;
+                    ${isCurrent ? 'opacity:0.4;' : ''}"
+                    ${isCurrent ? '' : 'onmouseenter="this.style.background=\'var(--accent-dim)\'" onmouseleave="this.style.background=\'\'"'}>
+                    <span style="font-family:'Courier New',monospace;font-size:9px;color:var(--accent);flex-shrink:0;">${sha7}</span>
+                    <span style="font-size:10px;font-family:'Poppins',sans-serif;color:var(--text-color);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${msg || '(no message)'}</span>
+                    <span style="font-size:9px;opacity:0.4;font-family:'Poppins',sans-serif;flex-shrink:0;">${date}</span>
+                    ${isCurrent ? '<span style="font-size:8px;background:var(--accent-dim);color:var(--accent);border-radius:3px;padding:1px 4px;flex-shrink:0;font-family:Poppins,sans-serif;font-weight:700;">now</span>' : ''}
+                </div>`;
+            }).join('');
+
+            histBox.innerHTML = header + rows;
+        } catch(e) {
+            let err = e.message || 'Failed to load commits.';
+            try { const j = JSON.parse(err); if (j.message) err = j.message; } catch(_) {}
+            histBox.innerHTML = `<div style="padding:10px 12px;font-size:11px;color:#f87171;font-family:'Poppins',sans-serif;">${err}</div>`;
+        }
+    }
+
+    async function _restoreCommit(sha, fname, rowEl) {
+        // Highlight selected row
+        rowEl.style.background = 'var(--accent-dim)';
+        rowEl.style.pointerEvents = 'none';
+        rowEl.innerHTML += `<div style="font-size:10px;color:var(--accent);font-family:'Poppins',sans-serif;margin-top:3px;display:flex;align-items:center;gap:4px;">
+            <span class="material-icons-round" style="font-size:12px;animation:commitSpin 0.8s linear infinite;">refresh</span>Restoring...
+        </div>`;
+        try {
+            const prevFile = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}?ref=${sha}`);
+            const prevContent = decodeB64(prevFile.content);
+            const curTab = fileTabs.find(t => t.id === activeTabId);
+            if (curTab) curTab.content = prevContent;
+            editor.setValue(prevContent, -1);
+            // Hide history box
+            const histBox = document.getElementById('gh-commit-history');
+            if (histBox) histBox.style.display = 'none';
+            closeGithubModal();
+            showToast(`"${fname}" restored to ${sha.slice(0,7)}`, 'undo');
+        } catch(e) {
+            let err = e.message || 'Restore failed.';
+            try { const j = JSON.parse(err); if (j.message) err = j.message; } catch(_) {}
+            cdAlert('Restore Failed', err, 'error');
+        }
     }
 
     // LOAD ENTIRE REPO
