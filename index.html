@@ -1079,8 +1079,7 @@
             box-shadow: 0 -3px 16px rgba(0,0,0,0.08);
             overflow: hidden;
             transform: translateY(100%);
-            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1),
-                        bottom 0.22s ease;
+            transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
             pointer-events: none;
         }
         #inline-chat-panel.chat-open {
@@ -1823,41 +1822,34 @@
     _setBodyHeight();
 
     // When chat panel is open and keyboard appears:
-    // shrink ONLY the chat panel, never the body/header
+    // Keyboard handler for chat panel
+    // interactive-widget=resizes-visual: keyboard overlaps fixed elements,
+    // layout viewport unchanged. Panel at bottom:0 is already correct.
+    // Only fullscreen mode needs adjustment (panel fills screen top-to-bottom).
     function _handleChatKeyboard() {
         if (!_inlineChatOpen) { _setBodyHeight(); return; }
         const vv = window.visualViewport;
         if (!vv) return;
-        const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
         const panel = document.getElementById('inline-chat-panel');
         if (!panel) return;
 
         if (_chatIsFullscreen) {
-            // Fullscreen: panel stays below header, shrinks above keyboard
+            // Fullscreen only: panel fills screen, must shrink above keyboard
+            const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
             const hh = parseInt(getComputedStyle(document.documentElement)
                 .getPropertyValue('--header-h')) || 48;
             if (kbHeight > 50) {
-                // Shrink height to fit between header and keyboard
                 panel.style.height = (vv.height - hh) + 'px';
                 panel.style.top    = hh + 'px';
                 panel.style.bottom = '';
             } else {
-                // Keyboard gone — let CSS handle it
                 panel.style.height = '';
                 panel.style.top    = '';
                 panel.style.bottom = '';
             }
-        } else {
-            // Normal mode: DO NOT change height — only shift bottom up above keyboard
-            // Changing height causes the panel to grow/jump behind header
-            if (kbHeight > 50) {
-                panel.style.bottom = kbHeight + 'px';
-                // No height change — panel keeps its 45vh CSS height
-            } else {
-                panel.style.bottom = '0';
-                panel.style.height = '';
-            }
         }
+        // Normal mode: do nothing — panel is fixed:bottom:0,
+        // keyboard slides over it, textarea stays visible inside panel
     }
 
     window.visualViewport && window.visualViewport.addEventListener('resize', _handleChatKeyboard);
@@ -5333,9 +5325,6 @@ No markdown, no backticks, no explanation outside the array.`;
         chatPanel.style.transform = '';
 
         chatPanel.classList.add('chat-open');
-        // Reset any keyboard-adjusted height
-        chatPanel.style.height = '';
-        chatPanel.style.bottom = '0';
         if (aiBtn) aiBtn.classList.add('chat-active');
 
         const inner = document.getElementById('bottom-panel');
