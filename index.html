@@ -1578,6 +1578,10 @@
                     <line x1="15" y1="15" x2="15" y2="21"/>
                 </svg>
             </button>
+            <!-- Desktop/Mobile layout toggle -->
+            <button class="icon-btn no-select" id="layout-toggle-btn" onclick="toggleLayoutMode()" title="Toggle Desktop/Mobile layout" style="width:30px;height:30px;background:none;min-width:30px;">
+                <span class="material-icons-round" id="layout-toggle-icon" style="color:var(--accent);font-size:18px;">desktop_windows</span>
+            </button>
             <button class="icon-btn no-select" style="width:30px; height:30px; background:none; min-width:30px;" onclick="toggleTheme()">
                 <span class="material-icons-round" id="theme-icon" style="color:var(--accent); font-size:18px;">light_mode</span>
             </button>
@@ -1829,7 +1833,6 @@
                     <button class="toolbar-btn" onclick="location.reload()" title="Restart app" style="width: 60px;"><span class="material-icons-round">refresh</span>Refresh</button>
                     <button class="toolbar-btn" id="no-anim-btn" onclick="toggleAnimations()" title="Disable all animations" style="width: 68px;"><span class="material-icons-round">motion_photos_off</span>No Anim</button>
                     <button class="toolbar-btn" id="plain-text-btn" onclick="togglePlainTextMode()" title="Force plain text mode" style="width: 68px;"><span class="material-icons-round">text_fields</span>Plain Text</button>
-                    <button class="toolbar-btn" id="layout-toggle-btn" onclick="toggleLayoutMode()" title="Switch Desktop/Mobile layout" style="width: 68px;"><span class="material-icons-round">desktop_windows</span>Desktop</button>
                 </div>
             </div></div>
         </div>
@@ -5973,21 +5976,38 @@ No markdown, no backticks, no explanation outside the array.`;
         }
         if (last < text.length) parts.push({ type: 'text', content: text.slice(last) });
 
-        return parts.map(p => {
+        return parts.map((p, idx) => {
             if (p.type === 'code') {
                 const id = 'cc_' + Math.random().toString(36).slice(2, 8);
                 const escaped = p.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                // Use base64 to safely store code with newlines in data attribute
                 const b64 = btoa(unescape(encodeURIComponent(p.content)));
-                return `<div class="code-canvas">
+
+                // Detect OLD / NEW block labels
+                const langLower = p.lang.toLowerCase();
+                const isOld = /old|original|before|current/.test(langLower);
+                const isNew = /new|updated|after|replace/.test(langLower);
+
+                // Check if previous part was an OLD block — if so this NEW block gets Apply
+                const prevPart = parts[idx - 1];
+                const prevIsOld = prevPart && prevPart.type === 'code' && /old|original|before|current/.test(prevPart.lang.toLowerCase());
+                const applyBtn = (isNew && prevIsOld)
+                    ? `<button class="code-canvas-btn" onclick="_canvasApplyReplace(this)" data-old="${btoa(unescape(encodeURIComponent(prevPart.content)))}" data-new="${b64}" data-b64="1" style="background:var(--accent);color:white;">
+                        <span class="material-icons-round">auto_fix_high</span>Apply
+                       </button>`
+                    : '';
+
+                const labelStyle = isOld ? 'color:#f87171;' : isNew ? 'color:#4ade80;' : '';
+
+                return `<div class="code-canvas" ${isOld ? 'data-old-canvas="1"' : ''}>
                     <div class="code-canvas-header">
-                        <span class="code-canvas-lang">${p.lang}</span>
+                        <span class="code-canvas-lang" style="${labelStyle}">${p.lang}</span>
                         <button class="code-canvas-btn" onclick="_canvasOpenInEditor(this)" data-code="${b64}" data-lang="${p.lang}" data-b64="1">
                             <span class="material-icons-round">open_in_new</span>Open
                         </button>
                         <button class="code-canvas-btn" id="${id}" onclick="_canvasCopy(this)" data-code="${b64}" data-b64="1">
                             <span class="material-icons-round">content_copy</span>Copy
                         </button>
+                        ${applyBtn}
                     </div>
                     <div class="code-canvas-body">${escaped}</div>
                 </div>`;
@@ -5995,18 +6015,56 @@ No markdown, no backticks, no explanation outside the array.`;
             // Text: render inline markdown
             let html = p.content
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-                // bold **text**
                 .replace(/\*\*(.+?)\*\*/g, '<span class="chat-md-bold">$1</span>')
-                // inline code `text`
                 .replace(/`([^`]+)`/g, '<span class="chat-inline-code">$1</span>')
-                // numbered list: lines starting with "1. " etc
                 .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="chat-md-li" style="padding-left:18px;"><span style="position:absolute;left:0;color:var(--accent);font-weight:700;">$1.</span>$2</div>')
-                // bullet list
                 .replace(/^[-*]\s+(.+)$/gm, '<div class="chat-md-li">$1</div>')
-                // line breaks
                 .replace(/\n/g, '<br>');
             return html;
         }).join('');
+    }
+
+    // ── Apply old→new block replacement ──
+    function _canvasApplyReplace(btn) {
+        const oldCode = decodeURIComponent(escape(atob(btn.dataset.old || '')));
+        const newCode = decodeURIComponent(escape(atob(btn.dataset.new || '')));
+        const current = editor.getValue();
+
+        if (current.includes(oldCode)) {
+            // Found — replace first occurrence
+            const updated = current.split(oldCode).join(newCode);
+            const curTab = fileTabs.find(t => t.id === activeTabId);
+            if (curTab) curTab.content = updated;
+            editor.setValue(updated, -1);
+            showToast('Applied ✓', 'auto_fix_high');
+            // Update button to show success
+            btn.innerHTML = '<span class="material-icons-round">check</span>Applied';
+            btn.style.background = '#16a34a';
+            btn.onclick = null;
+        } else {
+            // No match — show retry option
+            btn.innerHTML = '<span class="material-icons-round">search_off</span>No Match';
+            btn.style.background = '#dc2626';
+            btn.onclick = null;
+            // Add retry button after
+            const retryBtn = document.createElement('button');
+            retryBtn.className = 'code-canvas-btn';
+            retryBtn.style.cssText = 'background:rgba(245,158,11,0.2);color:#f59e0b;margin-left:4px;';
+            retryBtn.innerHTML = '<span class="material-icons-round">replay</span>Retry AI';
+            retryBtn.onclick = () => _canvasRetryMatch(oldCode, newCode, retryBtn);
+            btn.parentNode.insertBefore(retryBtn, btn.nextSibling);
+        }
+    }
+
+    // ── Retry: send old block back to AI asking for correction ──
+    function _canvasRetryMatch(oldCode, newCode, btn) {
+        btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span>Asking AI...';
+        btn.onclick = null;
+        const ta = document.getElementById('inline-chat-textarea');
+        if (ta) {
+            ta.value = `The OLD BLOCK you gave me doesn't match anything in my current code. Here is the old block you sent:\n\`\`\`\n${oldCode}\n\`\`\`\nPlease look at the current code carefully and send the correct OLD BLOCK and NEW BLOCK again.`;
+            sendInlineChat();
+        }
     }
 
     function _canvasDecodeCode(btn) {
@@ -7735,13 +7793,13 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Toggle Desktop / Mobile layout ──
     function toggleLayoutMode() {
         const isForced = document.body.classList.toggle('force-desktop');
-        const btn = document.getElementById('layout-toggle-btn');
+        const icon = document.getElementById('layout-toggle-icon');
         if (isForced) {
-            if (btn) { btn.style.color = 'var(--accent)'; btn.style.background = 'var(--accent-dim)'; btn.querySelector('.material-icons-round').textContent = 'phone_android'; btn.lastChild.textContent = 'Mobile'; }
-            showToast('Desktop Layout', 'desktop_windows');
+            if (icon) icon.textContent = 'phone_android';
+            showToast('Desktop Layout ON', 'desktop_windows');
             localStorage.setItem('codx_force_desktop', '1');
         } else {
-            if (btn) { btn.style.color = ''; btn.style.background = ''; btn.querySelector('.material-icons-round').textContent = 'desktop_windows'; btn.lastChild.textContent = 'Desktop'; }
+            if (icon) icon.textContent = 'desktop_windows';
             showToast('Mobile Layout', 'phone_android');
             localStorage.removeItem('codx_force_desktop');
         }
@@ -7752,8 +7810,8 @@ Use only line numbers visible in the context. Be precise.`;
     if (localStorage.getItem('codx_force_desktop')) {
         document.body.classList.add('force-desktop');
         setTimeout(() => {
-            const btn = document.getElementById('layout-toggle-btn');
-            if (btn) { btn.style.color = 'var(--accent)'; btn.style.background = 'var(--accent-dim)'; btn.querySelector('.material-icons-round').textContent = 'phone_android'; btn.lastChild.textContent = 'Mobile'; }
+            const icon = document.getElementById('layout-toggle-icon');
+            if (icon) icon.textContent = 'phone_android';
         }, 100);
     }
     function togglePlainTextMode() {
