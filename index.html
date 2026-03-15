@@ -6281,7 +6281,7 @@ STRICT FORMAT RULES:
 
         // ── Show prompt info in live log ──
         const historyForAPI = _buildHistoryForAPI();
-        if (!_isNewFileMode && targetTab) _inlineLogActivity('Target: ' + targetTab.name + ' (' + ((targetTab.content?.length||0)/1024).toFixed(1) + 'k)');
+        if (!_isNewFileMode && targetTab) _inlineLogActivity('Target: ' + targetTab.name);
         if (historyForAPI.length > 0)     _inlineLogActivity('History: ' + historyForAPI.length + ' msgs');
         _inlineLogActivity('Prompt ready: ' + (userMsg.length/1024).toFixed(1) + 'k chars');
         _inlineUpdateTypingStatus('📤', 'Generating...', userMsg.length);
