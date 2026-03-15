@@ -2872,9 +2872,21 @@
             const content = e.target.result;
             const name = file.name;
             if(fileTabs.length > 0) {
-                cdConfirm('Open File', `Open "${name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
-                    openFileInTab(name, content, useNew);
-                });
+                _showDialog(
+                    '<span class="material-icons-round" style="color:var(--accent)">folder_open</span>',
+                    'Open File',
+                    `Open "${name}"`,
+                    null,
+                    [
+                        { label: 'Cancel',       cls: 'secondary', value: 'cancel'  },
+                        { label: 'Current Tab',  cls: 'secondary', value: 'current' },
+                        { label: 'New Tab',      cls: 'primary',   value: 'new'     },
+                    ]
+                );
+                _cdResolve = (choice) => {
+                    if (!choice || choice === 'cancel') return;
+                    openFileInTab(name, content, choice === 'new');
+                };
             } else {
                 openFileInTab(name, content, false);
             }
