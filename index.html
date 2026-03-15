@@ -3681,7 +3681,10 @@
                 </div>`;
             }).join('');
 
-            histBox.innerHTML = header + rows;
+            histBox.innerHTML = header + rows + `<div onclick="document.getElementById('gh-commit-history').style.display='none'" style="padding:7px 10px;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;border-top:1px solid var(--glass-border);position:sticky;bottom:0;background:var(--glass-bg);transition:background 0.15s;" onmouseenter="this.style.background='rgba(239,68,68,0.08)'" onmouseleave="this.style.background='var(--glass-bg)'">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                <span style="font-size:10px;color:#ef4444;font-family:'Poppins',sans-serif;font-weight:600;pointer-events:none;">Cancel</span>
+            </div>`;
         } catch(e) {
             let err = e.message || 'Failed to load commits.';
             try { const j = JSON.parse(err); if (j.message) err = j.message; } catch(_) {}
