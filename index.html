@@ -6065,6 +6065,8 @@ DECIDE THE RESPONSE TYPE YOURSELF based on what the user wants:
 
 ─── EXPLAIN (question / review / debug) ───
 Reply in plain text. Same language as user (English/Hindi/Hinglish).
+Use this for greetings, questions, explanations — ANY message that is NOT a code task.
+NEVER wrap a conversational reply in JSON. If user says "hello", just say hello back in plain text.
 
 ─── EDIT (fix / change / add / remove / improve in existing code) ───
 Return ONLY this JSON, nothing else:
@@ -6405,8 +6407,7 @@ STRICT FORMAT RULES:
 
             } else if (parsed.type === 'edit') {
                 if (!Array.isArray(parsed.edits) || parsed.edits.length === 0) {
-                    _inlineAppendMsg('agent', parsed.explanation || 'No changes were needed.');
-                } else {
+                    _inlineAppendMsg('agent', parsed.explanation || 'No changes were needed.');                } else {
                     if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
                     const card = _buildInlineEditCard(parsed.edits, targetTab);
                     _inlineAppendMsg('agent', '', card);
@@ -6439,6 +6440,17 @@ STRICT FORMAT RULES:
                 }
 
             } else if (parsed.type === 'new_file') {
+                // Guard: if content is just plain text (Flash mistaking chat as file creation)
+                const _isActualFile = c => c && (
+                    /<[a-z][\s\S]*>/i.test(c) ||
+                    /[{};]/.test(c) ||
+                    /function |const |let |var |=>|@media|#[a-z]/i.test(c) ||
+                    c.split('\n').length > 4
+                );
+                if (!_isActualFile(parsed.content)) {
+                    // Flash treating conversation as file — show explanation/content as chat
+                    _inlineAppendMsg('agent', parsed.explanation || parsed.content || raw.trim());
+                } else {
                 const truncated = _detectTruncation(parsed.content);
                 if (truncated) {
                     _inlineShowTyping();
@@ -6465,6 +6477,7 @@ STRICT FORMAT RULES:
                         showToast(`${newFname} created`, 'add_circle');
                     }
                 }));
+                }
 
             } else if (parsed.type === 'reorganize') {
                 // Guard: if content looks like plain text (not code), show in chat
