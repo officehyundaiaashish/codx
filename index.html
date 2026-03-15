@@ -1081,6 +1081,7 @@
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
             pointer-events: none;
+            will-change: transform;
         }
         #inline-chat-panel.chat-open {
             transform: translateY(0);
@@ -1152,6 +1153,7 @@
             padding: 10px 12px;
             display: flex; flex-direction: column;
             gap: 8px;
+            overscroll-behavior: contain;
         }
         #inline-chat-messages::-webkit-scrollbar { display: none; }
 
@@ -5812,23 +5814,25 @@ STRICT FORMAT RULES:
         requestAnimationFrame(() => { ta.value = ''; ta.style.height = 'auto'; });
 
         const sendBtn = document.getElementById('inline-chat-send-btn');
-        sendBtn.disabled = false;
-        sendBtn.disabled = false;
 
-        // ── Switch to STOP button ──
+        // ── Switch to STOP button — batch both changes in one rAF to prevent flicker ──
         const _inlineAbortCtrl = new AbortController();
+        requestAnimationFrame(() => {
+            sendBtn.innerHTML = '<span class="material-icons-round">stop</span>';
+            sendBtn.style.background = '#ef4444';
+        });
         sendBtn.onclick = () => {
             _inlineAbortCtrl.abort();
-            sendBtn.onclick = sendInlineChat; // restore immediately
-            sendBtn.innerHTML = '<span class="material-icons-round">send</span>';
-            sendBtn.style.background = '';
+            sendBtn.onclick = sendInlineChat; // restore immediately so button is never dead
+            requestAnimationFrame(() => {
+                sendBtn.innerHTML = '<span class="material-icons-round">send</span>';
+                sendBtn.style.background = '';
+            });
         };
-        sendBtn.innerHTML = '<span class="material-icons-round">stop</span>';
-        sendBtn.style.background = '#ef4444';
 
         _inlineShowTyping();
-        // Yield one frame so browser paints the typing bubble before heavy work
-        await new Promise(r => setTimeout(r, 0));
+        // Double rAF: first commits DOM paint, second runs after browser has actually rendered
+        await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
 
         // ── Target file ──
         const _isNewFileMode = _inlineSelectedTabId === 'new';
@@ -6009,11 +6013,14 @@ Rules:
             else friendly = msg.slice(0, 120);
             _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + friendly);
         } finally {
-            // Always restore send button
+            // Restore onclick immediately — never leave button dead
             sendBtn.disabled = false;
             sendBtn.onclick = sendInlineChat;
-            sendBtn.innerHTML = '<span class="material-icons-round">send</span>';
-            sendBtn.style.background = '';
+            // Visuals batched in rAF to prevent flash
+            requestAnimationFrame(() => {
+                sendBtn.innerHTML = '<span class="material-icons-round">send</span>';
+                sendBtn.style.background = '';
+            });
             _inlineChatScroll();
         }
     }
