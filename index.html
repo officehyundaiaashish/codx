@@ -1815,6 +1815,15 @@
     const ghOverlay = document.getElementById('gh-overlay');
     // Declared early — used in visualViewport resize handler before full init
     var _inlineChatOpen = false;
+    // Declared early — used before their definition blocks to prevent TDZ crash
+    let _forcePlainText = false;
+    let _animationsDisabled = false;
+    let _chatIsFullscreen = false;
+    const findModal = document.getElementById('find-modal');
+    // Declared early — used in saved-settings restore blocks before their definition
+    let _lastZoomSize = 10;
+    let _inPreview = false;
+    let _navHidden = false;
 
     function _setBodyHeight() {
         if (_inlineChatOpen) return;
@@ -2317,7 +2326,7 @@
 
     const editorWrapper = document.getElementById('editor');
     let initialDistance = null, initialFontSize = 10;
-    let _lastZoomSize = 10, _zoomFrame = null;
+    let _zoomFrame = null;
     editorWrapper.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
             initialDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
@@ -2356,7 +2365,7 @@
 
     const bottomPanel = document.getElementById('bottom-panel');
 
-    let _inPreview = false;
+    // _inPreview declared early at top
     let _navMini = true; // Set to true so it starts collapsed by default
 
     // Initialize the UI state on load
@@ -2387,7 +2396,7 @@
     }
 
     // ── NAV COMPLETELY HIDE/SHOW ──
-    let _navHidden = false;
+    // _navHidden declared early at top
     function toggleNavVisibility() {
         _navHidden = !_navHidden;
         const outer = document.getElementById('bottom-outer');
@@ -2604,8 +2613,6 @@
         if (window.showSaveFilePicker) { try { const handle = await window.showSaveFilePicker({ suggestedName: currentFileName }); const writable = await handle.createWritable(); await writable.write(code); await writable.close(); return; } catch (err) {} }
         const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([code], { type: 'text/html' })); a.download = currentFileName; a.click();
     }
-
-    const findModal = document.getElementById('find-modal');
 
     // ── Nav hide/restore for modals (find, agent) ──
 
@@ -7137,7 +7144,6 @@ Use only line numbers visible in the context. Be precise.`;
     }
 
     // ── Inline chat: fullscreen toggle ──
-    let _chatIsFullscreen = false;
     function _toggleChatFullscreen() {
         _chatIsFullscreen = !_chatIsFullscreen;
         const panel  = document.getElementById('inline-chat-panel');
@@ -7155,7 +7161,6 @@ Use only line numbers visible in the context. Be precise.`;
     }
 
     // ── Toggle all CSS animations OFF/ON ──
-    let _animationsDisabled = false;
     function toggleAnimations() {
         _animationsDisabled = !_animationsDisabled;
         const btn = document.getElementById('no-anim-btn');
@@ -7181,7 +7186,6 @@ Use only line numbers visible in the context. Be precise.`;
     }
 
     // ── Toggle force plain text mode ON/OFF ──
-    let _forcePlainText = false;
     function togglePlainTextMode() {
         _forcePlainText = !_forcePlainText;
         const btn = document.getElementById('plain-text-btn');
