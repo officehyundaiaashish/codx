@@ -1767,51 +1767,83 @@
 <!-- Agent Setup Modal -->
 <div id="agent-overlay" onclick="closeAgentModal()"></div>
 <div id="agent-modal" class="no-select">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px;">
-        <div style="display:flex; align-items:center; gap:8px;">
-            <span class="material-icons-round" style="color:var(--accent); font-size:20px;">smart_toy</span>
-            <span style="font-weight:700; font-size:15px; color:var(--text-color);">AI Agents</span>
+
+    <!-- Header -->
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+        <div style="width:30px;height:30px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+            <span class="material-icons-round" style="color:var(--accent);font-size:16px;pointer-events:none;">smart_toy</span>
         </div>
-        <span class="material-icons-round" onclick="closeAgentModal()" style="opacity:0.5; cursor:pointer; font-size:20px; pointer-events:auto;">close</span>
+        <span style="font-weight:700;font-size:14px;color:var(--text-color);flex:1;">AI Agents</span>
+        <span class="material-icons-round" onclick="closeAgentModal()" style="opacity:0.4;cursor:pointer;font-size:18px;pointer-events:auto;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.4">close</span>
+    </div>
+
+    <!-- Connected agents -->
+    <div id="agent-connected-section" style="display:none;margin-bottom:12px;">
+        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:6px;">Connected — tap to set active</div>
+        <div id="agent-list-container" style="max-height:200px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;display:flex;flex-direction:column;gap:4px;"></div>
+        <div style="display:flex;gap:6px;margin-top:8px;">
+            <button class="modal-btn secondary" onclick="disconnectAgent()" style="flex:1;font-size:11px;padding:7px;display:flex;align-items:center;justify-content:center;gap:4px;">
+                <span class="material-icons-round" style="font-size:13px;pointer-events:none;">delete_sweep</span>Remove All
+            </button>
+            <button class="modal-btn" onclick="closeAgentModal();openAgentBar();" style="flex:1;font-size:11px;padding:7px;display:flex;align-items:center;justify-content:center;gap:4px;">
+                <span class="material-icons-round" style="font-size:13px;pointer-events:none;">chat</span>Open Chat
+            </button>
+        </div>
+        <div style="height:1px;background:var(--glass-border);margin:12px 0 10px;"></div>
+    </div>
+
+    <!-- Add agent -->
+    <div id="agent-setup-section">
+        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;margin-bottom:7px;">Add Agent — Paste API Key</div>
+        <input type="text" id="agent-api-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
+            placeholder="AIza… / gsk_… / sk-or-… / sk-…"
+            style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:7px;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;outline:none;"
+            oninput="agentKeyPreview(this.value)">
+        <div id="agent-detect-badge" style="display:none;align-items:center;gap:7px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.35);border-radius:8px;padding:7px 11px;margin-bottom:8px;font-size:11px;font-weight:600;color:var(--accent);">
+            <span class="material-icons-round" style="font-size:14px;pointer-events:none;">auto_awesome</span>
+            <span id="agent-detect-text">Detected: —</span>
+        </div>
+        <button class="modal-btn" onclick="connectAgent()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;">
+            <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add_circle</span>Connect Agent
+        </button>
     </div>
 
     <!-- Free providers tip -->
-    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.25);border-radius:10px;padding:9px 12px;margin-bottom:12px;font-size:10px;line-height:1.7;color:var(--text-color);opacity:0.85;">
-        <span style="font-weight:700;color:var(--accent);"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Best Free AI:</span>
-        <span style="font-weight:600;"> Groq</span> — console.groq.com · No quota · Super fast<br>
-        <span style="font-weight:600;"> OpenRouter</span> — openrouter.ai · Many free models<br>
-        <span style="font-weight:600;"> Gemini</span> — aistudio.google.com · Has daily limits
+    <div style="margin-top:12px;background:rgba(16,185,129,0.05);border:1px solid rgba(16,185,129,0.15);border-radius:10px;padding:9px 12px;">
+        <div style="font-size:9px;font-weight:700;color:var(--accent);margin-bottom:6px;display:flex;align-items:center;gap:4px;">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="pointer-events:none;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>FREE PROVIDERS
+        </div>
+        <div style="display:flex;flex-direction:column;gap:5px;">
+            <a href="https://console.groq.com" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                <div style="width:22px;height:22px;border-radius:6px;background:rgba(245,158,11,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-color);">Groq <span style="font-size:9px;font-weight:600;color:#f59e0b;background:rgba(245,158,11,0.1);border-radius:4px;padding:1px 5px;">FASTEST</span></div>
+                    <div style="font-size:9px;color:var(--text-color);opacity:0.4;">console.groq.com · No quota</div>
+                </div>
+            </a>
+            <a href="https://aistudio.google.com" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                <div style="width:22px;height:22px;border-radius:6px;background:rgba(16,185,129,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-color);">Gemini <span style="font-size:9px;font-weight:600;color:var(--accent);background:var(--accent-dim);border-radius:4px;padding:1px 5px;">FREE</span></div>
+                    <div style="font-size:9px;color:var(--text-color);opacity:0.4;">aistudio.google.com · Daily limits</div>
+                </div>
+            </a>
+            <a href="https://openrouter.ai" target="_blank" style="display:flex;align-items:center;gap:8px;text-decoration:none;">
+                <div style="width:22px;height:22px;border-radius:6px;background:rgba(139,92,246,0.12);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
+                </div>
+                <div style="min-width:0;">
+                    <div style="font-size:11px;font-weight:700;color:var(--text-color);">OpenRouter <span style="font-size:9px;font-weight:600;color:#8b5cf6;background:rgba(139,92,246,0.1);border-radius:4px;padding:1px 5px;">MANY FREE</span></div>
+                    <div style="font-size:9px;color:var(--text-color);opacity:0.4;">openrouter.ai · Many free models</div>
+                </div>
+            </a>
+        </div>
     </div>
 
-    <!-- Connected agents list -->
-    <div id="agent-connected-section" style="display:none; margin-bottom:10px;">
-        <div style="font-size:10px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:7px;">Connected Agents — tap to switch active</div>
-        <div id="agent-list-container" style="max-height:420px;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;"></div>
-        <div style="display:flex;gap:8px;margin-top:8px;">
-            <button class="modal-btn secondary" onclick="disconnectAgent()" style="flex:1;font-size:11px;padding:8px;">
-                <span style="display:flex;align-items:center;justify-content:center;gap:4px;"><span class="material-icons-round" style="font-size:14px;">logout</span>Remove All</span>
-            </button>
-            <button class="modal-btn" onclick="closeAgentModal();openAgentBar();" style="flex:1;font-size:11px;padding:8px;display:flex;align-items:center;justify-content:center;gap:4px;">
-                <span class="material-icons-round" style="font-size:14px;pointer-events:none;">chat</span> Open Chat
-            </button>
-        </div>
-        <div style="height:1px;background:var(--glass-border);margin:12px 0;"></div>
-    </div>
-
-    <!-- Add new agent -->
-    <div id="agent-setup-section">
-        <div style="font-size:11px; font-weight:700; color:var(--text-color); margin-bottom:8px;">Add Agent — Paste API Key</div>
-        <input type="text" id="agent-api-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="AIza... / gsk_... / sk-or-... / sk-..."
-            style="width:100%; padding:11px 12px; border-radius:10px; background:rgba(0,0,0,0.25); border:1px solid var(--glass-border); color:var(--text-color); font-family:'Poppins',sans-serif; font-size:13px; margin-bottom:8px; user-select:text; -webkit-user-select:text; transition:border-color 0.15s;"
-            oninput="agentKeyPreview(this.value)">
-        <div id="agent-detect-badge" style="display:none; align-items:center; gap:8px; background:var(--accent-dim); border:1px solid var(--accent); border-radius:8px; padding:9px 12px; margin-bottom:10px; font-size:11px; font-weight:600; color:var(--accent);">
-            <span class="material-icons-round" style="font-size:15px;pointer-events:none;">auto_awesome</span>
-            <span id="agent-detect-text">Detected: —</span>
-        </div>
-        <button class="modal-btn" onclick="connectAgent()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;">
-            <span class="material-icons-round" style="font-size:16px;pointer-events:none;">add_circle</span> Connect Agent
-        </button>
-    </div>
 </div>
 
 <script>
@@ -3534,7 +3566,7 @@
             }
 
             const row = document.createElement('div');
-            row.style.cssText = `padding:8px 10px;border-radius:10px;margin-bottom:5px;border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--glass-border)'};background:${isActive ? 'var(--accent-dim)' : 'rgba(0,0,0,0.15)'};cursor:pointer;transition:all 0.2s;`;
+            row.style.cssText = `padding:7px 10px;border-radius:10px;border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--glass-border)'};background:${isActive ? 'var(--accent-dim)' : 'transparent'};cursor:pointer;transition:all 0.18s;`;
             row.innerHTML = `
                 <div style="display:flex;align-items:center;gap:8px;">
                     <div style="width:8px;height:8px;border-radius:50%;background:${isActive ? '#10b981' : '#6b7280'};flex-shrink:0;"></div>
