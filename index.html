@@ -3777,9 +3777,79 @@
                 url:'https://api.groq.com/openai/v1/chat/completions',
                 model:'llama-3.3-70b-versatile', label:'Groq – Llama 3.3 70B · Free ⚡' };
         if (/^sk-or-/i.test(key))
-            return { provider:'openrouter', providerName:'OpenRouter – Auto Free',
-                url:'https://openrouter.ai/api/v1/chat/completions',
-                model:'openrouter/free', label:'OpenRouter – Auto Free' };
+            return [
+                // ── Reasoning / Thinking ──
+                { provider:'openrouter', providerName:'Qwen3 235B (Thinking)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'qwen/qwen3-235b-a22b:free', label:'OpenRouter – Qwen3 235B · Thinking · Free' },
+                { provider:'openrouter', providerName:'Qwen3 Coder 480B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'qwen/qwen3-coder:free', label:'OpenRouter – Qwen3 Coder 480B · Free · 262K ctx' },
+                { provider:'openrouter', providerName:'Qwen3 Next 80B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'qwen/qwen3-next-80b-a3b-instruct:free', label:'OpenRouter – Qwen3 Next 80B · Free · 262K ctx' },
+                { provider:'openrouter', providerName:'Qwen3 4B (Thinking)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'qwen/qwen3-4b:free', label:'OpenRouter – Qwen3 4B · Thinking · Free' },
+                { provider:'openrouter', providerName:'NVIDIA Nemotron 3 Super 120B (Reasoning)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nvidia/nemotron-3-super-120b-a12b:free', label:'OpenRouter – NVIDIA Nemotron 3 Super 120B · Reasoning · Free' },
+                { provider:'openrouter', providerName:'Arcee Trinity Large Preview (Reasoning)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'arcee-ai/trinity-large-preview:free', label:'OpenRouter – Arcee Trinity Large · Reasoning · Free' },
+                { provider:'openrouter', providerName:'Liquid LFM 2.5 1.2B (Thinking)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'liquid/lfm-2.5-1.2b-thinking:free', label:'OpenRouter – Liquid LFM 2.5 · Thinking · Free' },
+                // ── Standard Free ──
+                { provider:'openrouter', providerName:'OpenAI GPT OSS 120B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'openai/gpt-oss-120b:free', label:'OpenRouter – OpenAI GPT OSS 120B · Free · 131K ctx' },
+                { provider:'openrouter', providerName:'OpenAI GPT OSS 20B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'openai/gpt-oss-20b:free', label:'OpenRouter – OpenAI GPT OSS 20B · Free · 131K ctx' },
+                { provider:'openrouter', providerName:'Llama 3.3 70B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'meta-llama/llama-3.3-70b-instruct:free', label:'OpenRouter – Llama 3.3 70B · Free · 128K ctx' },
+                { provider:'openrouter', providerName:'Mistral Small 3.1 24B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'mistralai/mistral-small-3.1-24b-instruct:free', label:'OpenRouter – Mistral Small 3.1 24B · Free · 128K ctx' },
+                { provider:'openrouter', providerName:'Gemma 3 27B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'google/gemma-3-27b-it:free', label:'OpenRouter – Gemma 3 27B · Free · 131K ctx' },
+                { provider:'openrouter', providerName:'Gemma 3 12B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'google/gemma-3-12b-it:free', label:'OpenRouter – Gemma 3 12B · Free' },
+                { provider:'openrouter', providerName:'Gemma 3 4B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'google/gemma-3-4b-it:free', label:'OpenRouter – Gemma 3 4B · Free' },
+                { provider:'openrouter', providerName:'NVIDIA Nemotron 3 Nano 30B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nvidia/nemotron-3-nano-30b-a3b:free', label:'OpenRouter – NVIDIA Nemotron 3 Nano 30B · Free' },
+                { provider:'openrouter', providerName:'NVIDIA Nemotron Nano 12B VL',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nvidia/nemotron-nano-12b-v2-vl:free', label:'OpenRouter – NVIDIA Nemotron Nano 12B VL · Free' },
+                { provider:'openrouter', providerName:'StepFun Step 3.5 Flash',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'stepfun/step-3.5-flash:free', label:'OpenRouter – StepFun Step 3.5 Flash · Free · 256K ctx' },
+                { provider:'openrouter', providerName:'Hermes 3 Llama 405B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nousresearch/hermes-3-llama-3.1-405b:free', label:'OpenRouter – Hermes 3 Llama 405B · Free' },
+                { provider:'openrouter', providerName:'GLM 4.5 Air',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'z-ai/glm-4.5-air:free', label:'OpenRouter – GLM 4.5 Air · Free · 131K ctx' },
+                { provider:'openrouter', providerName:'Arcee Trinity Mini',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'arcee-ai/trinity-mini:free', label:'OpenRouter – Arcee Trinity Mini · Free · 131K ctx' },
+                { provider:'openrouter', providerName:'Llama 3.2 3B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'meta-llama/llama-3.2-3b-instruct:free', label:'OpenRouter – Llama 3.2 3B · Free · 131K ctx' },
+                { provider:'openrouter', providerName:'Liquid LFM 2.5 1.2B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'liquid/lfm-2.5-1.2b-instruct:free', label:'OpenRouter – Liquid LFM 2.5 1.2B · Free' },
+                { provider:'openrouter', providerName:'Dolphin Mistral 24B',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'cognitivecomputations/dolphin-mistral-24b-venice-edition:free', label:'OpenRouter – Dolphin Mistral 24B · Free' },
+            ];
         if (/^sk-ant-[A-Za-z0-9]{10,}/.test(key))
             return { provider:'anthropic', providerName:'Claude Haiku',
                 url:'https://api.anthropic.com/v1/messages',
@@ -3802,7 +3872,7 @@
         const d = _detectProviderFromKey(val);
         if (d) {
             badge.style.display = 'flex';
-            text.textContent = Array.isArray(d) ? `${d.length} Gemini models (Pro · Flash · Flash-Lite)` : d.label;
+            text.textContent = Array.isArray(d) ? (d[0]?.provider === 'gemini' ? `${d.length} Gemini models` : `${d.length} OpenRouter free models`) : d.label;
             inp.style.borderColor = 'var(--accent)';
         } else {
             badge.style.display = 'none';
