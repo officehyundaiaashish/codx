@@ -252,7 +252,7 @@
         
         .modal textarea, .modal input, .modal select { width: 100%; padding: 10px; margin-bottom: 8px; border-radius: 8px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); color: var(--text-color); font-family: 'Courier New', Courier, monospace; font-size: 13px; }
         .modal-actions { display: flex; gap: 8px; }
-        .modal-btn { flex: 1; padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
+        .modal-btn { padding: 10px; border: none; border-radius: 8px; background: var(--accent); color: white; font-weight: 600; font-family: 'Poppins', sans-serif; font-size: 13px; cursor: pointer; transition: opacity 0.2s, transform 0.15s; }
         .modal-btn:active { opacity: 0.8; transform: scale(0.97); }
         .modal-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text-color); }
 
@@ -1935,10 +1935,15 @@
             </button>
         </div>
 
-        <!-- Commit button -->
-        <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:11px;background:linear-gradient(135deg,#10b981,#059669);">
-            <span class="material-icons-round" style="font-size:16px;pointer-events:none;">upload</span>Commit
-        </button>
+        <!-- Commit + Undo row -->
+        <div style="display:flex;gap:6px;">
+            <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:11px;background:linear-gradient(135deg,#10b981,#059669);">
+                <span class="material-icons-round" style="font-size:16px;pointer-events:none;">upload</span>Commit
+            </button>
+            <button class="modal-btn secondary" id="gh-undo-btn" onclick="undoLastCommit()" disabled title="Undo last commit for selected file" style="width:80px;flex-shrink:0;display:flex;align-items:center;justify-content:center;gap:5px;font-size:11px;padding:11px;">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">undo</span>Undo
+            </button>
+        </div>
     </div>
 </div>
 
@@ -3278,6 +3283,8 @@
         if (type === 'blob') {
             const commitBtn = document.getElementById('gh-commit-btn');
             if (commitBtn) commitBtn.disabled = false;
+            const undoBtn = document.getElementById('gh-undo-btn');
+            if (undoBtn) undoBtn.disabled = false;
             showToast(`"${name}" selected — tap Commit to push`, 'cloud_upload');
         }
     }
@@ -3319,6 +3326,8 @@
             cdConfirm('Open File', `Open "${name}" in a new tab?`, 'New Tab', 'Current Tab', (useNew) => {
                 openFileInTab(name, content, useNew);
                 document.getElementById('gh-commit-btn').disabled = false;
+                const undoBtn = document.getElementById('gh-undo-btn');
+                if (undoBtn) undoBtn.disabled = false;
             });
         } catch(e) { cdAlert('GitHub', 'Failed to open file.', 'error'); }
     }
@@ -3586,6 +3595,46 @@
             return;
         }
         _showCommitModal();
+    }
+
+    // ── Undo last commit for selected file ──
+    async function undoLastCommit() {
+        if (!ghCurrentRepo || !ghCurrentFile) {
+            cdAlert('Undo Commit', 'Please select a file first.', 'warn');
+            return;
+        }
+        const fname = ghCurrentFile.split('/').pop();
+        cdConfirm(
+            'Undo Last Commit',
+            `Revert "${fname}" to the state before its last commit?\n\nThis will load the previous version into the editor. You can then commit again to save the revert.`,
+            'Revert File', 'Cancel',
+            async (ok) => {
+                if (!ok) return;
+                try {
+                    // Get commit history for this file
+                    const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=2`);
+                    if (!commits || commits.length < 2) {
+                        cdAlert('Undo Commit', 'No previous commit found for this file — it may be the first commit.', 'info');
+                        return;
+                    }
+                    const prevSha = commits[1].sha;
+                    // Get file content at previous commit
+                    const prevFile = await ghApi(`/repos/${ghCurrentRepo}/contents/${ghCurrentFile}?ref=${prevSha}`);
+                    const prevContent = decodeB64(prevFile.content);
+                    // Load into editor
+                    const curTab = fileTabs.find(t => t.id === activeTabId);
+                    if (curTab) curTab.content = prevContent;
+                    editor.setValue(prevContent, -1);
+                    closeGithubModal();
+                    showToast(`"${fname}" reverted to previous version`, 'undo');
+                    cdAlert('Reverted', `"${fname}" has been reverted.\n\nThe previous version is now in the editor. Click Commit to save this revert to GitHub.`, 'success');
+                } catch (e) {
+                    let err = e.message || 'Failed to undo.';
+                    try { const j = JSON.parse(err); if (j.message) err = j.message; } catch(_) {}
+                    cdAlert('Undo Failed', err, 'error');
+                }
+            }
+        );
     }
 
     // LOAD ENTIRE REPO
