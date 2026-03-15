@@ -2157,8 +2157,7 @@
     let _navHidden = false;
 
     function _setBodyHeight() {
-        // Always use window.innerHeight — never visualViewport.height
-        // visualViewport shrinks when keyboard appears, which pushes header up
+        if (_inPreview) return; // preview handles its own sizing via CSS
         document.body.style.height = window.innerHeight + 'px';
     }
     _setBodyHeight();
@@ -2191,6 +2190,7 @@
     // layout viewport unchanged. Panel at bottom:0 is already correct.
     // Only fullscreen mode needs adjustment (panel fills screen top-to-bottom).
     function _handleChatKeyboard() {
+        if (_inPreview) return; // never touch layout while preview is active
         if (!_inlineChatOpen) { _setBodyHeight(); return; }
         const vv = window.visualViewport;
         if (!vv) return;
@@ -2198,7 +2198,6 @@
         if (!panel) return;
 
         if (_chatIsFullscreen) {
-            // Fullscreen only: panel fills screen, must shrink above keyboard
             const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
             const hh = parseInt(getComputedStyle(document.documentElement)
                 .getPropertyValue('--header-h')) || 48;
@@ -2212,8 +2211,6 @@
                 panel.style.bottom = '';
             }
         }
-        // Normal mode: do nothing — panel is fixed:bottom:0,
-        // keyboard slides over it, textarea stays visible inside panel
     }
 
     window.visualViewport && window.visualViewport.addEventListener('resize', _handleChatKeyboard);
@@ -2865,20 +2862,28 @@
             const t = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
             if(outerEl) { outerEl.style.transition = t; outerEl.style.transform = 'translateY(100%)'; }
             if(innerEl) { innerEl.style.transition = t; innerEl.style.transform = 'translateY(100%)'; }
+            // Force hide chat panel in preview — it's fixed positioned and would overlay preview
+            const chatPanel = document.getElementById('inline-chat-panel');
+            if (chatPanel) { chatPanel.style.transform = 'translateY(100%)'; chatPanel.style.pointerEvents = 'none'; }
             document.getElementById('find-modal').classList.remove('active');
             closeGithubModal();
-            if (typeof closeInlineChat === 'function' && _inlineChatOpen) closeInlineChat();
             _refreshPreview();
         } else {
             _inPreview = false;
             prvEl.classList.remove('active-pane');
             edEl.style.opacity = '1';
             edEl.style.pointerEvents = 'auto';
-            // Only restore nav if user hasn't manually hidden it
+            // Restore nav panel if user hasn't hidden it
             if(!_navHidden) {
                 const t = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
                 if(outerEl) { outerEl.style.transition = t; outerEl.style.transform = ''; }
                 if(innerEl) { innerEl.style.transition = t; innerEl.style.transform = ''; }
+            }
+            // Restore chat panel if it was open
+            const chatPanel = document.getElementById('inline-chat-panel');
+            if (chatPanel && _inlineChatOpen) {
+                chatPanel.style.transform = '';
+                chatPanel.style.pointerEvents = 'auto';
             }
             checkScrollable();
             editor.blur();
