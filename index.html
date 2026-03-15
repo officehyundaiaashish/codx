@@ -5748,13 +5748,12 @@ No markdown, no backticks, no explanation outside the array.`;
         // Keep last N turns
         const history = _inlineChatHistory.slice(-(_HISTORY_MAX_TURNS * 2));
 
-        // Strip large code blocks from older user messages (not recent 4)
-        // Everything else (requests, applied summaries, feedback) is kept intact
-        const codeBlockRx = /```[\s\S]{200,}```/g;
-        return history.map((msg, i) => {
-            const isRecent = i >= history.length - 4;
-            if (!isRecent && msg.role === 'user') {
-                return { ...msg, content: msg.content.replace(codeBlockRx, '[full code — see latest version in current message]') };
+        // Strip ALL code blocks from history — current message already has fresh code
+        // Only keep: user requests, AI explanations, applied/created/rejected summaries
+        const codeBlockRx = /```[\s\S]{100,}```/g;
+        return history.map(msg => {
+            if (msg.role === 'user') {
+                return { ...msg, content: msg.content.replace(codeBlockRx, '[code — see current message]').replace(/── FULL CODE[\s\S]*?```\n```/g, '').replace(/── CONTEXT ──[\s\S]*?── USER REQUEST ──\n/, '') };
             }
             return msg;
         });
@@ -6136,8 +6135,7 @@ STRICT FORMAT RULES:
                 const banner = document.createElement('div');
                 banner.id = 'inline-no-agent-banner';
                 banner.style.cssText = 'margin:12px;padding:14px;border-radius:14px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.3);display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;';
-                banner.innerHTML = `
-                    <span class="material-icons-round" style="font-size:28px;color:var(--accent);">smart_toy</span>
+                banner.innerHTML = `<span class="material-icons-round" style="font-size:28px;color:var(--accent);">smart_toy</span>
                     <div style="font-size:12px;font-weight:700;color:var(--text-color);font-family:'Poppins',sans-serif;">No Agent Connected</div>
                     <div style="font-size:11px;color:var(--text-color);opacity:0.6;font-family:'Poppins',sans-serif;line-height:1.5;">Connect a free AI agent to start chatting.<br>Groq is free &amp; super fast.</div>
                     <button onclick="openAgentModal();document.getElementById('inline-no-agent-banner')?.remove();" style="background:var(--accent);color:white;border:none;border-radius:10px;padding:9px 20px;font-size:12px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;">
@@ -6160,370 +6158,184 @@ STRICT FORMAT RULES:
         sendBtn.disabled = true;
         _inlineShowTyping();
 
-
+        // ── Target file ──
         const _isNewFileMode = _inlineSelectedTabId === 'new';
         if (!_isNewFileMode && _inlineSelectedTabId) _agentTargetTabId = _inlineSelectedTabId;
         const targetTab = _isNewFileMode ? null : (fileTabs.find(t => t.id === (_agentTargetTabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId));
         const curTab = fileTabs.find(t => t.id === activeTabId);
         if (curTab) curTab.content = editor.getValue();
         const code = (!_isNewFileMode && targetTab) ? targetTab.content : '';
-        const filename = (!_isNewFileMode && targetTab) ? targetTab.name : 'new file';
+        const filename = (!_isNewFileMode && targetTab) ? targetTab.name : '';
 
-        // Add line numbers so AI can reference precise locations
-        // Per-provider safe limits (chars, not tokens — 1 token ≈ 4 chars):
-        //   Groq llama-3.3-70b  → ~128k tokens context, but on_demand tier throttles large requests
-        //                          Safe payload: ~60k chars  (~15k tokens)
-        //   Gemini 1.5 flash    → 1M tokens  → no practical limit, send full
-        //   OpenAI gpt-4o-mini  → 128k tokens → send full
-        //   Anthropic Haiku     → 200k tokens → send full
-        //   OpenRouter / DeepSeek → conservative 80k chars
+        // ── Code with line numbers (provider-safe truncation) ──
         const _provider = _activeAgent()?.provider || '';
-        const _MAX_CHARS = {
-            groq:       60000,   // Groq on_demand tier safe limit
-            gemini:     Infinity,
-            openai:     Infinity,
-            anthropic:  Infinity,
-            openrouter: 80000,
-            deepseek:   80000,
-        }[_provider] ?? 80000;
-
-        let numberedCode = code.split('\n').map((l, i) => `${i+1}| ${l}`).join('\n');
+        const _MAX_CHARS = { groq:60000, gemini:Infinity, openai:Infinity, anthropic:Infinity, openrouter:80000, deepseek:80000 }[_provider] ?? 80000;
+        let numberedCode = code.split('\n').map((l,i) => `${i+1}| ${l}`).join('\n');
         if (numberedCode.length > _MAX_CHARS) {
             const lines = numberedCode.split('\n');
-            // Send head + tail so AI sees structure at both ends
-            const headLines = Math.floor(_MAX_CHARS * 0.65 / 80); // ~65% from top
-            const tailLines = Math.floor(_MAX_CHARS * 0.30 / 80); // ~30% from bottom
-            const head = lines.slice(0, headLines).join('\n');
-            const tail = lines.slice(-tailLines).join('\n');
-            const skipped = lines.length - headLines - tailLines;
-            numberedCode = head + `\n\n// ⚠️ [${skipped} lines omitted — file too large for ${_provider} free tier. Use Gemini/OpenAI for full context]\n\n` + tail;
+            const h = Math.floor(_MAX_CHARS * 0.65 / 80);
+            const t2 = Math.floor(_MAX_CHARS * 0.30 / 80);
+            numberedCode = lines.slice(0,h).join('\n') + `\n\n// ⚠️ [${lines.length-h-t2} lines omitted — too large for ${_provider} free tier]\n\n` + lines.slice(-t2).join('\n');
         }
 
-        // Build/refresh index for this file
-        if (!_codeIndex || _codeIndexFile !== filename) _buildCodeIndex();
-        const indexSummary = _getCodeIndexSummary();
-
-        // Attachment context
-        const attachCtx = _inlineAttachment
-            ? `\n\n── ATTACHED FILE (${_inlineAttachment.name}) ──\n${_inlineAttachment.content.slice(0, 2000)}`
-            : '';
-        _inlineClearAttach();
-
-        // ── Build context files — ONLY files user explicitly ticked in dropdown ──
-        // _inlineContextTabIds = Set of tab IDs user has marked as context
+        // ── Context files (user explicitly ticked) ──
         const _CTX_PER_FILE = Math.floor(_MAX_CHARS * 0.15);
         let otherFilesCtx = '';
         if (_inlineContextTabIds && _inlineContextTabIds.size > 0) {
             _inlineContextTabIds.forEach(tid => {
-                if (tid === (targetTab ? targetTab.id : activeTabId)) return; // skip target
+                if (tid === (targetTab ? targetTab.id : activeTabId)) return;
                 const t = fileTabs.find(f => f.id === tid);
-                if (!t || !t.content || !t.content.trim()) return;
-                let preview = t.content;
-                if (preview.length > _CTX_PER_FILE) {
-                    preview = preview.slice(0, _CTX_PER_FILE) + `\n// ... [${t.name} truncated for context]`;
-                }
+                if (!t || !t.content?.trim()) return;
+                const preview = t.content.length > _CTX_PER_FILE ? t.content.slice(0,_CTX_PER_FILE) + '\n// ...[truncated]' : t.content;
                 otherFilesCtx += `\n\n── CONTEXT FILE: ${t.name} ──\n\`\`\`\n${preview}\n\`\`\``;
             });
         }
 
-        // ── Build full structured context message ──
-        // Every call gets: full current code + all open files + session events
-        const historyForAPI = _buildHistoryForAPI();
+        // ── Attachment ──
+        const attachCtx = _inlineAttachment ? `\n\n── ATTACHED FILE (${_inlineAttachment.name}) ──\n${_inlineAttachment.content.slice(0,2000)}` : '';
+        _inlineClearAttach();
 
-        // Summarise what has happened so far in this session (for AI awareness)
+        // ── Session events ──
         const sessionEvents = _inlineChatHistory
-            .filter(m => m.content.startsWith('[APPLIED') || m.content.startsWith('[CONFIRMED') || m.content.startsWith('[REJECTED') || m.content.startsWith('[USER CONFIRMED') || m.content.startsWith('[CREATED') || m.content.startsWith('[SPLIT'))
-            .map(m => m.content)
-            .join('\n');
+            .filter(m => m.content.startsWith('[APPLIED') || m.content.startsWith('[CREATED') || m.content.startsWith('[SPLIT') || m.content.startsWith('[REORGANIZED') || m.content.startsWith('[USER CONFIRMED') || m.content.startsWith('[USER DECLINED'))
+            .map(m => m.content).join('\n');
+        const sessionBlock = sessionEvents ? `\n\n── SESSION EVENTS ──\n${sessionEvents}` : '';
 
-        const sessionSummaryBlock = sessionEvents
-            ? `\n\n── SESSION EVENTS (changes made so far) ──\n${sessionEvents}`
-            : '';
+        // ── Build code index summary ──
+        if (!_codeIndex || _codeIndexFile !== filename) _buildCodeIndex();
+        const indexSummary = _getCodeIndexSummary();
 
-        // Always send full context — AI decides what to do
-        const codeBlock = (!_isNewFileMode && numberedCode)
-            ? `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\``
-            : '';
+        // ── Final message to AI ──
+        const codeBlock = (!_isNewFileMode && numberedCode) ? `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\`` : '';
+        const userMsg = `── CONTEXT ──${indexSummary}${sessionBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
 
-        const userMsg = `── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
-
-        // ── Fill live prompt preview before sending ──
-        (function() {
-            const ctxFiles = [];
-            if (_inlineContextTabIds && _inlineContextTabIds.size > 0) {
-                _inlineContextTabIds.forEach(tid => {
-                    const t = fileTabs.find(f => f.id === tid);
-                    if (t) ctxFiles.push(t.name + ' (' + (t.content ? (t.content.length/1024).toFixed(1) + 'k' : '0k') + ')');
-                });
-            }
-            const histLen = historyForAPI.length;
-            _inlineFillPromptPreview({
-                request: userRequest,
-                targetFile: (!_isNewFileMode && targetTab) ? targetTab.name + ' (' + (targetTab.content ? (targetTab.content.length/1024).toFixed(1) + 'k' : '0k') + ')' : null,
-                codeSize: !_isNewFileMode ? (numberedCode.length/1024).toFixed(1) + 'k chars (' + code.split('\n').length + ' lines)' : null,
-                contextFiles: ctxFiles.length ? ctxFiles : null,
-                attachment: _inlineAttachment ? _inlineAttachment.name : null,
-                history: histLen > 0 ? histLen + ' msg' + (histLen > 1 ? 's' : '') : null,
-                totalSize: (userMsg.length/1024).toFixed(1) + 'k chars',
-            });
-        })();
-
+        // ── Show prompt preview ──
+        const historyForAPI = _buildHistoryForAPI();
+        _inlineFillPromptPreview({
+            request: userRequest,
+            targetFile: (!_isNewFileMode && targetTab) ? targetTab.name + ' (' + ((targetTab.content?.length||0)/1024).toFixed(1) + 'k)' : null,
+            codeSize: !_isNewFileMode ? (numberedCode.length/1024).toFixed(1) + 'k (' + code.split('\n').length + ' lines)' : null,
+            history: historyForAPI.length > 0 ? historyForAPI.length + ' msgs' : null,
+            totalSize: (userMsg.length/1024).toFixed(1) + 'k chars',
+        });
         _inlineUpdateTypingStatus('📤', 'Sending to AI...', userMsg.length);
-
-        // ── Multi-file / split mode in inline chat ──
 
         try {
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
             _inlineLogActivity('Response received (' + (raw.length/1024).toFixed(1) + 'k)');
             _inlineHideTyping();
 
-            // Empty response — show friendly message
-            if (!raw || !raw.trim()) {
-                _inlineAppendMsg('agent', '⚠️ AI returned empty response. Try again or switch model.');
+            if (!raw?.trim()) {
+                _inlineAppendMsg('agent', '⚠️ Empty response. Try again or switch model.');
                 return;
             }
 
-            // Save this exchange to history
-            // Store user message WITH full code so history is accurate
-            // (older entries get their code blocks stripped by _buildHistoryForAPI)
+            // Save to history
             _inlineChatHistory.push({ role: 'user', content: userMsg });
             _inlineChatHistory.push({ role: 'assistant', content: raw });
 
-            // ── Robust JSON extraction ──
-            let parsed = null;
-            parsed = _tryParseJSON(raw);
+            const parsed = _tryParseJSON(raw);
 
-            // ── If new_file mode and first response has code block — extract immediately ──
-            // Text outside the code block = explanation → show in chat
-            // Code inside ``` ``` = actual file content → paste in editor
-            if (_isNewFileMode && (!parsed || parsed.type !== 'new_file')) {
-                const fenceMatch = raw.match(/```(?:html|css|js|javascript|typescript)?\s*([\s\S]*?)```/);
-                if (fenceMatch) {
-                    const extractedCode = fenceMatch[1].trim();
-                    // Everything outside the code block = AI's explanation/comments
-                    const textOutside = raw
-                        .replace(/```(?:html|css|js|javascript|typescript)?[\s\S]*?```/g, '')
-                        .trim();
-                    const guessExt = /<!DOCTYPE|<html/i.test(extractedCode) ? 'html'
-                        : /^[\s\S]*\{[\s\S]*\}/.test(extractedCode) && !/</.test(extractedCode) ? 'css' : 'js';
-                    parsed = {
-                        type: 'new_file',
-                        filename: `new-file.${guessExt}`,
-                        content: extractedCode,
-                        explanation: textOutside || ''
-                    };
-                }
-            }
-
-            // ── New file mode fallback — if AI didn't return new_file type, retry once ──
-            if (_isNewFileMode && (!parsed || parsed.type !== 'new_file')) {
-                _inlineShowTyping();
-                const retryRaw = await _callAgentAPI(
-                    'You are a code generator. Respond with ONLY a raw JSON object — no markdown, no explanation, no text outside the JSON. Use this exact format:\n{"type":"new_file","explanation":"what it does","filename":"name.ext","content":"full file content with \\" for quotes inside"}',
-                    `Create this: ${userRequest}${otherFilesCtx ? '\n\nReference files:' + otherFilesCtx : ''}`
-                );
-                _inlineHideTyping();
-                const retryParsed = _tryParseJSON(retryRaw);
-                if (retryParsed && retryParsed.type === 'new_file') {
-                    parsed = retryParsed;
-                } else {
-                    // Last resort — extract code from markdown fences, text outside = explanation
-                    const fenceMatch = retryRaw.match(/```(?:html|css|js|javascript|typescript)?\s*([\s\S]*?)```/);
-                    const extractedCode = fenceMatch ? fenceMatch[1].trim() : retryRaw.trim();
-                    const textOutside = fenceMatch
-                        ? retryRaw.replace(/```(?:html|css|js|javascript|typescript)?[\s\S]*?```/g, '').trim()
-                        : '';
-                    const guessExt = /<!DOCTYPE|<html/i.test(extractedCode) ? 'html'
-                        : /^[\s\S]*\{[\s\S]*\}/.test(extractedCode) && !/</.test(extractedCode) ? 'css' : 'js';
-                    parsed = {
-                        type: 'new_file',
-                        filename: `new-file.${guessExt}`,
-                        content: extractedCode,
-                        explanation: textOutside || ''
-                    };
-                }
-            }
-
+            // ── Plain text / explanation ──
             if (!parsed || !parsed.type) {
-                // ── Raw looks like JSON but failed to parse (e.g. truncated large file) ──
-                // Try to extract "content" field directly via regex as last resort
-                const looksLikeJSON = raw.trim().startsWith('{');
-                if (looksLikeJSON) {
-                    const typeMatch = raw.match(/"type"\s*:\s*"([^"]+)"/);
-                    const filenameMatch = raw.match(/"filename"\s*:\s*"([^"]+)"/);
-                    const explanationMatch = raw.match(/"explanation"\s*:\s*"([^"\\]*)"/);
-                    // Extract content between "content":" and the last occurrence of "}
-                    const contentStart = raw.indexOf('"content"');
-                    if (typeMatch && contentStart !== -1) {
-                        // Find the actual content value start (after "content":")
-                        const valStart = raw.indexOf('"', contentStart + 9) + 1;
-                        // Content ends at last `"}` pattern — grab everything up to it
-                        let rawContent = raw.slice(valStart);
-                        // Unescape JSON string escapes
-                        rawContent = rawContent
-                            .replace(/\\n/g, '\n').replace(/\\t/g, '\t')
-                            .replace(/\\"/g, '"').replace(/\\\\/g, '\\')
-                            .replace(/"}?\s*$/, '').trim();
-                        if (rawContent.length > 10) {
-                            const fname = filenameMatch ? filenameMatch[1] : 'new-file.html';
-                            const expl = explanationMatch ? explanationMatch[1] : '';
-                            if (expl) _inlineAppendMsg('agent', expl);
-                            openFileInTab(fname, rawContent, true);
-                            _inlineAppendMsg('agent', `✅ "${fname}" created and opened.`);
-                            _inlineChatHistory.push({ role: 'assistant', content: `[CREATED FILE: ${fname}]` });
-                            _inlineSelectedTabId = activeTabId;
-                            _agentTargetTabId = activeTabId;
-                            _inlineRenderFileDropdown();
-                            return; // handled
-                        }
-                    }
-                    // JSON but couldn't extract — show friendly error, not raw dump
-                    _inlineAppendMsg('agent', '⚠️ AI response was too large to parse. Try a shorter/simpler request, or switch to Gemini (handles large outputs better).');
-                // ── Plain text or code block ──
-                } else {
-                    const fenceMatch = raw.match(/```(?:html|css|js|javascript|typescript)?\s*([\s\S]*?)```/);
-                    if (fenceMatch && targetTab) {
-                        // AI gave code block — show in confirm card, never auto-apply
-                        const extractedCode = fenceMatch[1].trim();
-                        const textOutside = raw.replace(/```(?:html|css|js|javascript|typescript)?[\s\S]*?```/g, '').trim();
-                        if (textOutside) _inlineAppendMsg('agent', textOutside);
-                        const snapTab = targetTab;
-                        _inlineAppendMsg('agent', '', _buildConfirmCard({
-                            type: 'edit',
-                            icon: 'code',
-                            title: `Apply code to ${snapTab.name}`,
-                            lines: [extractedCode.split('\n').length + ' lines'],
-                            onApply: () => {
-                                _agentUndoStack.push({ type: 'edit_content', tab: snapTab, content: snapTab.content || editor.getValue() });
-                                if (_agentUndoStack.length > 5) _agentUndoStack.shift();
-                                const cleaned = extractedCode.split('\n').map(l => l.replace(/\s+$/, '')).join('\n').replace(/\n{3,}/g, '\n\n').trimEnd();
-                                snapTab.content = cleaned;
-                                if (snapTab.id === activeTabId) editor.setValue(cleaned, -1);
-                                else { switchFileTab(snapTab.id); editor.setValue(cleaned, -1); }
-                                _inlineChatHistory.push({ role: 'assistant', content: `[APPLIED CODE TO ${snapTab.name}]` });
-                            }
-                        }));
-                    } else {
-                        // Pure text — just show in chat
-                        _inlineAppendMsg('agent', raw.trim());
-                    }
-                }
+                _inlineAppendMsg('agent', raw.trim());
 
+            // ── Edit ──
             } else if (parsed.type === 'edit') {
                 if (!Array.isArray(parsed.edits) || parsed.edits.length === 0) {
-                    _inlineAppendMsg('agent', parsed.explanation || 'No changes were needed.');                } else {
-                    if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
-                    const card = _buildInlineEditCard(parsed.edits, targetTab);
-                    _inlineAppendMsg('agent', '', card);
+                    _inlineAppendMsg('agent', parsed.explanation || 'No changes needed.');
+                } else {
+                    if (parsed.explanation?.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                    _inlineAppendMsg('agent', '', _buildInlineEditCard(parsed.edits, targetTab));
                 }
 
+            // ── New file ──
+            } else if (parsed.type === 'new_file') {
+                const fname = parsed.filename || 'new-file.html';
+                const content = parsed.content || '';
+                if (parsed.explanation?.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                _inlineAppendMsg('agent', '', _buildConfirmCard({
+                    type: 'new_file', icon: 'add_circle',
+                    title: `New file: ${fname}`,
+                    lines: [content.split('\n').length + ' lines'],
+                    onApply: () => {
+                        _agentUndoStack.push({ type: 'new_file', filename: fname });
+                        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
+                        openFileInTab(fname, content, true);
+                        _inlineChatHistory.push({ role: 'assistant', content: `[CREATED FILE: ${fname}]` });
+                        _inlineSelectedTabId = activeTabId; _agentTargetTabId = activeTabId;
+                        _inlineRenderFileDropdown();
+                        showToast(`${fname} created`, 'add_circle');
+                    }
+                }));
+
+            // ── Split ──
             } else if (parsed.type === 'split') {
-                const truncated = _detectTruncation(parsed.files?.map(f => f.content).join(''));
-                if (truncated) {
-                    _inlineShowTyping();
-                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE content for every file. No truncation.');
-                    _inlineHideTyping();
-                    try { const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2; } catch(_) {}
-                }
-                const splitFiles = parsed.files || [];
-                if (!splitFiles.length) {
+                const files = parsed.files || [];
+                if (!files.length) {
                     _inlineAppendMsg('agent', '⚠️ AI returned no files. Try again.');
                 } else {
-                    if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                    if (parsed.explanation?.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
                     _inlineAppendMsg('agent', '', _buildConfirmCard({
-                        type: 'split',
-                        icon: 'call_split',
-                        title: `Split into ${splitFiles.length} file${splitFiles.length>1?'s':''}`,
-                        lines: splitFiles.map(f => f.filename + (f.reason ? ' — ' + f.reason : '')),
+                        type: 'split', icon: 'call_split',
+                        title: `Split into ${files.length} file${files.length>1?'s':''}`,
+                        lines: files.map(f => f.filename + (f.reason ? ' — ' + f.reason : '')),
                         onApply: () => {
-                            splitFiles.forEach(f => openFileInTab(f.filename, f.content || '', true));
-                            _inlineChatHistory.push({ role: 'assistant', content: `[SPLIT INTO ${splitFiles.length} FILES: ${splitFiles.map(f=>f.filename).join(', ')}]` });
-                            showToast(`${splitFiles.length} files created`, 'call_split');
+                            files.forEach(f => openFileInTab(f.filename, f.content || '', true));
+                            _inlineChatHistory.push({ role: 'assistant', content: `[SPLIT INTO ${files.length} FILES: ${files.map(f=>f.filename).join(', ')}]` });
+                            showToast(`${files.length} files created`, 'call_split');
                         }
                     }));
                 }
 
-            } else if (parsed.type === 'new_file') {
-                const truncated = _detectTruncation(parsed.content);
-                if (truncated) {
-                    _inlineShowTyping();
-                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE file content. No truncation.');
-                    _inlineHideTyping();
-                    const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
-                }
-                const newFname = parsed.filename || 'new-file.html';
-                const newContent = parsed.content || '';
-                if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
-                _inlineAppendMsg('agent', '', _buildConfirmCard({
-                    type: 'new_file',
-                    icon: 'add_circle',
-                    title: `New file: ${newFname}`,
-                    lines: [newContent.split('\n').length + ' lines'],
-                    onApply: () => {
-                        _agentUndoStack.push({ type: 'new_file', filename: newFname });
-                        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
-                        openFileInTab(newFname, newContent, true);
-                        _inlineChatHistory.push({ role: 'assistant', content: `[CREATED FILE: ${newFname}]` });
-                        _inlineSelectedTabId = activeTabId;
-                        _agentTargetTabId = activeTabId;
-                        _inlineRenderFileDropdown();
-                        showToast(`${newFname} created`, 'add_circle');
-                    }
-                }));
-
+            // ── Reorganize ──
             } else if (parsed.type === 'reorganize') {
                 if (!parsed.content) {
                     _inlineAppendMsg('agent', '⚠️ AI returned empty content. Try again.');
                 } else {
-                    const truncated = _detectTruncation(parsed.content);
-                    if (truncated) {
-                        _inlineShowTyping();
-                        const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE reorganized file — every single line.');
-                        _inlineHideTyping();
-                        const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
-                    }
-                    const reorgContent = parsed.content;
-                    const reorgTab = targetTab;
-                    const oldContent = reorgTab ? reorgTab.content : editor.getValue();
-                    const newLineCount = reorgContent.split('\n').length;
-                    if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                    const rTab = targetTab;
+                    const oldContent = rTab ? rTab.content : editor.getValue();
+                    const newContent = parsed.content;
+                    if (parsed.explanation?.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
                     _inlineAppendMsg('agent', '', _buildConfirmCard({
-                        type: 'reorganize',
-                        icon: 'reorder',
-                        title: `Reorganized file — ${newLineCount} lines`,
-                        lines: [`Old: ${oldContent.split('\n').length} lines → New: ${newLineCount} lines`],
+                        type: 'reorganize', icon: 'reorder',
+                        title: `Reorganized — ${newContent.split('\n').length} lines`,
+                        lines: [`${oldContent.split('\n').length} → ${newContent.split('\n').length} lines`],
                         onApply: () => {
-                            const cleanedReorg = reorgContent
-                                .split('\n').map(l => l.replace(/\s+$/, '')).join('\n')
-                                .replace(/\n{3,}/g, '\n\n').trimEnd();
-                            _agentUndoStack.push({ type: 'edit_content', tab: reorgTab, content: oldContent });
+                            const cleaned = newContent.split('\n').map(l=>l.replace(/\s+$/,'')).join('\n').replace(/\n{3,}/g,'\n\n').trimEnd();
+                            _agentUndoStack.push({ type: 'edit_content', tab: rTab, content: oldContent });
                             if (_agentUndoStack.length > 5) _agentUndoStack.shift();
-                            if (reorgTab) reorgTab.content = cleanedReorg;
-                            if (!reorgTab || reorgTab.id === activeTabId) editor.setValue(cleanedReorg, -1);
-                            else { switchFileTab(reorgTab.id); editor.setValue(cleanedReorg, -1); }
-                            _inlineChatHistory.push({ role: 'assistant', content: `[REORGANIZED FILE — ${cleanedReorg.split('\n').length} lines]` });
+                            if (rTab) rTab.content = cleaned;
+                            if (!rTab || rTab.id === activeTabId) editor.setValue(cleaned, -1);
+                            else { switchFileTab(rTab.id); editor.setValue(cleaned, -1); }
+                            _inlineChatHistory.push({ role: 'assistant', content: `[REORGANIZED FILE — ${cleaned.split('\n').length} lines]` });
                             showToast('File reorganized', 'reorder');
                         }
                     }));
                 }
+
+            // ── Unknown type — show as text ──
+            } else {
+                _inlineAppendMsg('agent', parsed.explanation || raw.trim());
             }
 
         } catch(err) {
             _inlineHideTyping();
-            const raw = err.message || 'Something went wrong.';
-            if (raw === '__RATE_LIMIT_SHOWN__') { /* already shown in chat */ return; }
-            let msg;
-            if (/quota|rate.?limit|exceeded/i.test(raw))         msg = 'Quota exceeded — wait or switch agent.';
-            else if (/timeout|abort|timed out/i.test(raw))       msg = 'Request timed out. Try a shorter request.';
-            else if (/401|403|invalid.*key|api.?key/i.test(raw)) msg = 'Invalid API key — reconnect agent.';
-            else if (/network|fetch|failed to fetch/i.test(raw)) msg = 'Network error — check internet.';
-            else msg = raw.slice(0, 120);
-            _inlineAppendMsg('agent', '⚠️ ' + msg);
+            const msg = err.message || '';
+            if (msg === '__RATE_LIMIT_SHOWN__') return;
+            let friendly;
+            if (/quota|rate.?limit|exceeded/i.test(msg))         friendly = 'Quota exceeded — wait or switch model.';
+            else if (/timeout|abort/i.test(msg))                  friendly = 'Request timed out. Try a shorter request.';
+            else if (/401|403|invalid.*key|api.?key/i.test(msg))  friendly = 'Invalid API key — reconnect agent.';
+            else if (/network|fetch|failed to fetch/i.test(msg))  friendly = 'Network error — check internet.';
+            else friendly = msg.slice(0, 120);
+            _inlineAppendMsg('agent', '⚠️ ' + friendly);
         } finally {
             sendBtn.disabled = false;
             _inlineChatScroll();
         }
     }
+
 
     // ── Gemini rate limit warning — shown in chat as compact bar ──
     function _geminiWarnInChat(model, type, used, limit) {
