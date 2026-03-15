@@ -6063,10 +6063,8 @@ QUALITY STANDARD:
 
 DECIDE THE RESPONSE TYPE YOURSELF based on what the user wants:
 
-─── EXPLAIN (question / review / debug) ───
+─── EXPLAIN (question / review / chat / greetings) ───
 Reply in plain text. Same language as user (English/Hindi/Hinglish).
-Use this for greetings, questions, explanations — ANY message that is NOT a code task.
-NEVER wrap a conversational reply in JSON. If user says "hello", just say hello back in plain text.
 
 ─── EDIT (fix / change / add / remove / improve in existing code) ───
 Return ONLY this JSON, nothing else:
@@ -6242,7 +6240,7 @@ STRICT FORMAT RULES:
             ? `\n\n── SESSION EVENTS (changes made so far) ──\n${sessionEvents}`
             : '';
 
-        // Single unified message — no mode forcing, AI decides response type
+        // Always send full context — AI decides what to do
         const codeBlock = (!_isNewFileMode && numberedCode)
             ? `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\``
             : '';
@@ -6278,6 +6276,12 @@ STRICT FORMAT RULES:
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
             _inlineLogActivity('Response received (' + (raw.length/1024).toFixed(1) + 'k)');
             _inlineHideTyping();
+
+            // Empty response — show friendly message
+            if (!raw || !raw.trim()) {
+                _inlineAppendMsg('agent', '⚠️ AI returned empty response. Try again or switch model.');
+                return;
+            }
 
             // Save this exchange to history
             // Store user message WITH full code so history is accurate
@@ -6440,17 +6444,6 @@ STRICT FORMAT RULES:
                 }
 
             } else if (parsed.type === 'new_file') {
-                // Guard: if content is just plain text (Flash mistaking chat as file creation)
-                const _isActualFile = c => c && (
-                    /<[a-z][\s\S]*>/i.test(c) ||
-                    /[{};]/.test(c) ||
-                    /function |const |let |var |=>|@media|#[a-z]/i.test(c) ||
-                    c.split('\n').length > 4
-                );
-                if (!_isActualFile(parsed.content)) {
-                    // Flash treating conversation as file — show explanation/content as chat
-                    _inlineAppendMsg('agent', parsed.explanation || parsed.content || raw.trim());
-                } else {
                 const truncated = _detectTruncation(parsed.content);
                 if (truncated) {
                     _inlineShowTyping();
@@ -6477,19 +6470,10 @@ STRICT FORMAT RULES:
                         showToast(`${newFname} created`, 'add_circle');
                     }
                 }));
-                }
 
             } else if (parsed.type === 'reorganize') {
-                // Guard: if content looks like plain text (not code), show in chat
-                const _looksLikeCode = c => c && (
-                    /<[a-z][\s\S]*>/i.test(c) ||    // HTML tags
-                    /[{};]\s*$/.test(c) ||            // CSS/JS braces
-                    /function |const |let |var |=>/.test(c) ||
-                    c.split('\n').length > 3           // multi-line = code
-                );
-                if (!parsed.content || !_looksLikeCode(parsed.content)) {
-                    // Flash returning conversational text as reorganize — show in chat
-                    _inlineAppendMsg('agent', parsed.explanation || parsed.content || 'No changes needed.');
+                if (!parsed.content) {
+                    _inlineAppendMsg('agent', '⚠️ AI returned empty content. Try again.');
                 } else {
                     const truncated = _detectTruncation(parsed.content);
                     if (truncated) {
@@ -6507,9 +6491,7 @@ STRICT FORMAT RULES:
                         type: 'reorganize',
                         icon: 'reorder',
                         title: `Reorganized file — ${newLineCount} lines`,
-                        lines: [
-                            `Old: ${oldContent.split('\n').length} lines → New: ${newLineCount} lines`,
-                        ],
+                        lines: [`Old: ${oldContent.split('\n').length} lines → New: ${newLineCount} lines`],
                         onApply: () => {
                             const cleanedReorg = reorgContent
                                 .split('\n').map(l => l.replace(/\s+$/, '')).join('\n')
