@@ -2094,6 +2094,8 @@
     let _animationsDisabled = false;
     let _chatIsFullscreen = false;
     let _pythonMode = false;
+    let _inlineChatModeOn = true;
+    let _chatCodeAccessOn = false;
     const findModal = document.getElementById('find-modal');
     // Declared early — used in saved-settings restore blocks before their definition
     let _lastZoomSize = 10;
@@ -2520,7 +2522,8 @@
         if (typeof fileTabs !== 'undefined' && fileTabs.length > 0) {
             let cur = fileTabs.find(t => t.id === activeTabId);
             if(cur) cur.content = editor.getValue();
-            localStorage.setItem('codx_session', JSON.stringify({tabs: fileTabs, active: activeTabId, counter: tabIdCounter}));
+            const key = _pythonMode ? 'codx_session_py' : 'codx_session_html';
+            localStorage.setItem(key, JSON.stringify({tabs: fileTabs, active: activeTabId, counter: tabIdCounter}));
         }
     }
     window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveSession(); });
@@ -2814,7 +2817,9 @@
 
     // --- MULTI-TAB SYSTEM ---
     let _savedSession = null;
-    try { _savedSession = JSON.parse(localStorage.getItem('codx_session')); } catch(e) {}
+    try { _savedSession = JSON.parse(localStorage.getItem('codx_session_html')); } catch(e) {}
+    // Fallback: migrate old unified session key to html session
+    if (!_savedSession) { try { _savedSession = JSON.parse(localStorage.getItem('codx_session')); } catch(e) {} }
     
     let fileTabs = _savedSession && _savedSession.tabs ? _savedSession.tabs : [{ id: 1, name: 'index.html', content: '' }];
     let activeTabId = _savedSession && _savedSession.active ? _savedSession.active : 1;
@@ -2844,12 +2849,14 @@
         let tab = fileTabs.find(t => t.id === id);
         if(tab) {
             _setEditorValueFast(tab.content);
-            _setEditorMode(tab.name, tab.content);
+            if (_pythonMode && !_forcePlainText) {
+                editor.session.setMode('ace/mode/python');
+            } else {
+                _setEditorMode(tab.name, tab.content);
+            }
             currentFileName = tab.name;
-            // tab switched
         }
         renderFileTabs();
-        // If currently in preview, auto-refresh with new tab's content
         if(_inPreview) { _refreshPreview(); }
     }
 
@@ -2891,7 +2898,11 @@
             if(cur2) { cur2.name = name; cur2.content = content; }
         }
         _setEditorValueFast(content);
-        _setEditorMode(name, content);
+        if (_pythonMode && !_forcePlainText) {
+            editor.session.setMode('ace/mode/python');
+        } else {
+            _setEditorMode(name, content);
+        }
         currentFileName = name;
         renderFileTabs();
     }
@@ -7402,10 +7413,10 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Chat Mode ──
     // When enabled: AI only chats (explains/analyses), never edits.
     // All code in response goes to canvas. No apply/edit cards shown.
-    let _inlineChatModeOn = true;
+    // _inlineChatModeOn declared early at top (default: true)
     // When Chat Mode is ON, user can additionally grant AI read-access to target file code.
     // Default OFF — AI gets empty code in chat mode unless user explicitly enables this.
-    let _chatCodeAccessOn = false;
+    // _chatCodeAccessOn declared early at top (default: false)
 
 
 
@@ -7620,7 +7631,36 @@ Use only line numbers visible in the context. Be precise.`;
 
     // ── Switch language mode ──
     function _setLangMode(lang) {
-        _pythonMode = (lang === 'python');
+        const newIsPython = (lang === 'python');
+        if (newIsPython === _pythonMode) return; // no change
+
+        // ── Save current mode's session ──
+        saveSession();
+
+        // ── Load target mode's session ──
+        const loadKey = newIsPython ? 'codx_session_py' : 'codx_session_html';
+        let sess = null;
+        try { sess = JSON.parse(localStorage.getItem(loadKey)); } catch(e) {}
+
+        _pythonMode = newIsPython;
+
+        if (sess && sess.tabs && sess.tabs.length > 0) {
+            fileTabs      = sess.tabs;
+            activeTabId   = sess.active;
+            tabIdCounter  = sess.counter || (Math.max(...sess.tabs.map(t => t.id)) + 1);
+        } else {
+            // Fresh session for this mode
+            const blankName = _pythonMode ? 'main.py' : 'index.html';
+            tabIdCounter = tabIdCounter + 1;
+            fileTabs     = [{ id: tabIdCounter, name: blankName, content: '' }];
+            activeTabId  = tabIdCounter;
+            tabIdCounter++;
+        }
+
+        const activeTab = fileTabs.find(t => t.id === activeTabId) || fileTabs[0];
+        activeTabId = activeTab.id;
+        currentFileName = activeTab.name;
+        _setEditorValueFast(activeTab.content);
 
         const chip       = document.getElementById('lang-chip');
         const chipLabel  = document.getElementById('lang-chip-label');
@@ -7642,6 +7682,8 @@ Use only line numbers visible in the context. Be precise.`;
             if (po) { po.style.visibility = 'hidden'; po.style.opacity = '0'; }
             showToast('HTML Mode', 'html');
         }
+
+        renderFileTabs();
         _updateEditorPlaceholder();
     }
 
