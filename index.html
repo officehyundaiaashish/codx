@@ -3188,22 +3188,7 @@
         spinner.id = 'commit-spinner';
         spinner.style.cssText = 'position:absolute;inset:0;border-radius:20px;background:var(--glass-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;z-index:10;';
         spinner.innerHTML = `
-            <svg width="52" height="52" viewBox="0 0 52 52" fill="none" style="animation:commitSpin 1.1s linear infinite;">
-                <circle cx="26" cy="26" r="20" stroke="var(--glass-border)" stroke-width="4"/>
-                <path d="M26 6 A20 20 0 0 1 46 26" stroke="var(--accent)" stroke-width="4" stroke-linecap="round"/>
-                <circle cx="26" cy="26" r="7" fill="none" stroke="var(--accent)" stroke-width="3"/>
-                <circle cx="26" cy="26" r="3" fill="var(--accent)"/>
-                <g stroke="var(--accent)" stroke-width="3" stroke-linecap="round">
-                    <line x1="26" y1="6" x2="26" y2="10"/>
-                    <line x1="26" y1="42" x2="26" y2="46"/>
-                    <line x1="6" y1="26" x2="10" y2="26"/>
-                    <line x1="42" y1="26" x2="46" y2="26"/>
-                    <line x1="11.5" y1="11.5" x2="14.3" y2="14.3"/>
-                    <line x1="37.7" y1="37.7" x2="40.5" y2="40.5"/>
-                    <line x1="40.5" y1="11.5" x2="37.7" y2="14.3"/>
-                    <line x1="14.3" y1="37.7" x2="11.5" y2="40.5"/>
-                </g>
-            </svg>
+            <div style="width:44px;height:44px;border-radius:50%;border:3px solid var(--glass-border);border-top-color:var(--accent);animation:commitSpin 0.8s linear infinite;"></div>
             <div style="font-size:12px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;">Committing...</div>
             <div style="font-size:10px;color:var(--text-color);opacity:0.5;font-family:'Poppins',sans-serif;max-width:200px;text-align:center;">${ghCurrentFile.split('/').pop()}</div>`;
         if(box) { box.style.position = 'relative'; box.appendChild(spinner); }
