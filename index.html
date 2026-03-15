@@ -4043,10 +4043,10 @@
         _removeAgentNavTab();
     }
 
-    async function _callAgentAPI(systemPrompt, userMsg, conversationHistory = []) {
+    async function _callAgentAPI(systemPrompt, userMsg, conversationHistory = [], externalController = null) {
         const cfg = _activeAgent();
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 600000);
+        const controller = externalController || new AbortController();
+        const timeoutId = externalController ? null : setTimeout(() => controller.abort(), 600000);
 
         // ── Helper: extract best JSON array from raw text ──
         function _extractJSON(raw) {
@@ -4200,10 +4200,10 @@
                 return text.trim();
             }
         } catch (e) {
-            if (e.name === 'AbortError') throw new Error('timeout');
+            if (e.name === 'AbortError') throw new Error('__USER_ABORTED__');
             throw e;
         } finally {
-            clearTimeout(timeoutId);
+            if (timeoutId) clearTimeout(timeoutId);
         }
     }
 
@@ -6223,7 +6223,19 @@ STRICT FORMAT RULES:
         ta.value = ''; ta.style.height = 'auto';
 
         const sendBtn = document.getElementById('inline-chat-send-btn');
-        sendBtn.disabled = true;
+        sendBtn.disabled = false;
+
+        // ── Switch to STOP button ──
+        const _inlineAbortCtrl = new AbortController();
+        sendBtn.onclick = () => {
+            _inlineAbortCtrl.abort();
+            sendBtn.onclick = sendInlineChat; // restore immediately
+            sendBtn.innerHTML = '<span class="material-icons-round">send</span>';
+            sendBtn.style.background = '';
+        };
+        sendBtn.innerHTML = '<span class="material-icons-round">stop</span>';
+        sendBtn.style.background = '#ef4444';
+
         _inlineShowTyping();
         // Yield one frame so browser paints the typing bubble before heavy work
         await new Promise(r => setTimeout(r, 0));
@@ -6285,7 +6297,7 @@ STRICT FORMAT RULES:
 
         try {
             _inlineLogActivity('Calling ' + (_activeAgent()?.providerName || 'AI') + '...');
-            const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
+            const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI, _inlineAbortCtrl);
             _inlineLogActivity('Response: ' + (raw.length/1024).toFixed(1) + 'k received');
             _inlineHideTyping();
 
@@ -6387,6 +6399,10 @@ STRICT FORMAT RULES:
             _inlineHideTyping();
             const msg = err.message || '';
             if (msg === '__RATE_LIMIT_SHOWN__') return;
+            if (msg === '__USER_ABORTED__') {
+                _inlineAppendMsg('agent', '⏹ Stopped.');
+                return;
+            }
             let friendly;
             if (/quota|rate.?limit|exceeded/i.test(msg))         friendly = 'Quota exceeded — wait or switch model.';
             else if (/timeout|abort/i.test(msg))                  friendly = 'Request timed out. Try a shorter request.';
@@ -6395,7 +6411,11 @@ STRICT FORMAT RULES:
             else friendly = msg.slice(0, 120);
             _inlineAppendMsg('agent', '⚠️ ' + friendly);
         } finally {
+            // Always restore send button
             sendBtn.disabled = false;
+            sendBtn.onclick = sendInlineChat;
+            sendBtn.innerHTML = '<span class="material-icons-round">send</span>';
+            sendBtn.style.background = '';
             _inlineChatScroll();
         }
     }
