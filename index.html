@@ -1407,11 +1407,12 @@
             align-items: center;
             justify-content: center;
             pointer-events: none;
-            z-index: 5;
+            z-index: 15;
             opacity: 0;
             transition: opacity 0.2s ease;
             text-align: center;
             padding: 20px;
+            background: transparent;
         }
         #editor-placeholder.visible { opacity: 1; }
         #editor-placeholder .ep-icon {
@@ -2590,8 +2591,8 @@
             if (sub)   sub.innerHTML    = 'Write your markup · hit <b style="opacity:0.5;font-weight:700">Preview</b> to render';
         }
     }
-    // Run once on load
-    _updateEditorPlaceholder();
+    // Run once on load — delayed so Ace editor is fully initialized
+    setTimeout(_updateEditorPlaceholder, 300);
 
     // ── CODE INDEX — lightweight client-side map of the file ──
     // Builds silently on every edit. Used to give AI a map before sending full code.
@@ -6298,17 +6299,21 @@ STRICT FORMAT RULES:
 
         try {
             _inlineLogActivity('Calling ' + (_activeAgent()?.providerName || 'AI') + '...');
+            // ── Mode context prefix ──
+            const _modeCtx = _pythonMode
+                ? '\nCURRENT MODE: Python. All code is Python (.py). Only write Python — never HTML/CSS/JS. Files are .py only.'
+                : '\nCURRENT MODE: HTML/Web. Write HTML, CSS, JavaScript as needed.';
             // ── Chat Mode: use a pure-conversation system prompt ──
             const activeSystemPrompt = _inlineChatModeOn
                 ? `You are CodX Assistant, an AI coding assistant built into the CodX editor.
-If the user asks your name, you are "CodX Assistant".
+If the user asks your name, you are "CodX Assistant".${_modeCtx}
 Rules:
 1. NEVER return JSON. NEVER return edit/new_file/split/reorganize JSON objects.
 2. Only respond in plain conversational text.
 3. If you need to show code, wrap it in fenced code blocks (triple backticks with language tag) — these render as Canvas cards the user can copy.
 4. If the user says "give me old block and new block", show them as two separate fenced code blocks labelled clearly: first the OLD block, then the NEW block so they can copy and manually replace.
 5. Keep responses clear, helpful, and to the point. Match the user's language (English or Hindi/Hinglish).`
-                : _AGENT_SYSTEM_PROMPT;
+                : _AGENT_SYSTEM_PROMPT + _modeCtx;
             const raw = await _callAgentAPI(activeSystemPrompt, userMsg, historyForAPI, _inlineAbortCtrl);
             _inlineLogActivity('Response: ' + (raw.length/1024).toFixed(1) + 'k received');
             _inlineHideTyping();
@@ -7688,16 +7693,28 @@ Use only line numbers visible in the context. Be precise.`;
         _pythonMode = newIsPython;
 
         if (sess && sess.tabs && sess.tabs.length > 0) {
-            fileTabs      = sess.tabs;
-            activeTabId   = sess.active;
-            tabIdCounter  = sess.counter || (Math.max(...sess.tabs.map(t => t.id)) + 1);
-        } else {
+            // Filter out tabs with wrong extension for this mode
+            const pyExts  = ['py'];
+            const htmlExts = ['html','htm','css','js','ts','jsx','tsx','json','md','txt','xml','svg'];
+            const allowedExts = _pythonMode ? pyExts : htmlExts;
+            const filtered = sess.tabs.filter(t => {
+                const ext = (t.name || '').split('.').pop().toLowerCase();
+                return allowedExts.includes(ext);
+            });
+            fileTabs     = filtered.length > 0 ? filtered : null;
+            activeTabId  = sess.active;
+            tabIdCounter = sess.counter || (Math.max(...sess.tabs.map(t => t.id)) + 1);
+            // If active tab was filtered out, pick first remaining
+            if (fileTabs && !fileTabs.find(t => t.id === activeTabId)) {
+                activeTabId = fileTabs[0].id;
+            }
+        }
+
+        if (!fileTabs || fileTabs.length === 0) {
             // Fresh session for this mode
             const blankName = _pythonMode ? 'main.py' : 'index.html';
-            tabIdCounter = tabIdCounter + 1;
-            fileTabs     = [{ id: tabIdCounter, name: blankName, content: '' }];
-            activeTabId  = tabIdCounter;
-            tabIdCounter++;
+            fileTabs    = [{ id: ++tabIdCounter, name: blankName, content: '' }];
+            activeTabId = fileTabs[0].id;
         }
 
         const activeTab = fileTabs.find(t => t.id === activeTabId) || fileTabs[0];
@@ -7705,21 +7722,20 @@ Use only line numbers visible in the context. Be precise.`;
         currentFileName = activeTab.name;
         _setEditorValueFast(activeTab.content);
 
-        const chip       = document.getElementById('lang-chip');
         const chipLabel  = document.getElementById('lang-chip-label');
         const iconHtml   = document.getElementById('lang-icon-html');
         const iconPy     = document.getElementById('lang-icon-py');
 
         if (_pythonMode) {
-            if (iconHtml) iconHtml.style.display = 'none';
-            if (iconPy)   iconPy.style.display   = 'block';
-            if (chipLabel) chipLabel.textContent  = 'Python';
+            if (iconHtml)  iconHtml.style.display  = 'none';
+            if (iconPy)    iconPy.style.display    = 'block';
+            if (chipLabel) chipLabel.textContent   = 'Python';
             if (!_forcePlainText) editor.session.setMode('ace/mode/python');
             showToast('Python Mode', 'code');
         } else {
-            if (iconHtml) iconHtml.style.display = 'block';
-            if (iconPy)   iconPy.style.display   = 'none';
-            if (chipLabel) chipLabel.textContent  = 'HTML';
+            if (iconHtml)  iconHtml.style.display  = 'block';
+            if (iconPy)    iconPy.style.display    = 'none';
+            if (chipLabel) chipLabel.textContent   = 'HTML';
             if (!_forcePlainText) _setEditorMode(currentFileName, editor.getValue());
             const po = document.getElementById('python-output');
             if (po) { po.style.visibility = 'hidden'; po.style.opacity = '0'; }
