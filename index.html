@@ -5938,26 +5938,34 @@ No markdown, no backticks, no explanation outside the array.`;
         return parts.map((p, idx) => {
             if (p.type === 'code') {
                 const id = 'cc_' + Math.random().toString(36).slice(2, 8);
-                const escaped = p.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-                const b64 = btoa(unescape(encodeURIComponent(p.content)));
+
+                // Strip line numbers from canvas content (e.g. "42| code" → "code")
+                const strippedContent = p.content.replace(/^\d+\| ?/gm, '');
+                const escaped = strippedContent.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                const b64 = btoa(unescape(encodeURIComponent(strippedContent)));
 
                 // Detect OLD / NEW block labels
                 const langLower = p.lang.toLowerCase();
                 const isOld = /old|original|before|current/.test(langLower);
                 const isNew = /new|updated|after|replace/.test(langLower);
 
-                // Check if previous part was an OLD block — if so this NEW block gets Apply
-                const prevPart = parts[idx - 1];
-                const prevIsOld = prevPart && prevPart.type === 'code' && /old|original|before|current/.test(prevPart.lang.toLowerCase());
+                // Find previous CODE part (skip any text parts in between)
+                let prevCodePart = null;
+                for (let i = idx - 1; i >= 0; i--) {
+                    if (parts[i].type === 'code') { prevCodePart = parts[i]; break; }
+                    if (parts[i].type === 'text' && parts[i].content.trim().length > 30) break;
+                }
+                const prevIsOld = prevCodePart && /old|original|before|current/.test(prevCodePart.lang.toLowerCase());
+
                 const applyBtn = (isNew && prevIsOld)
-                    ? `<button class="code-canvas-btn" onclick="_canvasApplyReplace(this)" data-old="${btoa(unescape(encodeURIComponent(prevPart.content)))}" data-new="${b64}" data-b64="1" style="background:var(--accent);color:white;">
+                    ? `<button class="code-canvas-btn" onclick="_canvasApplyReplace(this)" data-old="${btoa(unescape(encodeURIComponent(prevCodePart.content.replace(/^\d+\| ?/gm,''))))}" data-new="${b64}" data-b64="1" style="background:var(--accent);color:white;">
                         <span class="material-icons-round">auto_fix_high</span>Apply
                        </button>`
                     : '';
 
                 const labelStyle = isOld ? 'color:#f87171;' : isNew ? 'color:#4ade80;' : '';
 
-                return `<div class="code-canvas" ${isOld ? 'data-old-canvas="1"' : ''}>
+                return `<div class="code-canvas">
                     <div class="code-canvas-header">
                         <span class="code-canvas-lang" style="${labelStyle}">${p.lang}</span>
                         <button class="code-canvas-btn" onclick="_canvasOpenInEditor(this)" data-code="${b64}" data-lang="${p.lang}" data-b64="1">
@@ -5971,7 +5979,7 @@ No markdown, no backticks, no explanation outside the array.`;
                     <div class="code-canvas-body">${escaped}</div>
                 </div>`;
             }
-            // Text: render inline markdown
+            // Text: render inline markdown — strip line number prefixes from inline code too
             let html = p.content
                 .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                 .replace(/\*\*(.+?)\*\*/g, '<span class="chat-md-bold">$1</span>')
@@ -6419,7 +6427,12 @@ Rules:
 1. NEVER return JSON. NEVER return edit/new_file/split/reorganize JSON objects.
 2. Only respond in plain conversational text.
 3. If you need to show code, wrap it in fenced code blocks (triple backticks with language tag) — these render as Canvas cards the user can copy.
-4. If the user says "give me old block and new block", show them as two separate fenced code blocks labelled clearly: first the OLD block, then the NEW block so they can copy and manually replace.
+4. When showing code changes, use this exact format:
+   - First write in plain text: "Lines X–Y" (where the change is)
+   - Then the OLD block: \`\`\`old\n<exact code, NO line numbers>\n\`\`\`
+   - Then the NEW block: \`\`\`new\n<replacement code, NO line numbers>\n\`\`\`
+   - Line numbers go in the chat text ONLY, never inside the code blocks.
+   - The app will show an Apply button on the NEW block to auto-replace.
 5. Keep responses clear, helpful, and to the point. Match the user's language (English or Hindi/Hinglish).`
                 : _AGENT_SYSTEM_PROMPT + _modeCtx;
             const raw = await _callAgentAPI(activeSystemPrompt, userMsg, historyForAPI, _inlineAbortCtrl);
