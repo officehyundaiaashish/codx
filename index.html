@@ -48,7 +48,6 @@
         /* Anti-Google Search & Global UI Font */
 
         
-        /* ──────────────────────── Performance & Base ──────────────────────── */
 /* ── PERF: GPU compositing hints for scroll containers ── */
         #editor, #preview {
             -webkit-overflow-scrolling: touch;
@@ -78,7 +77,6 @@
         /* ──────────────────────── Header & Tabs ──────────────────────── */
 
         .app-header { /* perf: no blur, no shadow */ flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50;  }
-        /* ──────────────────────── Editor & Preview ──────────────────────── */
         /* Tabs pill with snake border animation */
         .tabs {
             display: flex;
@@ -143,7 +141,6 @@
 
         /* will-change: transform → own GPU layer, no repaint on slide */
         
-        /* ──────────────────────── Bottom Panel ──────────────────────── */
 
         /* ──────────────────────── Toolbar & Cursor Nav ──────────────────────── */
 .cursor-nav { touch-action: pan-x pan-y; }
@@ -205,7 +202,6 @@
         /* restore-btn removed */
 
         
-        /* ──────────────────────── Shared Modal ──────────────────────── */
 /* Shared Modal CSS */
         .modal { 
             position: fixed; left: 5%; width: 90%; background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: var(--panel-round); padding: 15px; z-index: 100; 
@@ -224,14 +220,12 @@
         .modal-btn.secondary { background: rgba(128,128,128,0.2); color: var(--text-color); }
 
         
-        /* ──────────────────────── Find & Replace ──────────────────────── */
 /* Find modal checkbox styles */
         .find-options { display: flex; gap: 12px; margin-bottom: 8px; }
         .find-check-label { display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.8; cursor: pointer; user-select: none; }
         .find-check-label input[type="checkbox"] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; }
 
         
-        /* ──────────────────────── GitHub Modal ──────────────────────── */
 /* GitHub modal — full screen sheet */
         #github-modal {
             position: fixed;
@@ -298,7 +292,6 @@
         .gh-tree-loading { text-align: center; padding: 20px; font-size: 11px; opacity: 0.5; }
 
         
-        /* ──────────────────────── File Tabs Bar ──────────────────────── */
 /* File Tabs Bar */
         .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
         .file-tabs-bar::-webkit-scrollbar { display: none; }
@@ -308,7 +301,6 @@
         .file-tab .ft-close:active { opacity: 1; }
 
         
-        /* ──────────────────────── Welcome Screen ──────────────────────── */
 /* ===== WELCOME SCREEN ===== */
         #welcome-screen {
             position: fixed; inset: 0; z-index: 1000;
@@ -372,7 +364,6 @@
         .welcome-start-btn .material-icons-round { font-size: 20px; }
 
         
-        /* ──────────────────────── Repo Progress Bar ──────────────────────── */
 /* ===== REPO LOAD PROGRESS BAR ===== */
         #repo-progress-overlay {
             position: fixed; inset: 0; z-index: 600; background: rgba(0,0,0,0.7);
@@ -399,7 +390,6 @@
         .repo-progress-count { font-size: 11px; color: var(--accent); font-weight: 600; text-align:right; }
 
         
-        /* ──────────────────────── New Project Modal ──────────────────────── */
 /* ===== NEW PROJECT MODAL ===== */
         #new-project-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 300; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
@@ -477,7 +467,6 @@
         .cdlg-btn.secondary { background: rgba(128,128,128,0.18); color: var(--text-color); }
 
         
-        /* ──────────────────────── GitHub Dropdowns ──────────────────────── */
 /* ===== CUSTOM GITHUB DROPDOWNS ===== */
         .gh-custom-select { position: relative; margin-bottom: 10px; }
         .gh-custom-trigger {
@@ -511,7 +500,6 @@
         .gh-custom-option .material-icons-round { font-size: 15px; opacity: 0.6; }
 
         
-        /* ──────────────────────── Agent Modal ──────────────────────── */
 /* ===== AGENT MODAL ===== */
         #agent-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.6); z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
@@ -541,7 +529,6 @@
         .agent-provider-btn .provider-tag { font-size: 9px; opacity: 0.6; display: block; margin-top: 2px; }
 
         
-        /* ──────────────────────── Agent Bar ──────────────────────── */
 /* ===== AGENT BAR — compact strip inside nav panel ===== */
         #agent-bar {
             display: none; flex-direction: column; gap: 0;
@@ -593,7 +580,6 @@
             font-weight:600; appearance:none; -webkit-appearance:none; cursor:pointer;
         }
     
-        /* ──────────────────────── Agent Chat UI ──────────────────────── */
 
         /* Full-screen chat overlay */
         #agent-chat-overlay {
@@ -1025,7 +1011,6 @@
         }
 
 
-        /* ──────────────────────── Split Screen Chat ──────────────────────── */
 
         /* When chat is open, main-container splits into two halves */
         .main-container.chat-split {
@@ -1894,11 +1879,9 @@
         installBtn.style.display = 'none'; deferredPrompt = null;
     });
 
-    // ════════════════════════════════════════════════
     //  CodXStore — ALL user data saved to local device
     //  EXCEPT: gh_token, agent_config (stay in localStorage for quick access)
     //  Everything else persists via IndexedDB (local device only, never sent anywhere)
-    // ════════════════════════════════════════════════
     const CodXStore = (() => {
         const DB_NAME = 'CodXData', DB_VER = 1, STORE = 'userdata';
         let _db = null;
@@ -1964,11 +1947,9 @@
         return { set, get, remove };
     })();
 
-    // ════════════════════════════════════════════════
     //  EDITOR — GAME ENGINE VIEWPORT APPROACH
     //  Rule: Only render what's visible. Everything
     //  else is culled — exactly like a game world.
-    // ════════════════════════════════════════════════
     var editor = ace.edit("editor");
 
     // ── STEP 1: Kill every expensive feature upfront ──
@@ -2036,7 +2017,7 @@
         const size = (content||editor.getValue()).length;
         // >200KB or >5000 lines → force plain text to prevent tokenizer hang
         const lines = editor.session.getLength();
-        if(size > 200000 || lines > 5000) {
+        if(size > 200000 || lines > 1000) {
             editor.session.setMode('ace/mode/text');
             _showPerfBadge('⚡ Plain text mode (large file)');
             return;
@@ -2294,6 +2275,11 @@
     }
 
     function switchTab(tabName, fromBtn) {
+        const edEl    = document.getElementById('editor');
+        const prvEl   = document.getElementById('preview');
+        const outerEl = document.getElementById('bottom-outer');
+        const innerEl = document.getElementById('bottom-panel');
+
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         if(fromBtn) fromBtn.classList.add('active');
         else if(event && event.currentTarget) event.currentTarget.classList.add('active');
@@ -2310,31 +2296,27 @@
 
         if(tabName === 'preview') {
             _inPreview = true;
-            document.getElementById('preview').classList.add('active-pane');
-            document.getElementById('editor').style.opacity = '0';
-            document.getElementById('editor').style.pointerEvents = 'none';
+            prvEl.classList.add('active-pane');
+            edEl.style.opacity = '0';
+            edEl.style.pointerEvents = 'none';
             jumpers.style.display = 'none';
             const t = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
-            const outer = document.getElementById('bottom-outer');
-            const inner = document.getElementById('bottom-panel');
-            if(outer) { outer.style.transition = t; outer.style.transform = 'translateY(100%)'; }
-            if(inner) { inner.style.transition = t; inner.style.transform = 'translateY(100%)'; }
+            if(outerEl) { outerEl.style.transition = t; outerEl.style.transform = 'translateY(100%)'; }
+            if(innerEl) { innerEl.style.transition = t; innerEl.style.transform = 'translateY(100%)'; }
             document.getElementById('find-modal').classList.remove('active');
             closeGithubModal();
             if (typeof closeInlineChat === 'function' && _inlineChatOpen) closeInlineChat();
             _refreshPreview();
         } else {
             _inPreview = false;
-            document.getElementById('preview').classList.remove('active-pane');
-            document.getElementById('editor').style.opacity = '1';
-            document.getElementById('editor').style.pointerEvents = 'auto';
+            prvEl.classList.remove('active-pane');
+            edEl.style.opacity = '1';
+            edEl.style.pointerEvents = 'auto';
             // Only restore nav if user hasn't manually hidden it
             if(!_navHidden) {
                 const t = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
-                const outer = document.getElementById('bottom-outer');
-                const inner = document.getElementById('bottom-panel');
-                if(outer) { outer.style.transition = t; outer.style.transform = ''; }
-                if(inner) { inner.style.transition = t; inner.style.transform = ''; }
+                if(outerEl) { outerEl.style.transition = t; outerEl.style.transform = ''; }
+                if(innerEl) { innerEl.style.transition = t; innerEl.style.transform = ''; }
             }
             checkScrollable();
             editor.blur();
@@ -3105,7 +3087,7 @@
 
         trigger.onclick = (e) => { e.stopPropagation(); trigger.classList.toggle('open'); list.classList.toggle('open'); };
         // Close on outside tap
-        document.addEventListener('click', () => { trigger.classList.remove('open'); list.classList.remove('open'); });
+        document.addEventListener('click', () => { trigger.classList.remove('open'); list.classList.remove('open'); }, { once: true });
 
         parent.appendChild(trigger); parent.appendChild(list); parent.appendChild(hidden);
     }
@@ -3214,7 +3196,8 @@
 
 
     function connectAgent() {
-        const key = document.getElementById('agent-api-key').value.trim();
+        const keyInp = document.getElementById('agent-api-key');
+        const key = keyInp.value.trim();
         if (!key) { cdAlert('Agent','Please paste your API key first.','warn'); return; }
         const d = _detectProviderFromKey(key);
         if (!d) {
@@ -3239,9 +3222,9 @@
         const firstModel = entries[0].model;
         activeAgentIdx = agentList.findIndex(a => a.model === firstModel);
         _saveAgentList();
-        document.getElementById('agent-api-key').value = '';
+        keyInp.value = '';
         document.getElementById('agent-detect-badge').style.display = 'none';
-        document.getElementById('agent-api-key').style.borderColor = '';
+        keyInp.style.borderColor = '';
         _renderConnectedAgents();
         if (added > 0) cdAlert('Agent', `${added} model${added>1?'s':''} added${updated>0?' · '+updated+' updated':''}.`, 'success');
         else cdAlert('Agent', `${updated} model${updated>1?'s':''} updated.`, 'info');
@@ -3610,16 +3593,12 @@
         catch (e) { return null; }
     }
 
-    // ════════════════════════════════════════════════
     // 3-STEP AGENT ENGINE
     // User controls every step — Reject = full stop
-    // ════════════════════════════════════════════════
     async function _runThreeStepAgent({ code, userRequest, attachCtx, appendMsg, showTyping, hideTyping, scrollBottom, onApply }) {
 
-        // ══════════════════════════════════════════════════════
         // STEP 1+2 MERGED: Analyse code AND identify problem blocks
         // One call — AI gets full picture, returns analysis + blocks
-        // ══════════════════════════════════════════════════════
         showTyping('🔍 Analysing code and planning fixes...');
 
         const mergedPrompt = `You are a professional software engineering agent.
@@ -3773,9 +3752,7 @@ Rules:
             return;
         }
 
-        // ══════════════════════════════════════════════════════
         // STEP 2: EXECUTE — per block, AI knows full context
-        // ══════════════════════════════════════════════════════
 
         // Extract the full block from code using block_start as anchor
         function _extractBlock(fullCode, blockStart) {
@@ -3895,7 +3872,9 @@ Rules:
 
     async function sendAgentPrompt() {
         if(!_activeAgent()) { openAgentModal(); return; }
-        const userRequest = document.getElementById('agent-prompt').value.trim();
+        const promptEl  = document.getElementById('agent-prompt');
+        const attachBtn = document.getElementById('agent-attach-btn');
+        const userRequest = promptEl.value.trim();
         if(!userRequest) return;
         if(_agentPendingEdits.length > 0) { cdAlert('Agent', 'Please accept or reject the current edits first.', 'warn'); return; }
 
@@ -3996,11 +3975,11 @@ Rules:
             }
 
             // Clear input
-            document.getElementById('agent-prompt').value = '';
-            document.getElementById('agent-prompt').style.height = 'auto';
+            promptEl.value = '';
+            promptEl.style.height = 'auto';
             agentAttachment = null;
-            document.getElementById('agent-attach-btn').style.background = '';
-            document.getElementById('agent-attach-btn').style.color = '';
+            attachBtn.style.background = '';
+            attachBtn.style.color = '';
         } catch(err) {
             const raw = err.message || 'Something went wrong.';
             // Smart error classification — show short friendly message
@@ -4577,7 +4556,6 @@ Rules:
     window.addEventListener('beforeinstallprompt', () => { window._logApkEvent('INFO', 'beforeinstallprompt fired — PWA installable'); });
     window.addEventListener('appinstalled', () => { window._logApkEvent('SUCCESS', 'appinstalled event fired'); });
 
-    // ═══════════════════════ AGENT CHAT SYSTEM ═══════════════════════
 
     // ── Chat state ──
     let _chatHistory = [];          // { role, text, time, edits, files, msgId }
@@ -5122,7 +5100,6 @@ No markdown, no backticks, no explanation outside the array.`;
         }
     };
 
-    // ═══════════════════ INLINE SPLIT CHAT ═══════════════════
     // Editor upar (50%), chat neeche (50%) — seedha split screen
 
     // _inlineChatOpen declared at script top (var) to avoid TDZ in visualViewport handler
@@ -5483,10 +5460,8 @@ No markdown, no backticks, no explanation outside the array.`;
         if (wrap) wrap.remove();
     }
 
-    // ══════════════════════════════════════════════════
     //  NEW AGENT WORKFLOW — Single API call, AI decides
     //  No regex intent detection — AI handles everything
-    // ══════════════════════════════════════════════════
 
     const _AGENT_SYSTEM_PROMPT = `You are an expert code assistant in CodX editor. You receive code with LINE NUMBERS like "42| code here".
 Full chat history is included every call — use it to understand context of what has been done before.
@@ -6561,19 +6536,25 @@ Use only line numbers visible in the context. Be precise.`;
         if (activeAg) { const b = document.getElementById('inline-no-agent-banner'); if(b) b.remove(); }
     }
 
+    let _modelDropdownCloseHandler = null;
+
     function _inlineToggleModelDropdown() {
         const dd = document.getElementById('inline-model-dropdown');
         const chevron = document.getElementById('inline-model-chevron');
         if (!dd) return;
         const isOpen = dd.style.display === 'block';
         if (isOpen) {
-            dd.style.display = 'none';
-            if(chevron) chevron.style.transform = 'rotate(0deg)';
+            _inlineCloseModelDropdown();
         } else {
             _inlineRenderModelDropdown();
             dd.style.display = 'block';
             if(chevron) chevron.style.transform = 'rotate(180deg)';
-            setTimeout(() => document.addEventListener('click', _inlineCloseModelDropdown, { once: true }), 50);
+            // Remove any orphan listener before adding new one
+            if(_modelDropdownCloseHandler) {
+                document.removeEventListener('click', _modelDropdownCloseHandler);
+            }
+            _modelDropdownCloseHandler = () => _inlineCloseModelDropdown();
+            setTimeout(() => document.addEventListener('click', _modelDropdownCloseHandler, { once: true }), 50);
         }
     }
 
@@ -6582,6 +6563,11 @@ Use only line numbers visible in the context. Be precise.`;
         const chevron = document.getElementById('inline-model-chevron');
         if(dd) dd.style.display = 'none';
         if(chevron) chevron.style.transform = 'rotate(0deg)';
+        // Remove pending close handler so it never fires as orphan
+        if(_modelDropdownCloseHandler) {
+            document.removeEventListener('click', _modelDropdownCloseHandler);
+            _modelDropdownCloseHandler = null;
+        }
     }
 
     function _inlineRenderModelDropdown() {
