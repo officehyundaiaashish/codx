@@ -753,6 +753,7 @@
         .chat-bubble {
             padding: 9px 13px; border-radius: 16px;
             font-size: 12px; line-height: 1.55; word-break: break-word;
+            min-width: 0; overflow: hidden;
         }
         .chat-msg.user .chat-bubble {
             background: var(--accent); color: white;
@@ -795,23 +796,26 @@
             border: 1px solid var(--glass-border);
             background: #0d0d10;
             font-family: 'Courier New', Courier, monospace;
+            max-width: 100%;
+            min-width: 0;
         }
         body.light-theme .code-canvas { background: #1e1e2e; }
         .code-canvas-header {
             display: flex; align-items: center; gap: 7px;
-            padding: 7px 11px;
+            padding: 6px 10px;
             background: rgba(255,255,255,0.04);
             border-bottom: 1px solid rgba(255,255,255,0.07);
         }
         .code-canvas-lang {
             font-size: 9px; font-weight: 700; font-family: 'Poppins', sans-serif;
             color: var(--accent); text-transform: uppercase; letter-spacing: 0.7px; flex: 1;
+            overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
         }
         .code-canvas-btn {
             background: rgba(255,255,255,0.07); border: none; border-radius: 6px;
-            padding: 4px 9px; font-size: 9px; font-weight: 700;
+            padding: 3px 7px; font-size: 9px; font-weight: 700;
             font-family: 'Poppins', sans-serif; color: rgba(255,255,255,0.7);
-            cursor: pointer; display: flex; align-items: center; gap: 4px;
+            cursor: pointer; display: flex; align-items: center; gap: 3px;
             transition: background 0.15s, color 0.15s; flex-shrink: 0;
             -webkit-tap-highlight-color: transparent;
         }
@@ -819,14 +823,15 @@
         .code-canvas-btn .material-icons-round { font-size: 11px; pointer-events: none; }
         .code-canvas-btn.copied { color: var(--accent); }
         .code-canvas-body {
-            padding: 11px 13px;
+            padding: 10px 12px;
             overflow-x: auto;
-            font-size: 11.5px;
-            line-height: 1.6;
+            overflow-y: auto;
+            font-size: 11px;
+            line-height: 1.55;
             color: #e0e0e0;
             white-space: pre;
-            max-height: 380px;
-            overflow-y: auto;
+            max-height: 260px;
+            -webkit-overflow-scrolling: touch;
         }
         /* inline code */
         .chat-inline-code {
@@ -1689,6 +1694,7 @@
 
         /* Reuse existing chat bubble styles */
         #inline-chat-messages .chat-msg { max-width: 88%; }
+        #inline-chat-messages .chat-msg.agent { max-width: 96%; }
 
         /* Input row */
         #inline-chat-input-row {
@@ -5975,13 +5981,15 @@ No markdown, no backticks, no explanation outside the array.`;
             if (p.type === 'code') {
                 const id = 'cc_' + Math.random().toString(36).slice(2, 8);
                 const escaped = p.content.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                // Use base64 to safely store code with newlines in data attribute
+                const b64 = btoa(unescape(encodeURIComponent(p.content)));
                 return `<div class="code-canvas">
                     <div class="code-canvas-header">
                         <span class="code-canvas-lang">${p.lang}</span>
-                        <button class="code-canvas-btn" onclick="_canvasOpenInEditor(this)" data-code="${encodeURIComponent(p.content)}" data-lang="${p.lang}">
+                        <button class="code-canvas-btn" onclick="_canvasOpenInEditor(this)" data-code="${b64}" data-lang="${p.lang}" data-b64="1">
                             <span class="material-icons-round">open_in_new</span>Open
                         </button>
-                        <button class="code-canvas-btn" id="${id}" onclick="_canvasCopy(this)" data-code="${encodeURIComponent(p.content)}">
+                        <button class="code-canvas-btn" id="${id}" onclick="_canvasCopy(this)" data-code="${b64}" data-b64="1">
                             <span class="material-icons-round">content_copy</span>Copy
                         </button>
                     </div>
@@ -6005,8 +6013,13 @@ No markdown, no backticks, no explanation outside the array.`;
         }).join('');
     }
 
+    function _canvasDecodeCode(btn) {
+        if (btn.dataset.b64) return decodeURIComponent(escape(atob(btn.dataset.code || '')));
+        return decodeURIComponent(btn.dataset.code || '');
+    }
+
     function _canvasCopy(btn) {
-        const code = decodeURIComponent(btn.dataset.code || '');
+        const code = _canvasDecodeCode(btn);
         navigator.clipboard.writeText(code).then(() => {
             btn.classList.add('copied');
             btn.innerHTML = '<span class="material-icons-round">check</span>Copied';
@@ -6018,7 +6031,7 @@ No markdown, no backticks, no explanation outside the array.`;
     }
 
     function _canvasOpenInEditor(btn) {
-        const code = decodeURIComponent(btn.dataset.code || '');
+        const code = _canvasDecodeCode(btn);
         const lang = btn.dataset.lang || '';
         const ext = { javascript:'js', js:'js', typescript:'ts', python:'py', html:'html', css:'css', json:'json', bash:'sh', shell:'sh' }[lang.toLowerCase()] || 'txt';
         openFileInTab('snippet.' + ext, code, true);
