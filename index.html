@@ -1447,9 +1447,16 @@
 
 <div class="app-layout">
     <div class="app-header" id="header">
-        <div class="tabs">
-            <div class="tab active" id="tab-code" onclick="switchTab('editor')">Code</div>
-            <div class="tab" id="tab-preview" onclick="switchTab('preview')">Preview</div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div class="tabs">
+                <div class="tab active" id="tab-code" onclick="switchTab('editor')">Code</div>
+                <div class="tab" id="tab-preview" onclick="switchTab('preview')">Preview</div>
+            </div>
+            <!-- Language toggle pill -->
+            <div id="lang-toggle" style="display:flex;padding:2px;border-radius:16px;background:rgba(0,0,0,0.2);gap:0;border:1px solid var(--glass-border);">
+                <button id="lang-html-btn" onclick="_setLangMode('html')" style="padding:3px 10px;border-radius:14px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;cursor:pointer;transition:background 0.18s,color 0.18s;">HTML</button>
+                <button id="lang-py-btn" onclick="_setLangMode('python')" style="padding:3px 10px;border-radius:14px;border:none;background:transparent;color:var(--text-color);font-family:'Poppins',sans-serif;font-size:10px;font-weight:700;cursor:pointer;opacity:0.6;transition:background 0.18s,color 0.18s,opacity 0.18s;">PY</button>
+            </div>
         </div>
         
         <div style="display:flex; align-items:center; gap:4px;">
@@ -1480,6 +1487,36 @@
     <div class="main-container" id="editor-wrapper">
         <div id="editor"></div>
         <iframe id="preview" allow="geolocation; microphone; camera; fullscreen; payment; clipboard-read; clipboard-write"></iframe>
+
+        <!-- Python output terminal -->
+        <div id="python-output" style="
+            position:absolute;top:0;right:0;bottom:0;left:0;
+            background:#0d0d10;
+            visibility:hidden;opacity:0;z-index:21;
+            display:flex;flex-direction:column;
+            font-family:'Courier New',Courier,monospace;
+            transition:opacity 0.15s;
+        ">
+            <!-- Python output header bar -->
+            <div id="py-out-header" style="display:flex;align-items:center;gap:8px;padding:7px 12px;background:rgba(16,185,129,0.08);border-bottom:1px solid rgba(16,185,129,0.2);flex-shrink:0;">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z" fill="var(--accent-dim)"/><path d="M8 12l2 2 4-4" stroke="var(--accent)" stroke-width="2.2"/></svg>
+                <span style="font-size:10px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;flex:1;">Python Output</span>
+                <span id="py-run-time" style="font-size:9px;color:var(--text-color);opacity:0.4;font-family:'Poppins',sans-serif;"></span>
+                <button onclick="_pyRunCode()" title="Run again" style="background:var(--accent-dim);border:none;border-radius:6px;padding:3px 8px;font-size:9px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;gap:3px;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="var(--accent)" stroke="none" style="pointer-events:none;"><polygon points="5 3 19 12 5 21 5 3"/></svg>Run
+                </button>
+                <button onclick="switchTab('editor')" style="background:none;border:none;padding:2px 4px;cursor:pointer;color:var(--text-color);opacity:0.4;display:flex;align-items:center;" title="Back to editor">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+            </div>
+            <!-- Output content -->
+            <div id="py-out-body" style="flex:1;overflow-y:auto;overflow-x:auto;padding:12px 14px;font-size:13px;line-height:1.7;color:#e0e0e0;white-space:pre-wrap;word-break:break-word;-webkit-overflow-scrolling:touch;"></div>
+            <!-- Loading state -->
+            <div id="py-loading" style="display:none;position:absolute;inset:0;background:#0d0d10;z-index:5;align-items:center;justify-content:center;flex-direction:column;gap:12px;">
+                <div style="width:36px;height:36px;border-radius:50%;border:3px solid rgba(16,185,129,0.2);border-top-color:var(--accent);animation:commitSpin 0.8s linear infinite;"></div>
+                <div style="font-size:11px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;" id="py-loading-msg">Loading Python...</div>
+            </div>
+        </div>
         <!-- Preview welcome overlay — shown when no project is loaded -->
                 <div id="preview-welcome" style="
             position:absolute;top:0;left:0;right:0;bottom:0;
@@ -7541,6 +7578,209 @@ Use only line numbers visible in the context. Be precise.`;
             showToast('Syntax ON', 'code');
             localStorage.removeItem('codx_plain_text');
         }
+    }
+
+
+    // ══════════════════════════════════════════════════════
+    //  PYTHON MODE — Pyodide-powered in-browser Python runner
+    // ══════════════════════════════════════════════════════
+
+    let _pythonMode = false;   // false = HTML, true = Python
+    let _pyodide    = null;    // Pyodide instance (lazy loaded)
+    let _pyLoading  = false;   // loading in progress
+
+    // ── Switch language mode ──
+    function _setLangMode(lang) {
+        _pythonMode = (lang === 'python');
+
+        const htmlBtn = document.getElementById('lang-html-btn');
+        const pyBtn   = document.getElementById('lang-py-btn');
+
+        if (_pythonMode) {
+            if (htmlBtn) { htmlBtn.style.background = 'transparent'; htmlBtn.style.color = 'var(--text-color)'; htmlBtn.style.opacity = '0.6'; }
+            if (pyBtn)   { pyBtn.style.background   = 'var(--accent)'; pyBtn.style.color = 'white'; pyBtn.style.opacity = '1'; }
+            // Set editor to Python syntax
+            editor.session.setMode('ace/mode/python');
+            // If current tab is .html, suggest .py — but don't force rename
+            showToast('Python Mode', 'code');
+        } else {
+            if (htmlBtn) { htmlBtn.style.background = 'var(--accent)'; htmlBtn.style.color = 'white'; htmlBtn.style.opacity = '1'; }
+            if (pyBtn)   { pyBtn.style.background   = 'transparent'; pyBtn.style.color = 'var(--text-color)'; pyBtn.style.opacity = '0.6'; }
+            // Restore syntax based on current filename
+            _setEditorMode(currentFileName, editor.getValue());
+            // Hide python output if visible
+            const po = document.getElementById('python-output');
+            if (po) { po.style.visibility = 'hidden'; po.style.opacity = '0'; }
+            showToast('HTML Mode', 'html');
+        }
+    }
+
+    // ── Override switchTab to handle Python preview ──
+    const _origSwitchTab = switchTab;
+    switchTab = function(tabName, fromBtn) {
+        if (tabName === 'preview' && _pythonMode) {
+            // Python mode — show output panel, not HTML iframe
+            _pyShowOutputPanel();
+            _pyRunCode();
+            // Update tab UI manually
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            const tgt = document.getElementById('tab-preview');
+            if (tgt) tgt.classList.add('active');
+            // Hide toolbar (same as HTML preview)
+            const outerEl = document.getElementById('bottom-outer');
+            const innerEl = document.getElementById('bottom-panel');
+            const isDesktop = window.innerWidth >= 768;
+            const t2 = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+            if (!isDesktop) {
+                if (outerEl) { outerEl.style.transition = t2; outerEl.style.transform = 'translateY(100%)'; }
+                if (innerEl) { innerEl.style.transition = t2; innerEl.style.transform = 'translateY(100%)'; }
+            }
+            _inPreview = true;
+            document.getElementById('editor').style.opacity = '0';
+            document.getElementById('editor').style.pointerEvents = 'none';
+            document.getElementById('jumpers').style.display = 'none';
+            return;
+        }
+        // Going back to editor from python output
+        if (tabName === 'editor' && _pythonMode) {
+            const po = document.getElementById('python-output');
+            if (po) { po.style.visibility = 'hidden'; po.style.opacity = '0'; }
+        }
+        _origSwitchTab(tabName, fromBtn);
+    };
+
+    // ── Show python output panel ──
+    function _pyShowOutputPanel() {
+        const iframe = document.getElementById('preview');
+        const po     = document.getElementById('python-output');
+        if (iframe) iframe.classList.remove('active-pane');
+        if (po) { po.style.visibility = 'visible'; po.style.opacity = '1'; }
+    }
+
+    // ── Load Pyodide (lazy, once) ──
+    async function _pyEnsureLoaded() {
+        if (_pyodide) return _pyodide;
+        if (_pyLoading) {
+            // Wait until loaded
+            await new Promise(r => {
+                const check = setInterval(() => { if (_pyodide || !_pyLoading) { clearInterval(check); r(); } }, 100);
+            });
+            return _pyodide;
+        }
+        _pyLoading = true;
+        const loadEl  = document.getElementById('py-loading');
+        const loadMsg = document.getElementById('py-loading-msg');
+        if (loadEl) loadEl.style.display = 'flex';
+        if (loadMsg) loadMsg.textContent = 'Loading Python runtime...';
+
+        try {
+            // Load Pyodide script dynamically
+            if (!window.loadPyodide) {
+                await new Promise((res, rej) => {
+                    const s = document.createElement('script');
+                    s.src = 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/pyodide.js';
+                    s.onload = res;
+                    s.onerror = () => rej(new Error('Failed to load Pyodide script'));
+                    document.head.appendChild(s);
+                });
+            }
+            if (loadMsg) loadMsg.textContent = 'Initialising Python...';
+            _pyodide = await loadPyodide({
+                indexURL: 'https://cdn.jsdelivr.net/pyodide/v0.26.2/full/'
+            });
+            if (loadEl) loadEl.style.display = 'none';
+        } catch (err) {
+            _pyLoading = false;
+            if (loadEl) loadEl.style.display = 'none';
+            throw err;
+        }
+        _pyLoading = false;
+        return _pyodide;
+    }
+
+    // ── Run Python code ──
+    async function _pyRunCode() {
+        const body    = document.getElementById('py-out-body');
+        const loadEl  = document.getElementById('py-loading');
+        const timeEl  = document.getElementById('py-run-time');
+        if (!body) return;
+
+        body.innerHTML = '';
+        const code = editor.getValue();
+        if (!code.trim()) {
+            _pyAppendLine('# No code to run', 'dim'); return;
+        }
+
+        const t0 = Date.now();
+
+        // Show loading if Pyodide not yet loaded
+        let py;
+        try {
+            if (!_pyodide) {
+                if (loadEl) loadEl.style.display = 'flex';
+            }
+            py = await _pyEnsureLoaded();
+        } catch (err) {
+            _pyAppendLine('⚠ Could not load Python runtime.', 'error');
+            _pyAppendLine(err.message, 'error');
+            return;
+        }
+
+        if (loadEl) loadEl.style.display = 'none';
+
+        // Redirect stdout/stderr into our output div
+        py.runPython(`
+import sys, io
+_codx_stdout = io.StringIO()
+_codx_stderr = io.StringIO()
+sys.stdout = _codx_stdout
+sys.stderr = _codx_stderr
+`);
+
+        let outText = '', errText = '';
+        try {
+            await py.runPythonAsync(code);
+        } catch (err) {
+            errText = err.message || String(err);
+        }
+
+        try {
+            outText = py.runPython('_codx_stdout.getvalue()');
+            errText = errText || py.runPython('_codx_stderr.getvalue()');
+        } catch(e) {}
+
+        // Restore stdout/stderr
+        try { py.runPython('sys.stdout = sys.__stdout__\nsys.stderr = sys.__stderr__'); } catch(e) {}
+
+        const elapsed = ((Date.now() - t0) / 1000).toFixed(2);
+        if (timeEl) timeEl.textContent = elapsed + 's';
+
+        if (outText) {
+            outText.split('\n').forEach(line => _pyAppendLine(line, 'out'));
+        }
+        if (errText) {
+            errText.trim().split('\n').forEach(line => _pyAppendLine(line, 'error'));
+        }
+        if (!outText && !errText) {
+            _pyAppendLine('# Finished with no output', 'dim');
+        }
+
+        // Scroll to bottom
+        body.scrollTop = body.scrollHeight;
+    }
+
+    // ── Append a line to output ──
+    function _pyAppendLine(text, type) {
+        const body = document.getElementById('py-out-body');
+        if (!body) return;
+        const line = document.createElement('div');
+        line.style.cssText = type === 'error'
+            ? 'color:#f87171;'
+            : type === 'dim'
+            ? 'color:rgba(255,255,255,0.3);font-style:italic;'
+            : 'color:#e0e0e0;';
+        line.textContent = text;
+        body.appendChild(line);
     }
 
 
