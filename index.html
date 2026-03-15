@@ -1439,7 +1439,144 @@
             line-height: 1.7;
         }
 
-        /* ── Force Desktop Layout on mobile ── */
+
+        /* ══════════════════════════════════════════
+           CHROME-STYLE DESKTOP MODE
+        ══════════════════════════════════════════ */
+
+        /* Titlebar — top chrome bar with window controls */
+        body.force-desktop .app-header {
+            background: #23272e;
+            border-bottom: none;
+            padding: 0;
+            height: 38px;
+            min-height: 38px;
+            display: flex;
+            align-items: center;
+            position: relative;
+            -webkit-app-region: drag;
+            user-select: none;
+        }
+        body.light-theme.force-desktop .app-header {
+            background: #e8eaed;
+        }
+
+        /* macOS traffic light dots */
+        body.force-desktop .app-header::before {
+            content: '';
+            display: flex;
+        }
+        body.force-desktop #dt-wincontrols {
+            display: flex !important;
+            align-items: center;
+            gap: 7px;
+            padding: 0 14px;
+            flex-shrink: 0;
+            -webkit-app-region: no-drag;
+        }
+        body.force-desktop #dt-wincontrols .wc-dot {
+            width: 12px; height: 12px;
+            border-radius: 50%;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: opacity 0.15s;
+        }
+        body.force-desktop #dt-wincontrols .wc-dot:hover { opacity: 0.8; }
+        body.force-desktop #dt-wincontrols .wc-close   { background: #ff5f56; }
+        body.force-desktop #dt-wincontrols .wc-min     { background: #febc2e; }
+        body.force-desktop #dt-wincontrols .wc-max     { background: #28c840; }
+
+        /* App title centered in titlebar */
+        body.force-desktop #dt-title {
+            display: block !important;
+            position: absolute;
+            left: 50%; transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-color);
+            opacity: 0.6;
+            font-family: 'Poppins', sans-serif;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        /* Hide mobile tabs pill in desktop mode — tabs move to tab bar */
+        body.force-desktop .tabs { display: none !important; }
+
+        /* Right controls — smaller in titlebar */
+        body.force-desktop .app-header > div:last-child {
+            margin-left: auto;
+            -webkit-app-region: no-drag;
+        }
+        body.force-desktop .app-header .icon-btn {
+            width: 26px !important; height: 26px !important;
+            min-width: 26px !important;
+        }
+
+        /* Chrome-style tab bar */
+        body.force-desktop .file-tabs-bar {
+            background: #23272e;
+            border-bottom: 1px solid rgba(0,0,0,0.35);
+            padding: 5px 4px 0;
+            height: 37px;
+            align-items: flex-end;
+            gap: 1px;
+        }
+        body.light-theme.force-desktop .file-tabs-bar {
+            background: #e8eaed;
+            border-bottom: 1px solid rgba(0,0,0,0.2);
+        }
+        body.force-desktop .file-tab {
+            background: #323740;
+            border-radius: 8px 8px 0 0;
+            border: none;
+            height: 32px;
+            padding: 0 14px 0 12px;
+            margin-bottom: 0;
+            font-size: 11px;
+            font-weight: 500;
+            opacity: 1;
+            min-width: 90px;
+            max-width: 200px;
+            color: rgba(255,255,255,0.55);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+        body.light-theme.force-desktop .file-tab {
+            background: #d2d5db;
+            color: rgba(0,0,0,0.5);
+        }
+        body.force-desktop .file-tab.active {
+            background: var(--editor-bg);
+            color: var(--text-color);
+            z-index: 1;
+        }
+        body.light-theme.force-desktop .file-tab.active {
+            background: #ffffff;
+            color: #1c1e21;
+        }
+        /* New tab + button after tabs */
+        body.force-desktop #dt-newtab {
+            display: flex !important;
+            align-items: center;
+            justify-content: center;
+            width: 26px; height: 26px;
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text-color);
+            opacity: 0.4;
+            border: none;
+            background: none;
+            font-size: 18px;
+            margin-bottom: 3px;
+            transition: opacity 0.15s, background 0.15s;
+            flex-shrink: 0;
+        }
+        body.force-desktop #dt-newtab:hover { opacity: 0.8; background: rgba(128,128,128,0.15); }
+
+        /* Sidebar */
         body.force-desktop #bottom-panel {
             position: fixed !important;
             left: 0; top: 0; bottom: 0;
@@ -1452,6 +1589,7 @@
             overflow-x: hidden;
             z-index: 40;
         }
+        body.force-desktop #bottom-panel::-webkit-scrollbar { display: none; }
         body.force-desktop #bottom-panel .bottom-area {
             flex: 1;
             border-top: none !important;
@@ -1479,6 +1617,7 @@
         body.force-desktop #bottom-panel .toolbar-rows > div[style*="justify-content: center"] .toolbar-btn { width: 100% !important; }
         body.force-desktop #inline-chat-panel { left: 188px !important; }
         body.force-desktop #find-modal { left: calc(188px + 2%) !important; width: calc(96% - 188px) !important; }
+        body.force-desktop #bottom-outer { left: 188px !important; }
 
     </style>
 </head>
@@ -1529,6 +1668,15 @@
 
 <div class="app-layout">
     <div class="app-header" id="header">
+        <!-- Chrome window controls (macOS dots) — shown in desktop mode only -->
+        <div id="dt-wincontrols" style="display:none;">
+            <div class="wc-dot wc-close" title="Close" onclick="showToast('Close not available in PWA','info')"></div>
+            <div class="wc-dot wc-min"   title="Minimize" onclick="showToast('Minimize not available in PWA','info')"></div>
+            <div class="wc-dot wc-max"   title="Maximize" onclick="showToast('Maximize not available in PWA','info')"></div>
+        </div>
+        <!-- App title (desktop mode) -->
+        <span id="dt-title" style="display:none;">CodX Editor</span>
+
         <div style="display:flex;align-items:center;gap:8px;">
             <div class="tabs">
                 <div class="tab active" id="tab-code" onclick="switchTab('editor')">Code</div>
@@ -1588,7 +1736,12 @@
         </div>
     </div>
 
-    <div class="file-tabs-bar no-select" id="file-tabs-bar"></div>
+    <div style="display:flex;align-items:flex-end;background:transparent;">
+        <div class="file-tabs-bar no-select" id="file-tabs-bar" style="flex:1;"></div>
+        <button id="dt-newtab" style="display:none;" onclick="openNewProjectModal()" title="New tab">
+            <span class="material-icons-round" style="font-size:18px;pointer-events:none;">add</span>
+        </button>
+    </div>
 
     <div class="main-container" id="editor-wrapper">
         <div id="editor"></div>
@@ -6061,10 +6214,11 @@ No markdown, no backticks, no explanation outside the array.`;
         btn.innerHTML = '<span class="material-icons-round">hourglass_empty</span>Asking AI...';
         btn.onclick = null;
         const ta = document.getElementById('inline-chat-textarea');
-        if (ta) {
-            ta.value = `The OLD BLOCK you gave me doesn't match anything in my current code. Here is the old block you sent:\n\`\`\`\n${oldCode}\n\`\`\`\nPlease look at the current code carefully and send the correct OLD BLOCK and NEW BLOCK again.`;
-            sendInlineChat();
-        }
+        if (!ta) return;
+        const currentCode = editor.getValue();
+        const numbered = currentCode.split('\n').map((l,i) => `${i+1}| ${l}`).join('\n');
+        ta.value = `The OLD BLOCK you gave me doesn't match anything in my current code.\n\nOLD BLOCK you sent:\n\`\`\`\n${oldCode}\n\`\`\`\n\nMy CURRENT CODE (with line numbers):\n\`\`\`\n${numbered}\n\`\`\`\n\nPlease find the correct matching block in my current code and send the correct OLD BLOCK and NEW BLOCK again.`;
+        sendInlineChat();
     }
 
     function _canvasDecodeCode(btn) {
@@ -7793,12 +7947,22 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Toggle Desktop / Mobile layout ──
     function toggleLayoutMode() {
         const isForced = document.body.classList.toggle('force-desktop');
-        const icon = document.getElementById('layout-toggle-icon');
+        const icon  = document.getElementById('layout-toggle-icon');
+        const inner = document.getElementById('bottom-panel');
+        const outer = document.getElementById('bottom-outer');
         if (isForced) {
+            // Force inline styles so JS-set transforms can't win
+            if (inner) {
+                inner.style.cssText = 'position:fixed!important;left:0;top:0;bottom:0;width:188px;height:100%!important;transform:none!important;display:flex!important;flex-direction:column;overflow-y:auto;overflow-x:hidden;z-index:40;transition:none!important;';
+            }
+            if (outer) outer.style.cssText = 'left:188px;';
             if (icon) icon.textContent = 'phone_android';
             showToast('Desktop Layout ON', 'desktop_windows');
             localStorage.setItem('codx_force_desktop', '1');
         } else {
+            // Restore mobile — clear all inline styles
+            if (inner) inner.style.cssText = '';
+            if (outer) outer.style.cssText = '';
             if (icon) icon.textContent = 'desktop_windows';
             showToast('Mobile Layout', 'phone_android');
             localStorage.removeItem('codx_force_desktop');
@@ -7806,12 +7970,17 @@ Use only line numbers visible in the context. Be precise.`;
         setTimeout(() => editor.resize(), 350);
     }
 
-    // Restore layout mode on load
+    // Restore desktop layout on load if saved
     if (localStorage.getItem('codx_force_desktop')) {
         document.body.classList.add('force-desktop');
+        const inner = document.getElementById('bottom-panel');
+        const outer = document.getElementById('bottom-outer');
+        if (inner) inner.style.cssText = 'position:fixed!important;left:0;top:0;bottom:0;width:188px;height:100%!important;transform:none!important;display:flex!important;flex-direction:column;overflow-y:auto;overflow-x:hidden;z-index:40;transition:none!important;';
+        if (outer) outer.style.cssText = 'left:188px;';
         setTimeout(() => {
             const icon = document.getElementById('layout-toggle-icon');
             if (icon) icon.textContent = 'phone_android';
+            editor.resize();
         }, 100);
     }
     function togglePlainTextMode() {
