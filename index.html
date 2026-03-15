@@ -2591,7 +2591,7 @@
         if (_pythonMode) {
             if (icon)  icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 4h5a3 3 0 0 1 3 3v3H9a3 3 0 0 0-3 3v3a3 3 0 0 0 3 3h1"/><path d="M18 20h-5a3 3 0 0 1-3-3v-3h5a3 3 0 0 0 3-3V8a3 3 0 0 0-3-3h-1"/><circle cx="8.5" cy="6.5" r="1" fill="var(--accent)" stroke="none"/><circle cx="15.5" cy="17.5" r="1" fill="var(--accent)" stroke="none"/></svg>';
             if (title) title.textContent = 'Start coding in Python';
-            if (sub)   sub.innerHTML    = 'Write your code · hit <b style="opacity:0.5;font-weight:700">Preview</b> to run';
+            if (sub)   sub.innerHTML    = 'Pyodide · CPython 3.12 · hit <b style="opacity:0.5;font-weight:700">Preview</b> to run';
         } else {
             if (icon)  icon.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>';
             if (title) title.textContent = 'Start coding in HTML';
@@ -6333,8 +6333,18 @@ STRICT FORMAT RULES:
             _inlineLogActivity('Calling ' + (_activeAgent()?.providerName || 'AI') + '...');
             // ── Mode context prefix ──
             const _modeCtx = _pythonMode
-                ? '\nCURRENT MODE: Python. All code is Python (.py). Only write Python — never HTML/CSS/JS. Files are .py only.'
-                : '\nCURRENT MODE: HTML/Web. Write HTML, CSS, JavaScript as needed.';
+                ? `\nCURRENT MODE: Python (Pyodide v0.26.2 — CPython 3.12 in browser via WebAssembly).
+PYODIDE RULES — follow strictly or code will break:
+1. NEVER use input() — no stdin in browser.
+2. NEVER use requests, urllib, httpx — no direct network calls (CORS blocked). Use js.fetch if HTTP needed.
+3. NEVER use tkinter, pygame, wx, PyQt — no GUI libraries.
+4. NEVER write files with open('file','w') to filesystem — browser sandbox, use in-memory only.
+5. NEVER use plt.show() — use plt.savefig(buf, format='png') + base64 to display images.
+6. stdlib is fully available: math, json, re, datetime, random, itertools, collections, functools, os.path etc.
+7. numpy, pandas, scipy ARE available (auto-loaded). Always write pure Pyodide-compatible code.
+8. All code runs in a single execution context — print() output appears in the Preview panel.
+9. Only write .py files. Never generate HTML/CSS/JS.`
+                : `\nCURRENT MODE: HTML/Web. Write HTML, CSS, JavaScript as needed.`;
             // ── Chat Mode: use a pure-conversation system prompt ──
             const activeSystemPrompt = _inlineChatModeOn
                 ? `You are CodX Assistant, an AI coding assistant built into the CodX editor.
