@@ -746,14 +746,14 @@
         #agent-chat-messages::-webkit-scrollbar { display: none; }
 
         /* Individual message bubbles */
-        .chat-msg { display: flex; flex-direction: column; max-width: 85%; }
+        .chat-msg { display: flex; flex-direction: column; max-width: 85%; min-width: 0; }
         .chat-msg.user { align-self: flex-end; align-items: flex-end; }
-        .chat-msg.agent { align-self: flex-start; align-items: flex-start; }
+        .chat-msg.agent { align-self: flex-start; align-items: flex-start; width: 100%; max-width: 100%; }
 
         .chat-bubble {
             padding: 9px 13px; border-radius: 16px;
             font-size: 12px; line-height: 1.55; word-break: break-word;
-            min-width: 0; overflow: hidden;
+            min-width: 0; overflow: hidden; max-width: 100%; box-sizing: border-box;
         }
         .chat-msg.user .chat-bubble {
             background: var(--accent); color: white;
@@ -798,6 +798,8 @@
             font-family: 'Courier New', Courier, monospace;
             max-width: 100%;
             min-width: 0;
+            width: 100%;
+            box-sizing: border-box;
         }
         body.light-theme .code-canvas { background: #1e1e2e; }
         .code-canvas-header {
@@ -1682,6 +1684,15 @@
             display: flex; align-items: center; padding: 2px;
         }
         #inline-chat-close .material-icons-round { font-size: 18px; pointer-events: none; }
+        /* Fullscreen toggle */
+        #inline-chat-fullscreen {
+            background: rgba(128,128,128,0.1); border: none; border-radius: 8px;
+            width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-color); opacity: 0.55; flex-shrink: 0;
+            transition: opacity 0.15s;
+        }
+        #inline-chat-fullscreen:active { opacity: 1; background: var(--accent-dim); }
+        #inline-chat-panel.chat-fullscreen { height: 100dvh !important; border-radius: 0 !important; }
 
         /* Messages area */
         #inline-chat-messages {
@@ -1693,8 +1704,8 @@
         #inline-chat-messages::-webkit-scrollbar { display: none; }
 
         /* Reuse existing chat bubble styles */
-        #inline-chat-messages .chat-msg { max-width: 88%; }
-        #inline-chat-messages .chat-msg.agent { max-width: 96%; }
+        #inline-chat-messages .chat-msg { max-width: 88%; min-width: 0; }
+        #inline-chat-messages .chat-msg.agent { max-width: 100%; width: 100%; }
 
         /* Input row */
         #inline-chat-input-row {
@@ -1928,6 +1939,9 @@
                 </div>
                 <button onclick="_inlineClearChatUI()" title="Clear conversation" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.5;flex-shrink:0;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.5">
                     <span class="material-icons-round" style="font-size:15px;pointer-events:none;">delete_sweep</span>
+                </button>
+                <button id="inline-chat-fullscreen" onclick="_toggleChatFullscreen()" title="Fullscreen">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" id="fs-icon" pointer-events="none"><polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/></svg>
                 </button>
                 <button id="inline-chat-close" onclick="closeInlineChat()" style="background:rgba(239,68,68,0.1);border:none;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:#ef4444;flex-shrink:0;">
                     <span class="material-icons-round" style="font-size:16px;pointer-events:none;">close</span>
@@ -6261,12 +6275,12 @@ STRICT FORMAT RULES:
         const targetTab = _isNewFileMode ? null : (fileTabs.find(t => t.id === (_agentTargetTabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId));
         const curTab = fileTabs.find(t => t.id === activeTabId);
         if (curTab) curTab.content = editor.getValue();
-        const code = (!_isNewFileMode && targetTab) ? targetTab.content : '';
+        const code = (!_isNewFileMode && targetTab && !_inlineChatModeOn) ? targetTab.content : '';
         const filename = (!_isNewFileMode && targetTab) ? targetTab.name : '';
 
         // ── Code with line numbers (no truncation — all providers support large context) ──
         const _provider = _activeAgent()?.provider || '';
-        let numberedCode = code.split('\n').map((l,i) => `${i+1}| ${l}`).join('\n');
+        let numberedCode = code ? code.split('\n').map((l,i) => `${i+1}| ${l}`).join('\n') : '';
         _inlineLogActivity('Code: ' + (numberedCode.length/1024).toFixed(1) + 'k (' + code.split('\n').length + ' lines)');
 
         // ── Context files (user explicitly ticked) ──
@@ -7522,6 +7536,23 @@ Use only line numbers visible in the context. Be precise.`;
             if (icon) icon.setAttribute('stroke', 'currentColor');
             if (ta)   ta.placeholder = 'Ask agent...';
             showToast('Chat Mode OFF', 'edit');
+        }
+    }
+
+    // ── Inline chat: fullscreen toggle ──
+    let _chatIsFullscreen = false;
+    function _toggleChatFullscreen() {
+        _chatIsFullscreen = !_chatIsFullscreen;
+        const panel = document.getElementById('inline-chat-panel');
+        const icon  = document.getElementById('fs-icon');
+        if (_chatIsFullscreen) {
+            panel.classList.add('chat-fullscreen');
+            // Switch icon to compress/exit fullscreen arrows
+            if (icon) icon.innerHTML = '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>';
+        } else {
+            panel.classList.remove('chat-fullscreen');
+            // Restore expand arrows
+            if (icon) icon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
         }
     }
 
