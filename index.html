@@ -654,7 +654,7 @@
         .agent-dots span { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--accent); margin-right: 2px; animation: agentBounce 0.8s infinite; }
         .agent-dots span:nth-child(2) { animation-delay: 0.2s; }
         .agent-dots span:nth-child(3) { animation-delay: 0.4s; }
-        @keyframes agentBounce { 0%,80%,100%{ transform:translateY(0); opacity:0.6; } 40%{ transform:translateY(-4px); opacity:1; } }
+        @keyframes agentBounce { 0%,80%,100%{ transform:translateY(0); opacity:0.6; } 40%{ transform:translateY(-4px); opacity:1; } } @keyframes activityFadeIn { from { opacity:0; transform:translateY(3px); } to { opacity:0.7; transform:translateY(0); } }
         @keyframes spin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         @keyframes commitSpin { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         #agent-file-selector { padding: 0 10px 5px; }
@@ -4678,7 +4678,7 @@ Rules:
     function _acceptPendingEdits() {
         if(_agentPendingEdits.length === 0) return;
         _agentUndoStack.push(editor.getValue());
-        if(_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+        if(_agentUndoStack.length > 5) _agentUndoStack.shift();
 
         // Apply edits to the agent's target tab
         const targetId = _agentTargetTabId || activeTabId;
@@ -5310,7 +5310,7 @@ Rules:
         if (!edits || edits.length === 0) return;
 
         _agentUndoStack.push(editor.getValue());
-        if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
 
         const targetId  = _agentTargetTabId || activeTabId;
         const targetTab = fileTabs.find(t => t.id === targetId);
@@ -5828,11 +5828,12 @@ No markdown, no backticks, no explanation outside the array.`;
 
         const bubble = document.createElement('div');
         bubble.className = 'chat-bubble';
-        bubble.style.cssText = 'padding:0;overflow:hidden;min-width:180px;';
+        bubble.style.cssText = 'padding:0;overflow:hidden;min-width:200px;max-width:100%;';
 
+        // ── Header row with status + dots ──
         const hdr = document.createElement('div');
         hdr.id = 'ipt-header';
-        hdr.style.cssText = 'display:flex;align-items:center;gap:7px;padding:8px 11px;cursor:pointer;user-select:none;';
+        hdr.style.cssText = 'display:flex;align-items:center;gap:7px;padding:8px 11px;';
 
         const icon = document.createElement('span');
         icon.id = 'inline-status-icon';
@@ -5841,7 +5842,7 @@ No markdown, no backticks, no explanation outside the array.`;
 
         const txt = document.createElement('span');
         txt.id = 'inline-status-text';
-        txt.style.cssText = 'font-size:10px;font-weight:700;font-family:Poppins,sans-serif;color:var(--accent);flex:1;transition:opacity 0.15s;';
+        txt.style.cssText = 'font-size:10px;font-weight:700;font-family:Poppins,sans-serif;color:var(--accent);flex:1;';
         txt.textContent = 'Building prompt...';
 
         const dots = document.createElement('div');
@@ -5853,31 +5854,45 @@ No markdown, no backticks, no explanation outside the array.`;
             dots.appendChild(d);
         }
 
-        const chev = document.createElement('span');
-        chev.id = 'ipt-chev';
-        chev.className = 'material-icons-round';
-        chev.style.cssText = 'font-size:13px;opacity:0.5;transition:transform 0.2s;transform:rotate(180deg);';
-        chev.textContent = 'expand_more';
-
         hdr.appendChild(icon);
         hdr.appendChild(txt);
         hdr.appendChild(dots);
-        hdr.appendChild(chev);
 
+        // ── Prompt preview body (existing) ──
         const body = document.createElement('div');
         body.id = 'ipt-body';
-        body.style.cssText = 'display:block;border-top:1px solid var(--glass-border);padding:6px 11px 8px;';
+        body.style.cssText = 'display:none;border-top:1px solid var(--glass-border);padding:5px 11px 6px;';
 
+        // ── Live activity log ──
+        const log = document.createElement('div');
+        log.id = 'ipt-log';
+        log.style.cssText = 'border-top:1px solid var(--glass-border);max-height:72px;overflow-y:auto;padding:4px 11px 5px;display:flex;flex-direction:column;gap:1px;scroll-behavior:smooth;';
+        log.innerHTML = '<div style="font-size:9px;color:var(--accent);opacity:0.5;font-family:Poppins,sans-serif;font-weight:700;padding-bottom:2px;letter-spacing:0.5px;">ACTIVITY</div>';
+
+        // Toggle prompt preview on header click
+        hdr.style.cursor = 'pointer';
         hdr.addEventListener('click', function() {
-            const open = body.style.display !== 'none';
-            body.style.display = open ? 'none' : 'block';
-            chev.style.transform = open ? 'rotate(0deg)' : 'rotate(180deg)';
+            body.style.display = body.style.display === 'none' ? 'block' : 'none';
         });
 
         bubble.appendChild(hdr);
         bubble.appendChild(body);
+        bubble.appendChild(log);
         wrap.appendChild(bubble);
         box.appendChild(wrap);
+        _inlineChatScroll();
+    }
+
+    // ── Push a line to the live activity log ──
+    function _inlineLogActivity(text) {
+        const log = document.getElementById('ipt-log');
+        if (!log) return;
+        const line = document.createElement('div');
+        line.style.cssText = 'font-size:9px;font-family:"Courier New",monospace;color:var(--text-color);opacity:0.7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;animation:activityFadeIn 0.2s ease;';
+        line.textContent = '› ' + text;
+        log.appendChild(line);
+        // Auto-scroll to bottom
+        log.scrollTop = log.scrollHeight;
         _inlineChatScroll();
     }
 
@@ -5888,30 +5903,29 @@ No markdown, no backticks, no explanation outside the array.`;
         const dotsEl = document.getElementById('ipt-dots');
         if (!textEl) return;
         if (iconEl) iconEl.textContent = icon;
-        textEl.textContent = text + (promptChars != null ? '  ' + (promptChars/1024).toFixed(1) + 'k' : '');
-        if (dotsEl) dotsEl.style.display = 'none';
-        const chev = document.getElementById('ipt-chev');
-        if (chev) chev.style.opacity = '0.7';
+        const displayText = text + (promptChars != null ? '  ' + (promptChars/1024).toFixed(1) + 'k' : '');
+        textEl.textContent = displayText;
+        if (dotsEl) dotsEl.style.display = 'flex';
+        // Also push to live log
+        _inlineLogActivity(text + (promptChars != null ? ' (' + (promptChars/1024).toFixed(1) + 'k)' : ''));
     }
 
     function _inlineFillPromptPreview(data) {
         const body = document.getElementById('ipt-body');
         if (!body) return;
         const rows = [];
-        if (data.mode) rows.push(['Mode', data.mode]);
         if (data.request) rows.push(['Request', data.request.length > 140 ? data.request.slice(0,140) + '…' : data.request]);
-        if (data.targetFile) rows.push(['Target file', data.targetFile]);
-        if (data.codeSize) rows.push(['Code sent', data.codeSize]);
+        if (data.targetFile) rows.push(['Target', data.targetFile]);
+        if (data.codeSize) rows.push(['Code', data.codeSize]);
         if (data.contextFiles && data.contextFiles.length) data.contextFiles.forEach(f => rows.push(['Context', f]));
         if (data.attachment) rows.push(['Attachment', data.attachment]);
         if (data.history) rows.push(['History', data.history]);
-        if (data.rules) rows.push(['Rules', data.rules]);
-        if (data.totalSize) rows.push(['Total prompt', data.totalSize]);
+        if (data.totalSize) rows.push(['Prompt size', data.totalSize]);
         body.innerHTML = rows.map(r => {
             const row = document.createElement('div');
-            row.style.cssText = 'display:flex;gap:8px;padding:2px 0;font-size:10px;border-bottom:1px solid var(--glass-border);';
+            row.style.cssText = 'display:flex;gap:8px;padding:2px 0;font-size:9px;border-bottom:1px solid var(--glass-border);';
             const lbl = document.createElement('span');
-            lbl.style.cssText = 'color:var(--accent);font-weight:700;opacity:0.7;min-width:72px;flex-shrink:0;font-family:Poppins,sans-serif;';
+            lbl.style.cssText = 'color:var(--accent);font-weight:700;opacity:0.7;min-width:60px;flex-shrink:0;font-family:Poppins,sans-serif;';
             lbl.textContent = r[0];
             const val = document.createElement('span');
             val.style.cssText = 'color:var(--text-color);opacity:0.85;word-break:break-word;line-height:1.4;font-family:Poppins,sans-serif;';
@@ -5920,9 +5934,11 @@ No markdown, no backticks, no explanation outside the array.`;
             row.appendChild(val);
             return row.outerHTML;
         }).join('');
-        body.style.display = 'block';
-        const chev = document.getElementById('ipt-chev');
-        if (chev) chev.style.transform = 'rotate(180deg)';
+        // Log key steps to activity window
+        if (data.targetFile) _inlineLogActivity('Target: ' + data.targetFile);
+        if (data.codeSize)   _inlineLogActivity('Code: ' + data.codeSize);
+        if (data.contextFiles && data.contextFiles.length) _inlineLogActivity('Context: ' + data.contextFiles.join(', '));
+        if (data.totalSize)  _inlineLogActivity('Prompt ready: ' + data.totalSize);
         _inlineChatScroll();
     }
 
@@ -5945,40 +5961,44 @@ No markdown, no backticks, no explanation outside the array.`;
     //  No regex intent detection — AI handles everything
     // ══════════════════════════════════════════════════
 
-    const _AGENT_SYSTEM_PROMPT = `You are a code assistant in CodX editor. You receive code with LINE NUMBERS like "42| code here".
+    const _AGENT_SYSTEM_PROMPT = `You are an expert code assistant in CodX editor. You receive code with LINE NUMBERS like "42| code here".
 Full chat history is included every call — use it to understand context of what has been done before.
 
-DECIDE THE RESPONSE TYPE YOURSELF based on what the user wants. No mode is forced on you.
+YOUR JOB: Fulfil exactly what the user asks. Nothing more, nothing less. The user's request is the source of truth.
 
-─── EXPLAIN (question / review / debug / "what does X do") ───
-Reply in plain text. Short. Same language as user (English/Hindi/Hinglish).
+QUALITY STANDARD:
+- Every UI you build must be modern, well-designed, and polished — clean layouts, smooth animations, good typography
+- Use SVG icons (inline) — never rely on external icon libraries
+- Code must be clean, well-organised, and professional
+- Fully functional — no placeholders, no "TODO", no incomplete sections
 
-─── EDIT (fix / change / add / remove / improve something in existing code) ───
+DECIDE THE RESPONSE TYPE YOURSELF based on what the user wants:
+
+─── EXPLAIN (question / review / debug) ───
+Reply in plain text. Same language as user (English/Hindi/Hinglish).
+
+─── EDIT (fix / change / add / remove / improve in existing code) ───
 Return ONLY this JSON, nothing else:
 {"type":"edit","explanation":"what changed","edits":[{"line_start":N,"line_end":N,"replace":"new code here"}]}
-Rules: use exact line numbers shown. replace = complete replacement lines. surgical — max 8 edits. touch nothing unrelated.
+Use exact line numbers shown. replace = complete replacement lines.
 
-─── NEW FILE (user asks to create a new file / project / component from scratch) ───
+─── NEW FILE (create a new file from scratch) ───
 Return ONLY this JSON, nothing else:
 {"type":"new_file","explanation":"what it does","filename":"name.ext","content":"complete file content"}
-Use this when NO existing code is provided OR user explicitly says "create", "new file", "bana do", "nayi file".
 
-─── SPLIT (user wants to break one file into multiple separate files) ───
+─── SPLIT (break one file into multiple files) ───
 Return ONLY this JSON, nothing else:
 {"type":"split","explanation":"what was split","files":[{"filename":"name.ext","content":"complete file content","reason":"why"}]}
-Use this when user says "split", "separate", "alag karo", "multiple files", "tod do" etc.
 
-─── REORGANIZE (restructure / reorder / refactor the whole file structure) ───
-Return ONLY this JSON with COMPLETE file content — not just the changed parts:
+─── REORGANIZE (restructure / reorder the whole file) ───
+Return ONLY this JSON with COMPLETE file content:
 {"type":"reorganize","explanation":"what changed","content":"entire file content here"}
 
-STRICT RULES:
-- Return ONLY JSON for edit/new_file/split/reorganize — no markdown fences, no extra text outside JSON
+STRICT FORMAT RULES:
+- Return ONLY JSON for edit/new_file/split/reorganize — no markdown fences, no text outside JSON
 - Never truncate — write every single line completely
 - Never hallucinate line numbers — only use line numbers visible in the provided code
-- In JSON strings: escape " as \\" and newlines as \\n
-- Minimal change, maximum stability. Never break unrelated code.
-- If user intent is ambiguous, pick the safest type (edit for small changes, reorganize for large restructuring).`;
+- In JSON strings: escape " as \\" and newlines as \\n`;
 
     // ── Robust JSON parser — shared across all agent response handlers ──
     function _tryParseJSON(str) {
@@ -6136,7 +6156,7 @@ STRICT RULES:
             ? `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\``
             : '';
 
-        const userMsg = `── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}\n\nRules: Analyse full code before changing. Senior-level quality. Only do what's requested. Respect existing structure. Minimal change, max stability. No comments in code.`;
+        const userMsg = `── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}`;
 
         // ── Fill live prompt preview before sending ──
         (function() {
@@ -6149,15 +6169,13 @@ STRICT RULES:
             }
             const histLen = historyForAPI.length;
             _inlineFillPromptPreview({
-                mode: _isNewFileMode ? 'Create new file' : 'Edit existing file',
                 request: userRequest,
                 targetFile: (!_isNewFileMode && targetTab) ? targetTab.name + ' (' + (targetTab.content ? (targetTab.content.length/1024).toFixed(1) + 'k' : '0k') + ')' : null,
                 codeSize: !_isNewFileMode ? (numberedCode.length/1024).toFixed(1) + 'k chars (' + code.split('\n').length + ' lines)' : null,
                 contextFiles: ctxFiles.length ? ctxFiles : null,
                 attachment: _inlineAttachment ? _inlineAttachment.name : null,
-                history: histLen > 0 ? histLen + ' previous message' + (histLen > 1 ? 's' : '') : 'none',
-                rules: _isNewFileMode ? 'New file (minimal)' : 'Edit mode (full)',
-                totalSize: (userMsg.length/1024).toFixed(1) + 'k total  ·  system ' + (_AGENT_SYSTEM_PROMPT.length/1024).toFixed(1) + 'k  +  user ' + (userMsg.length/1024).toFixed(1) + 'k',
+                history: histLen > 0 ? histLen + ' msg' + (histLen > 1 ? 's' : '') : null,
+                totalSize: (userMsg.length/1024).toFixed(1) + 'k chars',
             });
         })();
 
@@ -6167,6 +6185,7 @@ STRICT RULES:
 
         try {
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
+            _inlineLogActivity('Response received (' + (raw.length/1024).toFixed(1) + 'k)');
             _inlineHideTyping();
 
             // Save this exchange to history
@@ -6231,44 +6250,68 @@ STRICT RULES:
             }
 
             if (!parsed || !parsed.type) {
-                // ── Plain text — but check if it contains a code block ──
-                const fenceMatch = raw.match(/```(?:html|css|js|javascript|typescript)?\s*([\s\S]*?)```/);
-                if (fenceMatch && targetTab) {
-                    // AI gave explanation + code block — show text in chat, apply code to editor
-                    const extractedCode = fenceMatch[1].trim();
-                    const textOutside = raw.replace(/```(?:html|css|js|javascript|typescript)?[\s\S]*?```/g, '').trim();
-                    if (textOutside) _inlineAppendMsg('agent', textOutside);
-                    // Save undo snapshot and apply
-                    _agentUndoStack.push(targetTab.content || editor.getValue());
-                    if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
-                    targetTab.content = extractedCode;
-                    if (targetTab.id === activeTabId) {
-                        editor.setValue(extractedCode, -1);
-                    } else {
-                        switchFileTab(targetTab.id);
-                        editor.setValue(extractedCode, -1);
+                // ── Raw looks like JSON but failed to parse (e.g. truncated large file) ──
+                // Try to extract "content" field directly via regex as last resort
+                const looksLikeJSON = raw.trim().startsWith('{');
+                if (looksLikeJSON) {
+                    const typeMatch = raw.match(/"type"\s*:\s*"([^"]+)"/);
+                    const filenameMatch = raw.match(/"filename"\s*:\s*"([^"]+)"/);
+                    const explanationMatch = raw.match(/"explanation"\s*:\s*"([^"\\]*)"/);
+                    // Extract content between "content":" and the last occurrence of "}
+                    const contentStart = raw.indexOf('"content"');
+                    if (typeMatch && contentStart !== -1) {
+                        // Find the actual content value start (after "content":")
+                        const valStart = raw.indexOf('"', contentStart + 9) + 1;
+                        // Content ends at last `"}` pattern — grab everything up to it
+                        let rawContent = raw.slice(valStart);
+                        // Unescape JSON string escapes
+                        rawContent = rawContent
+                            .replace(/\\n/g, '\n').replace(/\\t/g, '\t')
+                            .replace(/\\"/g, '"').replace(/\\\\/g, '\\')
+                            .replace(/"}?\s*$/, '').trim();
+                        if (rawContent.length > 10) {
+                            const fname = filenameMatch ? filenameMatch[1] : 'new-file.html';
+                            const expl = explanationMatch ? explanationMatch[1] : '';
+                            if (expl) _inlineAppendMsg('agent', expl);
+                            openFileInTab(fname, rawContent, true);
+                            _inlineAppendMsg('agent', `✅ "${fname}" created and opened.`);
+                            _inlineChatHistory.push({ role: 'assistant', content: `[CREATED FILE: ${fname}]` });
+                            _inlineSelectedTabId = activeTabId;
+                            _agentTargetTabId = activeTabId;
+                            _inlineRenderFileDropdown();
+                            return; // handled
+                        }
                     }
-                    _inlineAppendMsg('agent', `✅ Code applied to ${targetTab.name}.`);
-                    _inlineChatHistory.push({ role: 'assistant', content: `[APPLIED CODE TO ${targetTab.name}]` });
+                    // JSON but couldn't extract — show friendly error, not raw dump
+                    _inlineAppendMsg('agent', '⚠️ AI response was too large to parse. Try a shorter/simpler request, or switch to Gemini (handles large outputs better).');
+                // ── Plain text or code block ──
                 } else {
-                    // Pure text — explanation or question answer
-                    const stronglyLooksLikeJSON = raw.trim().startsWith('{') && raw.trim().endsWith('}');
-                    if (stronglyLooksLikeJSON) {
-                        const preview = raw.trim().slice(0, 120).replace(/</g,'&lt;');
-                        _inlineAppendMsg('agent', `⚠️ AI returned malformed JSON. Try again or switch to Gemini/OpenAI.\n\nPreview: ${preview}...`);
+                    const fenceMatch = raw.match(/```(?:html|css|js|javascript|typescript)?\s*([\s\S]*?)```/);
+                    if (fenceMatch && targetTab) {
+                        const extractedCode = fenceMatch[1].trim();
+                        const textOutside = raw.replace(/```(?:html|css|js|javascript|typescript)?[\s\S]*?```/g, '').trim();
+                        if (textOutside) _inlineAppendMsg('agent', textOutside);
+                        _agentUndoStack.push(targetTab.content || editor.getValue());
+                        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
+                        targetTab.content = extractedCode;
+                        if (targetTab.id === activeTabId) {
+                            editor.setValue(extractedCode, -1);
+                        } else {
+                            switchFileTab(targetTab.id);
+                            editor.setValue(extractedCode, -1);
+                        }
+                        _inlineAppendMsg('agent', `✅ Code applied to ${targetTab.name}.`);
+                        _inlineChatHistory.push({ role: 'assistant', content: `[APPLIED CODE TO ${targetTab.name}]` });
                     } else {
                         _inlineAppendMsg('agent', raw.trim());
                     }
                 }
 
             } else if (parsed.type === 'edit') {
-                // Guard: edits must be a non-empty array
                 if (!Array.isArray(parsed.edits) || parsed.edits.length === 0) {
                     _inlineAppendMsg('agent', parsed.explanation || 'No changes were needed.');
                 } else {
-                    if (parsed.explanation && parsed.explanation.trim()) {
-                        _inlineAppendMsg('agent', parsed.explanation.trim());
-                    }
+                    if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
                     const card = _buildInlineEditCard(parsed.edits, targetTab);
                     _inlineAppendMsg('agent', '', card);
                 }
@@ -6276,110 +6319,93 @@ STRICT RULES:
             } else if (parsed.type === 'split') {
                 const truncated = _detectTruncation(parsed.files?.map(f => f.content).join(''));
                 if (truncated) {
-                    _inlineAppendMsg('agent', '⚠️ AI truncated the output. Retrying with explicit instruction...');
                     _inlineShowTyping();
-                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return the COMPLETE content for every file. Do NOT truncate or use placeholders. Write every single line.');
+                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE content for every file. No truncation.');
                     _inlineHideTyping();
-                    try {
-                        const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
-                    } catch(_) {}
+                    try { const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2; } catch(_) {}
                 }
-                // Auto-create all split files directly — no confirmation card needed
                 const splitFiles = parsed.files || [];
                 if (!splitFiles.length) {
                     _inlineAppendMsg('agent', '⚠️ AI returned no files. Try again.');
                 } else {
-                    splitFiles.forEach(f => openFileInTab(f.filename, f.content || '', true));
-                    const names = splitFiles.map(f => f.filename).join(', ');
-                    _inlineAppendMsg('agent',
-                        `✅ Split into ${splitFiles.length} files: ${names}` +
-                        (parsed.explanation ? '\n' + parsed.explanation : '')
-                    );
-                    _inlineChatHistory.push({
-                        role: 'assistant',
-                        content: `[SPLIT INTO ${splitFiles.length} FILES: ${names}] ${parsed.explanation || ''}`
-                    });
+                    if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                    _inlineAppendMsg('agent', '', _buildConfirmCard({
+                        type: 'split',
+                        icon: 'call_split',
+                        title: `Split into ${splitFiles.length} file${splitFiles.length>1?'s':''}`,
+                        lines: splitFiles.map(f => f.filename + (f.reason ? ' — ' + f.reason : '')),
+                        onApply: () => {
+                            splitFiles.forEach(f => openFileInTab(f.filename, f.content || '', true));
+                            _inlineChatHistory.push({ role: 'assistant', content: `[SPLIT INTO ${splitFiles.length} FILES: ${splitFiles.map(f=>f.filename).join(', ')}]` });
+                            showToast(`${splitFiles.length} files created`, 'call_split');
+                        }
+                    }));
                 }
 
             } else if (parsed.type === 'new_file') {
                 const truncated = _detectTruncation(parsed.content);
                 if (truncated) {
-                    _inlineAppendMsg('agent', '⚠️ AI truncated the output. Retrying...');
                     _inlineShowTyping();
-                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE file content. No truncation, no placeholders.');
+                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE file content. No truncation.');
                     _inlineHideTyping();
                     const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
                 }
-                // new_file mode: paste content directly into current active tab (replace)
-                // Normal mode: open in new tab
-                if (_isNewFileMode) {
-                    const curActiveTab = fileTabs.find(t => t.id === activeTabId);
-                    const newContent = parsed.content || '';
-                    // Save undo snapshot
-                    _agentUndoStack.push(curActiveTab ? curActiveTab.content : editor.getValue());
-                    if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
-                    // Replace content in current tab
-                    if (curActiveTab) curActiveTab.content = newContent;
-                    editor.setValue(newContent, -1);
-                    // Show AI's explanation/comments in chat first (if any), then success
-                    if (parsed.explanation && parsed.explanation.trim()) {
-                        _inlineAppendMsg('agent', parsed.explanation.trim());
+                const newFname = parsed.filename || 'new-file.html';
+                const newContent = parsed.content || '';
+                if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                _inlineAppendMsg('agent', '', _buildConfirmCard({
+                    type: 'new_file',
+                    icon: 'add_circle',
+                    title: `New file: ${newFname}`,
+                    lines: [newContent.split('\n').length + ' lines'],
+                    onApply: () => {
+                        _agentUndoStack.push({ type: 'new_file', filename: newFname });
+                        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
+                        openFileInTab(newFname, newContent, true);
+                        _inlineChatHistory.push({ role: 'assistant', content: `[CREATED FILE: ${newFname}]` });
+                        _inlineSelectedTabId = activeTabId;
+                        _agentTargetTabId = activeTabId;
+                        _inlineRenderFileDropdown();
+                        showToast(`${newFname} created`, 'add_circle');
                     }
-                    _inlineAppendMsg('agent', `✅ Code pasted into editor.`);
-                    // Reset to normal file mode
-                    _inlineSelectedTabId = activeTabId;
-                    _agentTargetTabId = activeTabId;
-                    _inlineRenderFileDropdown();
-                } else {
-                    openFileInTab(parsed.filename, parsed.content || '', true);
-                    if (parsed.explanation && parsed.explanation.trim()) {
-                        _inlineAppendMsg('agent', parsed.explanation.trim());
-                    }
-                    _inlineAppendMsg('agent', `✅ "${parsed.filename}" created and opened.`);
-                    _inlineSelectedTabId = activeTabId;
-                    _agentTargetTabId = activeTabId;
-                    _inlineRenderFileDropdown();
-                }
-                _inlineChatHistory.push({
-                    role: 'assistant',
-                    content: `[CREATED FILE: ${parsed.filename}] ${parsed.explanation || ''}`
-                });
+                }));
 
             } else if (parsed.type === 'reorganize') {
-                // Check truncation — reorganize must have FULL content
                 const truncated = _detectTruncation(parsed.content);
                 if (truncated) {
-                    _inlineAppendMsg('agent', '⚠️ AI truncated the reorganized file. Retrying with full content request...');
                     _inlineShowTyping();
-                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT,
-                        userMsg + '\n\nCRITICAL: Your previous response was truncated. Return the COMPLETE reorganized file — every single line, no shortcuts, no "rest remains same", no ellipsis.');
+                    const retryRaw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg + '\n\nCRITICAL: Return COMPLETE reorganized file — every single line.');
                     _inlineHideTyping();
                     const p2 = _tryParseJSON(retryRaw); if (p2) parsed = p2;
                 }
-                // Auto-apply reorganize directly — save undo snapshot first
                 if (!parsed.content) {
                     _inlineAppendMsg('agent', '⚠️ AI returned empty content. Try again.');
                 } else {
-                    const origContent = targetTab ? targetTab.content : editor.getValue();
-                    _agentUndoStack.push(origContent);
-                    if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
-                    if (targetTab) targetTab.content = parsed.content;
-                    if (!targetTab || targetTab.id === activeTabId) {
-                        editor.setValue(parsed.content, -1);
-                    } else {
-                        switchFileTab(targetTab.id);
-                        editor.setValue(parsed.content, -1);
-                    }
-                    const newLineCount = parsed.content.split('\n').length;
-                    if (parsed.explanation && parsed.explanation.trim()) {
-                        _inlineAppendMsg('agent', parsed.explanation.trim());
-                    }
-                    _inlineAppendMsg('agent', `✅ File reorganized (${newLineCount} lines). Undo available.`);
-                    _inlineChatHistory.push({
-                        role: 'assistant',
-                        content: `[REORGANIZED FILE — ${newLineCount} lines] ${parsed.explanation || ''}`
-                    });
-                    showToast('File reorganized', 'reorder');
+                    const reorgContent = parsed.content;
+                    const reorgTab = targetTab;
+                    const oldContent = reorgTab ? reorgTab.content : editor.getValue();
+                    const newLineCount = reorgContent.split('\n').length;
+                    if (parsed.explanation && parsed.explanation.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
+                    _inlineAppendMsg('agent', '', _buildConfirmCard({
+                        type: 'reorganize',
+                        icon: 'reorder',
+                        title: `Reorganized file — ${newLineCount} lines`,
+                        lines: [
+                            `Old: ${oldContent.split('\n').length} lines → New: ${newLineCount} lines`,
+                        ],
+                        onApply: () => {
+                            const cleanedReorg = reorgContent
+                                .split('\n').map(l => l.replace(/\s+$/, '')).join('\n')
+                                .replace(/\n{3,}/g, '\n\n').trimEnd();
+                            _agentUndoStack.push({ type: 'edit_content', tab: reorgTab, content: oldContent });
+                            if (_agentUndoStack.length > 5) _agentUndoStack.shift();
+                            if (reorgTab) reorgTab.content = cleanedReorg;
+                            if (!reorgTab || reorgTab.id === activeTabId) editor.setValue(cleanedReorg, -1);
+                            else { switchFileTab(reorgTab.id); editor.setValue(cleanedReorg, -1); }
+                            _inlineChatHistory.push({ role: 'assistant', content: `[REORGANIZED FILE — ${cleanedReorg.split('\n').length} lines]` });
+                            showToast('File reorganized', 'reorder');
+                        }
+                    }));
                 }
             }
 
@@ -6460,16 +6486,19 @@ STRICT RULES:
         if (!newContent) return;
         const snapTab = fileTabs.find(t => t.id === (tabId || activeTabId)) || fileTabs.find(t => t.id === activeTabId);
         const original = snapTab ? snapTab.content : editor.getValue();
+        // Clean: trailing whitespace per line, max 2 blank lines, no trailing newlines
+        const cleaned = newContent
+            .split('\n').map(l => l.replace(/\s+$/, '')).join('\n')
+            .replace(/\n{3,}/g, '\n\n').trimEnd();
         // Save undo snapshot
-        _agentUndoStack.push(original);
-        if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
-        // Apply full file replacement
-        if (snapTab) snapTab.content = newContent;
+        _agentUndoStack.push({ type: 'edit_content', tab: snapTab, content: original });
+        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
+        if (snapTab) snapTab.content = cleaned;
         if (!tabId || tabId === activeTabId) {
-            editor.setValue(newContent, -1);
+            editor.setValue(cleaned, -1);
         } else {
             switchFileTab(tabId);
-            editor.setValue(newContent, -1);
+            editor.setValue(cleaned, -1);
         }
         const undoCount = _agentUndoStack.length;
         btn.closest('div').parentElement.innerHTML = `<div style="padding:8px 12px;display:flex;align-items:center;gap:8px;background:rgba(16,185,129,0.08);border-radius:12px;">
@@ -6684,7 +6713,10 @@ STRICT RULES:
                     failReasons.push(`Line ${edit.line_start} is out of range (file has ${lines.length} lines)`);
                     return;
                 }
-                const newLines = (edit.replace || '').split('\n').map(l => l.replace(/^\t/, '  '));
+                const newLines = (edit.replace || '').split('\n').map(l => 
+                    l.replace(/\t/g, '  ')      // all tabs → 2 spaces
+                     .replace(/\s+$/, '')        // trailing whitespace per line
+                );
                 lines.splice(s, e - s + 1, ...newLines);
                 applied++;
 
@@ -6730,11 +6762,15 @@ STRICT RULES:
         }
 
         // Save undo snapshot ONLY if at least something applied
-        _agentUndoStack.push(original);
-        if (_agentUndoStack.length > AGENT_UNDO_LIMIT) _agentUndoStack.shift();
+        _agentUndoStack.push({ type: 'edit_content', tab: snapTab, content: original });
+        if (_agentUndoStack.length > 5) _agentUndoStack.shift();
 
-        // Clean up extra blank lines
-        const cleaned = lines.join('\n').replace(/\n{3,}/g, '\n\n');
+        // Clean up: collapse 3+ blank lines → max 2, remove trailing whitespace per line
+        const cleaned = lines
+            .map(l => l.replace(/\s+$/, ''))
+            .join('\n')
+            .replace(/\n{3,}/g, '\n\n')
+            .trimEnd();
 
         // ── Write back to the correct tab ──
         if (snapTab) snapTab.content = cleaned;
@@ -6915,12 +6951,24 @@ Use only line numbers visible in the context. Be precise.`;
     function _agentUndoLast(btn) {
         if (_agentUndoStack.length === 0) { showToast('Nothing to undo', 'info'); return; }
         const prev = _agentUndoStack.pop();
-        const curTab = fileTabs.find(t => t.id === activeTabId);
-        if (curTab) curTab.content = prev;
-        editor.setValue(prev, -1);
+        // prev can be: string (old content) or { type, tab, content } or { type:'new_file', filename }
+        if (typeof prev === 'string') {
+            const curTab = fileTabs.find(t => t.id === activeTabId);
+            if (curTab) curTab.content = prev;
+            editor.setValue(prev, -1);
+        } else if (prev && prev.type === 'edit_content') {
+            const t = prev.tab || fileTabs.find(t => t.id === activeTabId);
+            if (t) t.content = prev.content;
+            if (!prev.tab || prev.tab.id === activeTabId) editor.setValue(prev.content, -1);
+            else { switchFileTab(prev.tab.id); editor.setValue(prev.content, -1); }
+        } else if (prev && prev.type === 'new_file') {
+            // Undo new_file = close that tab
+            const tabToClose = fileTabs.find(t => t.name === prev.filename);
+            if (tabToClose) closeFileTab(tabToClose.id);
+        }
         if (btn) {
             const remaining = _agentUndoStack.length;
-            btn.innerHTML = `<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="pointer-events:none;"><path d="M3 7v6h6"/><path d="M3 13C5.5 6.5 13 4 18 8s5 10 1 14"/></svg> Undo (${remaining})`;
+            btn.textContent = remaining > 0 ? `Undo (${remaining} left)` : 'Undone';
             if (remaining === 0) btn.style.opacity = '0.35';
         }
         showToast('Undone', 'undo');
@@ -7066,6 +7114,59 @@ Use only line numbers visible in the context. Be precise.`;
             <span style="font-size:11px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;">${filename} created</span>
         </div>`;
         showToast(`${filename} created`, 'add_circle');
+    }
+
+    // ── Universal Apply/Decline confirm card ──
+    // Used for new_file, split, reorganize — all go through here
+    function _buildConfirmCard({ type, icon, title, lines, onApply }) {
+        const card = document.createElement('div');
+        card.style.cssText = 'border:1px solid var(--glass-border);border-radius:12px;overflow:hidden;margin-top:4px;';
+
+        const linesHTML = (lines||[]).map(l =>
+            `<div style="font-size:10px;font-family:'Poppins',sans-serif;color:var(--text-color);opacity:0.7;padding:2px 0;display:flex;align-items:center;gap:6px;">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+                ${l}
+            </div>`
+        ).join('');
+
+        card.innerHTML = `
+            <div style="background:rgba(16,185,129,0.08);padding:9px 12px;border-bottom:1px solid var(--glass-border);display:flex;align-items:center;gap:8px;">
+                <span class="material-icons-round" style="font-size:15px;color:var(--accent);pointer-events:none;">${icon}</span>
+                <span style="font-size:11px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;flex:1;">${title}</span>
+            </div>
+            ${linesHTML ? `<div style="padding:8px 12px 4px;">${linesHTML}</div>` : ''}
+            <div style="padding:8px 12px;display:flex;gap:7px;" id="confirm-card-actions-${Date.now()}">
+                <button class="confirm-apply-btn" style="flex:1;padding:9px;border-radius:9px;border:none;background:var(--accent);color:white;font-size:11px;font-weight:700;font-family:'Poppins',sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:5px;transition:opacity 0.15s,transform 0.15s;">
+                    <span class="material-icons-round" style="font-size:14px;pointer-events:none;">check</span>Apply
+                </button>
+                <button class="confirm-decline-btn" style="padding:9px 16px;border-radius:9px;border:1px solid var(--glass-border);background:none;color:var(--text-color);font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;opacity:0.6;transition:opacity 0.15s;">
+                    Decline
+                </button>
+            </div>`;
+
+        const applyBtn = card.querySelector('.confirm-apply-btn');
+        const declineBtn = card.querySelector('.confirm-decline-btn');
+        const actRow = card.querySelector('[id^="confirm-card-actions"]');
+
+        applyBtn.onclick = () => {
+            onApply();
+            actRow.outerHTML = `<div style="padding:8px 12px;display:flex;align-items:center;gap:7px;background:rgba(16,185,129,0.06);">
+                <span class="material-icons-round" style="font-size:14px;color:var(--accent);">check_circle</span>
+                <span style="font-size:11px;font-weight:700;color:var(--accent);font-family:'Poppins',sans-serif;flex:1;">Applied ✓</span>
+                <button onclick="_agentUndoLast(this)" style="background:rgba(128,128,128,0.12);border:1px solid var(--glass-border);border-radius:8px;padding:3px 10px;font-size:10px;font-weight:700;font-family:'Poppins',sans-serif;color:var(--text-color);cursor:pointer;display:flex;align-items:center;gap:4px;">
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;"><path d="M3 7v6h6"/><path d="M3 13C5.5 6.5 13 4 18 8s5 10 1 14"/></svg>
+                    Undo
+                </button>
+            </div>`;
+        };
+        declineBtn.onclick = () => {
+            actRow.outerHTML = `<div style="padding:8px 12px;display:flex;align-items:center;gap:7px;background:rgba(239,68,68,0.05);">
+                <span class="material-icons-round" style="font-size:14px;color:#ef4444;opacity:0.7;">cancel</span>
+                <span style="font-size:11px;font-weight:600;color:var(--text-color);font-family:'Poppins',sans-serif;opacity:0.5;">Declined</span>
+            </div>`;
+            _inlineChatHistory.push({ role: 'user', content: '[USER DECLINED the suggested change]' });
+        };
+        return card;
     }
 
     // ── Inline chat: populate model dropdown ──
