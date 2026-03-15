@@ -2027,8 +2027,13 @@
 <!-- Custom Dialog (replaces all browser confirm/alert/prompt) -->
 <div id="custom-dialog-overlay">
     <div id="custom-dialog-box">
-        <div id="custom-dialog-icon"></div>
-        <div id="custom-dialog-title"></div>
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <div id="custom-dialog-icon" style="flex-shrink:0;"></div>
+            <div id="custom-dialog-title" style="flex:1;"></div>
+            <button onclick="_hideDialog()" style="background:none;border:none;cursor:pointer;color:var(--text-color);opacity:0.4;padding:2px;display:flex;align-items:center;flex-shrink:0;transition:opacity 0.15s;" onmouseenter="this.style.opacity=1" onmouseleave="this.style.opacity=0.4">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            </button>
+        </div>
         <div id="custom-dialog-msg"></div>
         <input type="text" id="custom-dialog-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="display:none;">
         <div id="custom-dialog-btns"></div>
