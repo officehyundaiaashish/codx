@@ -5946,33 +5946,39 @@ No markdown, no backticks, no explanation outside the array.`;
     // ══════════════════════════════════════════════════
 
     const _AGENT_SYSTEM_PROMPT = `You are a code assistant in CodX editor. You receive code with LINE NUMBERS like "42| code here".
+Full chat history is included every call — use it to understand context of what has been done before.
 
-RESPOND WITH ONE OF THESE — pick based on user intent:
+DECIDE THE RESPONSE TYPE YOURSELF based on what the user wants. No mode is forced on you.
 
-─── EXPLAIN (question/debug/review) ───
+─── EXPLAIN (question / review / debug / "what does X do") ───
 Reply in plain text. Short. Same language as user (English/Hindi/Hinglish).
 
-─── EDIT (fix/change/improve/add/remove) ───
-Return ONLY this JSON, nothing else before or after:
-{"type":"edit","explanation":"what changed","edits":[{"line_start":N,"line_end":N,"replace":"new code"}]}
-Rules: use exact line numbers shown. replace = complete new lines. surgical changes only. max 8 edits.
-
-─── NEW FILE (create from scratch) ───
+─── EDIT (fix / change / add / remove / improve something in existing code) ───
 Return ONLY this JSON, nothing else:
-{"type":"new_file","explanation":"what it does","filename":"name.ext","content":"complete file"}
-If MODE: CREATE NEW FILE is in the message — you MUST use this type.
+{"type":"edit","explanation":"what changed","edits":[{"line_start":N,"line_end":N,"replace":"new code here"}]}
+Rules: use exact line numbers shown. replace = complete replacement lines. surgical — max 8 edits. touch nothing unrelated.
 
-─── REORGANIZE (restructure layout/order) ───
-Return ONLY this JSON with COMPLETE file content:
-{"type":"reorganize","explanation":"what changed","content":"entire file content"}
+─── NEW FILE (user asks to create a new file / project / component from scratch) ───
+Return ONLY this JSON, nothing else:
+{"type":"new_file","explanation":"what it does","filename":"name.ext","content":"complete file content"}
+Use this when NO existing code is provided OR user explicitly says "create", "new file", "bana do", "nayi file".
+
+─── SPLIT (user wants to break one file into multiple separate files) ───
+Return ONLY this JSON, nothing else:
+{"type":"split","explanation":"what was split","files":[{"filename":"name.ext","content":"complete file content","reason":"why"}]}
+Use this when user says "split", "separate", "alag karo", "multiple files", "tod do" etc.
+
+─── REORGANIZE (restructure / reorder / refactor the whole file structure) ───
+Return ONLY this JSON with COMPLETE file content — not just the changed parts:
+{"type":"reorganize","explanation":"what changed","content":"entire file content here"}
 
 STRICT RULES:
-- Return ONLY JSON for edit/new_file/reorganize — no markdown fences, no text outside JSON
-- Never truncate content — write every line
-- Never hallucinate line numbers — use only what you see
+- Return ONLY JSON for edit/new_file/split/reorganize — no markdown fences, no extra text outside JSON
+- Never truncate — write every single line completely
+- Never hallucinate line numbers — only use line numbers visible in the provided code
 - In JSON strings: escape " as \\" and newlines as \\n
-- No silly mistakes. Surgical edits only — touch nothing unrelated.
-- Minimal change, maximum stability. Ensure no other part breaks.`;
+- Minimal change, maximum stability. Never break unrelated code.
+- If user intent is ambiguous, pick the safest type (edit for small changes, reorganize for large restructuring).`;
 
     // ── Robust JSON parser — shared across all agent response handlers ──
     function _tryParseJSON(str) {
@@ -6045,12 +6051,6 @@ STRICT RULES:
         sendBtn.disabled = true;
         _inlineShowTyping();
 
-        // Get target file content
-        // 'new' = user wants AI to create a brand new file — don't send any existing code as target
-        // Detect multi-file intent — if prompt mentions multiple file types or split keywords
-        const _multiFilePattern = /(\.html.*\.css|\.css.*\.js|\.html.*\.js|index\.html.*style\.css|multiple\s+files?|separate\s+files?|split\s+into|alag\s+files?|teen\s+file|3\s+file)/i;
-        const _splitKeywordsInline = /(split|divide|separate|extract|break\s*into|multiple\s*files?|alag|tod\s*do|files\s*mein)/i;
-        const _isMultiFileIntent = (_multiFilePattern.test(userRequest) || _splitKeywordsInline.test(userRequest));
 
         const _isNewFileMode = _inlineSelectedTabId === 'new';
         if (!_isNewFileMode && _inlineSelectedTabId) _agentTargetTabId = _inlineSelectedTabId;
@@ -6131,20 +6131,12 @@ STRICT RULES:
             ? `\n\n── SESSION EVENTS (changes made so far) ──\n${sessionEvents}`
             : '';
 
-        // In new-file mode: don't send any existing code as target — just context files + request
-        const newFileModePrefix = _isNewFileMode
-            ? `── MODE: CREATE NEW FILE ──\nYou MUST respond with ONLY this JSON and nothing else — no explanation, no markdown, no text before or after:\n{"type":"new_file","explanation":"...","filename":"name.ext","content":"COMPLETE file content"}\n\n`
+        // Single unified message — no mode forcing, AI decides response type
+        const codeBlock = (!_isNewFileMode && numberedCode)
+            ? `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\``
             : '';
 
-        const codeBlock = _isNewFileMode
-            ? ''   // no "FULL CODE" section — there is no target file
-            : `\n\n── FULL CODE (with line numbers) ──\n\`\`\`\n${numberedCode}\n\`\`\``;
-
-        const editRules = _isNewFileMode
-            ? `\n\nRules: Only do what's requested. Senior-level quality. Minimal output, max stability. No comments in code.`
-            : `\n\nRules: Analyse full code before changing. Senior-level quality. Only do what's requested. Don't touch unrelated code. Respect existing UI/structure/animations. Ensure no other part breaks. Minimal change, max stability, lowest complexity. No comments in code.`;
-
-        const userMsg = `${newFileModePrefix}── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}${editRules}`;
+        const userMsg = `── CONTEXT ──${indexSummary}${sessionSummaryBlock}${codeBlock}${otherFilesCtx}${attachCtx}\n\n── USER REQUEST ──\n${userRequest}\n\nRules: Analyse full code before changing. Senior-level quality. Only do what's requested. Respect existing structure. Minimal change, max stability. No comments in code.`;
 
         // ── Fill live prompt preview before sending ──
         (function() {
@@ -6172,36 +6164,6 @@ STRICT RULES:
         _inlineUpdateTypingStatus('📤', 'Sending to AI...', userMsg.length);
 
         // ── Multi-file / split mode in inline chat ──
-        if (_isMultiFileIntent) {
-            try {
-                const splitSP = `You are CodX AI Agent. The user wants to create or split code into multiple separate files.
-Analyse the request and produce all required files. Return ONLY a JSON array:
-[{"filename":"name.ext","content":"full content","reason":"brief reason"}]
-Only do what's requested. Senior-level quality. Minimal output, max stability. No comments in code.
-No markdown, no backticks, no explanation outside the array.`;
-                const splitMsg = _isNewFileMode
-                    ? `Create these files as requested:\n\nRequest: ${userRequest}\n\nRules: Only do what's requested. Senior-level quality. No comments in code.`
-                    : `Code to work with (${filename}):\n\`\`\`\n${code}\n\`\`\`\n\nRequest: ${userRequest}\n\nRules: Only do what's requested. Senior-level quality. No comments in code.`;
-                const splitRaw = await _callAgentAPI(splitSP, splitMsg, historyForAPI);
-                _inlineHideTyping();
-                _inlineChatHistory.push({ role: 'user', content: splitMsg });
-                _inlineChatHistory.push({ role: 'assistant', content: splitRaw });
-                const files = _safeExtractJSON(splitRaw);
-                if (files && files.length) {
-                    const msgId = Date.now();
-                    const card = _buildSplitCard(files, msgId);
-                    _inlineAppendMsg('agent', `✅ ${files.length} file${files.length>1?'s':''} ready — open each below:`, card);
-                } else {
-                    _inlineAppendMsg('agent', '⚠️ Could not generate files. Try rephrasing your request.');
-                }
-            } catch(err) {
-                _inlineHideTyping();
-                _inlineAppendMsg('agent', '⚠️ ' + (err.message || 'Something went wrong.'));
-            } finally {
-                document.getElementById('inline-chat-send-btn').disabled = false;
-            }
-            return;
-        }
 
         try {
             const raw = await _callAgentAPI(_AGENT_SYSTEM_PROMPT, userMsg, historyForAPI);
