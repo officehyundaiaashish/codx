@@ -1855,7 +1855,7 @@
                 </div>
                 <!-- Custom file selector -->
                 <div id="inline-file-selector" style="position:relative;flex-shrink:0;">
-                    <button id="inline-file-trigger" onclick="_inlineToggleFileDropdown()" style="background:rgba(128,128,128,0.1);border:1px solid var(--glass-border);border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-color);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;transition:all 0.15s;">
+                    <button id="inline-file-trigger" onclick="_inlineToggleFileDropdown(event)" style="background:rgba(128,128,128,0.1);border:1px solid var(--glass-border);border-radius:8px;padding:3px 8px;display:flex;align-items:center;gap:4px;cursor:pointer;color:var(--text-color);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;transition:all 0.15s;">
                         <span class="material-icons-round" style="font-size:13px;pointer-events:none;color:var(--accent);">description</span>
                         <span id="inline-file-label" style="max-width:70px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">Current File</span>
                         <span class="material-icons-round" id="inline-file-chevron" style="font-size:12px;pointer-events:none;transition:transform 0.2s;">expand_more</span>
@@ -7275,7 +7275,8 @@ Use only line numbers visible in the context. Be precise.`;
         _inlineRenderFileDropdown();
     }
 
-    function _inlineToggleFileDropdown() {
+    function _inlineToggleFileDropdown(e) {
+        if (e) e.stopPropagation();
         const dd = document.getElementById('inline-file-dropdown');
         const chevron = document.getElementById('inline-file-chevron');
         const trigger = document.getElementById('inline-file-trigger');
@@ -7297,10 +7298,12 @@ Use only line numbers visible in the context. Be precise.`;
         }
     }
 
-    function _inlineCloseFileDropdown() {
+    function _inlineCloseFileDropdown(e) {
+        // If click was on the trigger button itself, let _inlineToggleFileDropdown handle it
+        const trigger = document.getElementById('inline-file-trigger');
+        if (e && trigger && trigger.contains(e.target)) return;
         const dd = document.getElementById('inline-file-dropdown');
         const chevron = document.getElementById('inline-file-chevron');
-        const trigger = document.getElementById('inline-file-trigger');
         if(dd) dd.style.display = 'none';
         if(chevron) chevron.style.transform = 'rotate(0deg)';
         if(trigger) { trigger.style.borderColor = 'var(--glass-border)'; trigger.style.background = 'rgba(128,128,128,0.1)'; }
