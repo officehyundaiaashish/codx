@@ -2145,9 +2145,9 @@
     let _navHidden = false;
 
     function _setBodyHeight() {
-        if (_inlineChatOpen) return;
-        const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-        document.body.style.height = h + 'px';
+        // Always use window.innerHeight — never visualViewport.height
+        // visualViewport shrinks when keyboard appears, which pushes header up
+        document.body.style.height = window.innerHeight + 'px';
     }
     _setBodyHeight();
 
