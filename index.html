@@ -76,7 +76,7 @@
         
         /* ──────────────────────── Header & Tabs ──────────────────────── */
 
-        .app-header { /* perf: no blur, no shadow */ flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50;  }
+        .app-header { flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,0.10); }
         /* Tabs pill with snake border animation */
         .tabs {
             display: flex;
@@ -174,7 +174,7 @@
             border-radius: var(--panel-round) var(--panel-round) 0 0;
             padding-top: 10px;
             padding-bottom: max(env(safe-area-inset-bottom), 12px);
-            box-shadow: 0 -2px 12px rgba(0,0,0,0.08);
+            box-shadow: 0 -2px 12px rgba(0,0,0,0.10);
         }
 
         .drag-handle-area { width: 100%; height: 0; display: flex; justify-content: center; align-items: center; }
@@ -831,7 +831,7 @@
         .agent-step-actions {
             display: flex; gap: 8px;
             padding: 9px 12px;
-            background: rgba(0,0,0,0.08);
+            background: rgba(0,0,0,0.10);
             border-top: 1px solid var(--glass-border);
         }
         .agent-step-accept {
@@ -883,7 +883,7 @@
         .agent-step-done {
             font-size: 10px; font-weight: 700; color: var(--text-color);
             opacity: 0.4; padding: 9px 12px;
-            background: rgba(0,0,0,0.08);
+            background: rgba(0,0,0,0.10);
             border-top: 1px solid var(--glass-border);
             text-align: center;
         }
@@ -1076,7 +1076,7 @@
             background: var(--glass-bg);
             border-top: 2px solid var(--accent);
             border-radius: var(--panel-round) var(--panel-round) 0 0;
-            box-shadow: 0 -3px 16px rgba(0,0,0,0.08);
+            box-shadow: 0 -3px 16px rgba(0,0,0,0.10);
             overflow: hidden;
             transform: translateY(100%);
             transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
