@@ -4849,12 +4849,14 @@ Rules:
         if (fileTabs.length <= 1) { cdAlert('Close All', 'Only one tab is open.', 'info'); return; }
         cdConfirm('Close All Tabs', `Close all ${fileTabs.length} tabs and start fresh?`, 'Close All', 'Cancel', (ok) => {
             if (!ok) return;
-            fileTabs = [{ id: 1, name: 'untitled.html', content: '' }];
+            const blankName = _pythonMode ? 'main.py' : 'index.html';
+            fileTabs = [{ id: 1, name: blankName, content: '' }];
             activeTabId = 1;
             tabIdCounter = 2;
             _setEditorValueFast('');
-            _setEditorMode('untitled.html', '');
-            currentFileName = 'untitled.html';
+            if (_pythonMode && !_forcePlainText) editor.session.setMode('ace/mode/python');
+            else _setEditorMode(blankName, '');
+            currentFileName = blankName;
             renderFileTabs();
         });
     }
