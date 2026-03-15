@@ -6092,17 +6092,23 @@ STRICT RULES:
                     { label: 'Rules', val: _isNewFileMode ? 'New file mode (minimal)' : 'Edit mode (full)' },
                     { label: 'Total size', val: sizeKb + 'k chars → ' + (_AGENT_SYSTEM_PROMPT.length/1024).toFixed(1) + 'k system + ' + sizeKb + 'k user' },
                 ];
-                const id = 'ppc_' + Date.now();
                 const card = document.createElement('div');
                 card.className = 'prompt-preview-card';
-                card.innerHTML = '<div class="prompt-preview-header" onclick="(function(el){var b=el.parentElement.querySelector('.prompt-preview-body');var c=el.querySelector('.prompt-preview-chevron');b.classList.toggle('open');c.style.transform=b.classList.contains('open')?'rotate(180deg)':'rotate(0deg)';})(this)">' +
-                    '<span class="material-icons-round prompt-preview-chevron">expand_more</span>' +
+                const hdr = document.createElement('div');
+                hdr.className = 'prompt-preview-header';
+                hdr.innerHTML = '<span class="material-icons-round prompt-preview-chevron">expand_more</span>' +
                     '<span class="prompt-preview-title">📋 Prompt sent to AI</span>' +
-                    '<span class="prompt-preview-size">' + sizeKb + 'k</span>' +
-                    '</div>' +
-                    '<div class="prompt-preview-body">' +
-                    rows.map(r => '<div class="prompt-preview-row"><span class="prompt-preview-label">' + r.label + '</span><span class="prompt-preview-val">' + r.val + '</span></div>').join('') +
-                    '</div>';
+                    '<span class="prompt-preview-size">' + sizeKb + 'k</span>';
+                const body = document.createElement('div');
+                body.className = 'prompt-preview-body';
+                body.innerHTML = rows.map(r => '<div class="prompt-preview-row"><span class="prompt-preview-label">' + r.label + '</span><span class="prompt-preview-val">' + r.val + '</span></div>').join('');
+                hdr.addEventListener('click', function() {
+                    body.classList.toggle('open');
+                    const chev = hdr.querySelector('.prompt-preview-chevron');
+                    if (chev) chev.style.transform = body.classList.contains('open') ? 'rotate(180deg)' : 'rotate(0deg)';
+                });
+                card.appendChild(hdr);
+                card.appendChild(body);
                 box.appendChild(card);
                 _inlineChatScroll();
             })();
