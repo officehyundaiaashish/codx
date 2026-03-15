@@ -2284,6 +2284,9 @@
     const ghOverlay = document.getElementById('gh-overlay');
 
     function _setBodyHeight() {
+        // When inline chat is open, keyboard resize should NOT shrink the body
+        // — chat panel handles its own positioning via CSS safe-area
+        if (_inlineChatOpen) return;
         const h = window.visualViewport ? window.visualViewport.height : window.innerHeight;
         document.body.style.height = h + 'px';
     }
@@ -2309,6 +2312,17 @@
         let activeModal = document.querySelector('.modal.active:not(#github-modal):not(#find-modal)');
         if (activeModal) {
             activeModal.style.bottom = kbHeight > 10 ? (kbHeight + 10) + 'px' : '20px';
+        }
+        // Inline chat — move panel above keyboard
+        const chatPanel = document.getElementById('inline-chat-panel');
+        if (chatPanel && _inlineChatOpen) {
+            if (kbHeight > 50) {
+                chatPanel.style.bottom = kbHeight + 'px';
+                chatPanel.style.height = (vv.height * 0.5) + 'px';
+            } else {
+                chatPanel.style.bottom = '0';
+                chatPanel.style.height = '45vh';
+            }
         }
     });
 
@@ -5812,12 +5826,16 @@ No markdown, no backticks, no explanation outside the array.`;
 
     function closeInlineChat() {
         _inlineChatOpen = false;
-        _inlineClearHistory(); // reset conversation on close
+        _inlineClearHistory();
         const chatPanel = document.getElementById('inline-chat-panel');
         const aiBtn     = document.getElementById('ai-agent-btn');
         chatPanel.classList.remove('chat-open');
+        // Reset panel position
+        chatPanel.style.bottom = '';
+        chatPanel.style.height = '';
         if (aiBtn) aiBtn.classList.remove('chat-active');
-        
+        // Restore body height
+        _setBodyHeight();
         const inner = document.getElementById('bottom-panel');
         if(inner && !_navHidden && !_inPreview) { inner.style.transition = 'transform 0.35s cubic-bezier(0.4,0,0.2,1)'; inner.style.transform = ''; }
     }
