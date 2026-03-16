@@ -1928,23 +1928,36 @@
             <div class="gh-tree-loading">Loading files...</div>
         </div>
 
-        <!-- Create + Load row -->
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;margin-top:10px;margin-bottom:10px;" id="gh-create-bar">
-            <button onclick="createGhFile()" id="gh-new-file-btn" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;border-radius:10px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;" ontouchstart="this.style.opacity='0.75';this.style.transform='scale(0.95)'" ontouchend="this.style.opacity='1';this.style.transform='scale(1)'">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add</span>New File
+        <!-- Divider -->
+        <div style="height:1px;background:var(--glass-border);margin:12px 0;"></div>
+
+        <!-- CREATE section -->
+        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;font-family:'Poppins',sans-serif;margin-bottom:7px;">Create &amp; Upload</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px;" id="gh-create-bar">
+            <button onclick="createGhFile()" id="gh-new-file-btn" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;border-radius:10px;border:1px solid rgba(16,185,129,0.25);background:var(--accent-dim);color:var(--accent);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;" ontouchstart="this.style.opacity='0.75';this.style.transform='scale(0.95)'" ontouchend="this.style.opacity='1';this.style.transform='scale(1)'">
+                <span class="material-icons-round" style="font-size:17px;pointer-events:none;">add_circle</span>New File
             </button>
-            <button onclick="createGhFolder()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;border-radius:10px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;" ontouchstart="this.style.opacity='0.75';this.style.transform='scale(0.95)'" ontouchend="this.style.opacity='1';this.style.transform='scale(1)'">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">create_new_folder</span>New Folder
+            <button onclick="createGhFolder()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;border-radius:10px;border:1px solid rgba(16,185,129,0.25);background:var(--accent-dim);color:var(--accent);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;" ontouchstart="this.style.opacity='0.75';this.style.transform='scale(0.95)'" ontouchend="this.style.opacity='1';this.style.transform='scale(1)'">
+                <span class="material-icons-round" style="font-size:17px;pointer-events:none;">create_new_folder</span>New Folder
             </button>
-            <button id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;border-radius:10px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;opacity:0.35;" ontouchstart="if(!this.disabled){this.style.opacity='0.75';this.style.transform='scale(0.95)'}" ontouchend="if(!this.disabled){this.style.opacity='1';this.style.transform='scale(1)'}">
-                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">file_open</span>Load
+            <button onclick="uploadGhFile()" style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;border-radius:10px;border:1px solid rgba(16,185,129,0.25);background:var(--accent-dim);color:var(--accent);font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;" ontouchstart="this.style.opacity='0.75';this.style.transform='scale(0.95)'" ontouchend="this.style.opacity='1';this.style.transform='scale(1)'">
+                <span class="material-icons-round" style="font-size:17px;pointer-events:none;">upload_file</span>Upload
             </button>
-            <button id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px 4px;border-radius:10px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:9px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;opacity:0.35;" ontouchstart="if(!this.disabled){this.style.opacity='0.75';this.style.transform='scale(0.95)'}" ontouchend="if(!this.disabled){this.style.opacity='1';this.style.transform='scale(1)'}">
+        </div>
+
+        <!-- OPEN section -->
+        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;font-family:'Poppins',sans-serif;margin-bottom:7px;">Open</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;">
+            <button id="gh-load-btn" onclick="loadGhFile()" disabled style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:10px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;opacity:0.35;" ontouchstart="if(!this.disabled){this.style.opacity='0.75';this.style.transform='scale(0.95)'}" ontouchend="if(!this.disabled){this.style.opacity='1';this.style.transform='scale(1)'}">
+                <span class="material-icons-round" style="font-size:15px;pointer-events:none;">file_open</span>Load File
+            </button>
+            <button id="gh-load-repo-btn" onclick="loadGhRepo()" disabled style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px 8px;border-radius:10px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:opacity 0.15s,transform 0.15s;opacity:0.35;" ontouchstart="if(!this.disabled){this.style.opacity='0.75';this.style.transform='scale(0.95)'}" ontouchend="if(!this.disabled){this.style.opacity='1';this.style.transform='scale(1)'}">
                 <span class="material-icons-round" style="font-size:15px;pointer-events:none;">folder_zip</span>Load All
             </button>
         </div>
 
-        <!-- Commit + Undo row -->
+        <!-- SYNC section -->
+        <div style="font-size:9px;font-weight:700;color:var(--text-color);opacity:0.4;text-transform:uppercase;letter-spacing:0.7px;font-family:'Poppins',sans-serif;margin-bottom:7px;">Sync</div>
         <div style="display:flex;gap:6px;">
             <button class="modal-btn" id="gh-commit-btn" onclick="commitGhFile()" disabled style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;font-size:12px;padding:11px;background:linear-gradient(135deg,#10b981,#059669);">
                 <span class="material-icons-round" style="font-size:16px;pointer-events:none;">upload</span>Commit
@@ -1958,6 +1971,7 @@
     </div>
 </div>
 
+<input type="file" id="gh-upload-input" style="display:none;" multiple>
 <input type="file" id="agent-file-input" style="display:none;">
 <input type="file" id="inline-chat-file-input" style="display:none;">
 
@@ -3478,6 +3492,64 @@
             } catch(e) { cdAlert('Failed', 'Could not create folder.', 'error'); }
         });
     }
+
+    function uploadGhFile() {
+        if(!ghCurrentRepo) { cdAlert('Upload', 'Select a repository first.', 'info'); return; }
+        const inp = document.getElementById('gh-upload-input');
+        if(!inp) return;
+        inp.value = '';
+        inp.click();
+    }
+
+    document.getElementById('gh-upload-input').addEventListener('change', async (e) => {
+        const files = Array.from(e.target.files);
+        if(!files.length) return;
+        e.target.value = '';
+
+        // 20MB limit per file
+        const tooBig = files.filter(f => f.size > 20 * 1024 * 1024);
+        if(tooBig.length) {
+            cdAlert('Too Large', `${tooBig.map(f=>f.name).join(', ')} exceeds 20MB limit.`, 'warn');
+            return;
+        }
+
+        let uploaded = 0, failed = 0;
+        showToast(`Uploading ${files.length} file${files.length>1?'s':''}...`, 'upload_file');
+
+        for(const file of files) {
+            const filePath = _ghCurrentPath ? `${_ghCurrentPath}/${file.name}` : file.name;
+            try {
+                // Read as base64
+                const b64 = await new Promise((res, rej) => {
+                    const r = new FileReader();
+                    r.onload = ev => res(ev.target.result.split(',')[1]);
+                    r.onerror = () => rej(new Error('Read failed'));
+                    r.readAsDataURL(file);
+                });
+
+                // Check if file already exists (to get sha for update)
+                let sha;
+                try {
+                    const existing = await ghApi(`/repos/${ghCurrentRepo}/contents/${filePath}`);
+                    sha = existing.sha;
+                } catch(_) { sha = undefined; }
+
+                const body = { message: sha ? `Update ${file.name}` : `Upload ${file.name}`, content: b64 };
+                if(sha) body.sha = sha;
+                await ghApi(`/repos/${ghCurrentRepo}/contents/${filePath}`, 'PUT', body);
+                uploaded++;
+            } catch(err) {
+                failed++;
+            }
+        }
+
+        _ghTree = []; await fetchGhFiles();
+        if(failed === 0) {
+            cdAlert('Uploaded', `${uploaded} file${uploaded>1?'s':''} uploaded successfully.`, 'success');
+        } else {
+            cdAlert('Partial Upload', `${uploaded} uploaded, ${failed} failed. Check permissions.`, 'warn');
+        }
+    });
 
     // ── COMMIT MODAL — custom inline, no browser dialogs ──
     function _showCommitModal() {
