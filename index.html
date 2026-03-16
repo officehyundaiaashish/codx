@@ -290,10 +290,12 @@
             transform: translate(-50%, -50%) scale(1);
         }
         #gh-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 105; opacity: 0; pointer-events: none !important; transition: opacity 0.2s ease;
+            position: fixed; inset: 0; background: rgba(0,0,0,0.55); z-index: 105;
+            display: none; opacity: 0; transition: opacity 0.2s ease;
         }
-        #gh-overlay.active { opacity: 1; pointer-events: auto !important; }
-        #github-modal:not(.active) { pointer-events: none !important; }
+        #gh-overlay.active { display: block; opacity: 1; }
+        #github-modal { pointer-events: none; }
+        #github-modal.active { pointer-events: auto; }
         .gh-select-wrap { position: relative; margin-bottom: 8px; }
         .gh-select-wrap select {
             width: 100%; padding: 11px 36px 11px 12px; border-radius: 10px;
@@ -2142,9 +2144,9 @@
     // GitHub modal refs — declared early so closeGithubModal() never hits TDZ
     const ghModal = document.getElementById('github-modal');
     const ghOverlay = document.getElementById('gh-overlay');
-    // Force clean closed state on init — prevent any stale pointer-events
-    if (ghModal)   { ghModal.classList.remove('active');   ghModal.style.pointerEvents   = 'none'; }
-    if (ghOverlay) { ghOverlay.classList.remove('active'); ghOverlay.style.pointerEvents = 'none'; }
+    // Force clean closed state on init
+    if (ghModal)   { ghModal.classList.remove('active'); }
+    if (ghOverlay) { ghOverlay.classList.remove('active'); ghOverlay.style.display = 'none'; }
     // Declared early — used in visualViewport resize handler before full init
     var _inlineChatOpen = false;
     // Declared early — used before their definition blocks to prevent TDZ crash
@@ -3099,20 +3101,16 @@
 
     function openGithubModal() {
         findModal.classList.remove('active');
-        // Explicit state — never rely on CSS transition for pointer-events
+        ghOverlay.style.display = 'block';
         ghOverlay.classList.add('active');
-        ghOverlay.style.pointerEvents = 'auto';
         ghModal.classList.add('active');
-        ghModal.style.pointerEvents = 'auto';
         checkGhLogin();
     }
     function closeGithubModal() {
         ghModal.classList.remove('active');
-        ghModal.style.pointerEvents = 'none';
+        // Immediately remove display — no transition delay, no invisible intercepts
         ghOverlay.classList.remove('active');
-        // Immediately kill pointer-events — don't wait for opacity transition
-        ghOverlay.style.pointerEvents = 'none';
-        // Hide commit history dropdown
+        ghOverlay.style.display = 'none';
         const hist = document.getElementById('gh-commit-history');
         if (hist) hist.style.display = 'none';
     }
@@ -6139,27 +6137,59 @@ No markdown, no backticks, no explanation outside the array.`;
 
     // ── Apply old→new block replacement ──
     function _canvasApplyReplace(btn) {
-        const oldCode = decodeURIComponent(escape(atob(btn.dataset.old || '')));
-        const newCode = decodeURIComponent(escape(atob(btn.dataset.new || '')));
+        let oldCode = decodeURIComponent(escape(atob(btn.dataset.old || '')));
+        let newCode = decodeURIComponent(escape(atob(btn.dataset.new || '')));
         const current = editor.getValue();
 
-        if (current.includes(oldCode)) {
-            // Found — replace first occurrence
-            const updated = current.split(oldCode).join(newCode);
+        // Strategy 1: exact match
+        let matched = current.includes(oldCode);
+        let matchedOld = oldCode;
+
+        // Strategy 2: trim leading/trailing blank lines from old block
+        if (!matched) {
+            const trimmed = oldCode.replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+            if (trimmed !== oldCode && current.includes(trimmed)) {
+                matched = true;
+                matchedOld = trimmed;
+            }
+        }
+
+        // Strategy 3: normalize indentation — find block ignoring leading spaces per line
+        if (!matched) {
+            const oldLines = oldCode.split('\n');
+            // Find minimum indent of old block
+            const minIndent = oldLines
+                .filter(l => l.trim().length > 0)
+                .reduce((min, l) => Math.min(min, l.match(/^(\s*)/)[1].length), Infinity);
+            if (minIndent > 0 && isFinite(minIndent)) {
+                const stripped = oldLines.map(l => l.slice(minIndent)).join('\n').replace(/^\s*\n/, '').replace(/\n\s*$/, '');
+                // Search current for same block with any indent
+                const escapedStripped = stripped.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const flexRx = new RegExp('[ \\t]*' + escapedStripped.replace(/\n/g, '\\n[ \\t]*'), '');
+                const m = current.match(flexRx);
+                if (m) { matched = true; matchedOld = m[0]; }
+            }
+        }
+
+        if (matched) {
+            // Preserve indentation: detect leading indent of matched block and apply to newCode
+            const leadingIndent = (matchedOld.match(/^([ \t]*)/) || ['', ''])[1];
+            const indentedNew = leadingIndent
+                ? newCode.split('\n').map((l, i) => i === 0 ? l : leadingIndent + l).join('\n')
+                : newCode;
+
+            const updated = current.replace(matchedOld, indentedNew);
             const curTab = fileTabs.find(t => t.id === activeTabId);
             if (curTab) curTab.content = updated;
             editor.setValue(updated, -1);
             showToast('Applied ✓', 'auto_fix_high');
-            // Update button to show success
             btn.innerHTML = '<span class="material-icons-round">check</span>Applied';
             btn.style.background = '#16a34a';
             btn.onclick = null;
         } else {
-            // No match — show retry option
             btn.innerHTML = '<span class="material-icons-round">search_off</span>No Match';
             btn.style.background = '#dc2626';
             btn.onclick = null;
-            // Add retry button after
             const retryBtn = document.createElement('button');
             retryBtn.className = 'code-canvas-btn';
             retryBtn.style.cssText = 'background:rgba(245,158,11,0.2);color:#f59e0b;margin-left:4px;';
