@@ -3934,9 +3934,26 @@
                 url:'https://api.groq.com/openai/v1/chat/completions',
                 model:'llama-3.3-70b-versatile', label:'Groq – Llama 3.3 70B · Free <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' };
         if (/^sk-or-/i.test(key))
-            return { provider:'openrouter', providerName:'OpenRouter – Auto Free',
-                url:'https://openrouter.ai/api/v1/chat/completions',
-                model:'openrouter/auto', label:'OpenRouter – Auto Free' };
+            return [
+                { provider:'openrouter', providerName:'DeepSeek R1 (Free)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'deepseek/deepseek-r1:free', label:'OpenRouter – DeepSeek R1 · Free' },
+                { provider:'openrouter', providerName:'DeepSeek V3 (Free)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'deepseek/deepseek-chat-v3-0324:free', label:'OpenRouter – DeepSeek V3 · Free' },
+                { provider:'openrouter', providerName:'Nvidia Llama 3.1 Nemotron 70B (Free)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nvidia/llama-3.1-nemotron-70b-instruct:free', label:'OpenRouter – Nvidia Nemotron 70B · Free' },
+                { provider:'openrouter', providerName:'Nvidia Llama 3.3 Nemotron Super (Free)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nvidia/llama-3.3-nemotron-super-49b-v1:free', label:'OpenRouter – Nvidia Nemotron Super 49B · Free' },
+                { provider:'openrouter', providerName:'Nvidia Nemotron Ultra (Free)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'nvidia/llama-3.1-nemotron-ultra-253b-v1:free', label:'OpenRouter – Nvidia Nemotron Ultra 253B · Free' },
+                { provider:'openrouter', providerName:'OpenRouter – Auto Free',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'openrouter/auto', label:'OpenRouter – Auto Free' },
+            ];
         if (/^sk-ant-[A-Za-z0-9]{10,}/.test(key))
             return { provider:'anthropic', providerName:'Claude Haiku',
                 url:'https://api.anthropic.com/v1/messages',
