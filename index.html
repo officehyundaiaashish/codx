@@ -76,7 +76,7 @@
         
         /* ──────────────────────── Header & Tabs ──────────────────────── */
 
-        .app-header { flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,0.10); position: fixed; top: 0; left: 0; right: 0; }
+        .app-header { flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 50; box-shadow: 0 2px 12px rgba(0,0,0,0.10); }
         /* Tabs pill with snake border animation */
         .tabs {
             display: flex;
@@ -333,7 +333,7 @@
 
         
 /* File Tabs Bar */
-        .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; position: fixed; top: var(--header-h, 48px); left: 0; right: 0; z-index: 49; }
+        .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
         .file-tabs-bar::-webkit-scrollbar { display: none; }
         .file-tab { display: flex; align-items: center; gap: 5px; padding: 6px 12px 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.55; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .file-tab.active { opacity: 1; border-bottom-color: var(--accent); color: var(--accent); }
@@ -1129,11 +1129,10 @@
         }
         #inline-chat-fullscreen:active { opacity: 1; background: var(--accent-dim); }
         #inline-chat-panel.chat-fullscreen {
-            top: var(--top-bar-h, 80px) !important;
-            height: calc(100svh - var(--top-bar-h, 80px)) !important;
+            top: var(--header-h, 48px) !important;
+            height: calc(100dvh - var(--header-h, 48px)) !important;
             border-radius: 0 !important;
             padding-top: 0;
-            max-height: calc(100svh - var(--top-bar-h, 80px)) !important;
         }
 
         /* Chat mode button — animated glow ring when ON */
@@ -1959,7 +1958,6 @@
 </div>
 
 <input type="file" id="agent-file-input" accept=".html,.js,.css,.txt,.json,.md" style="display:none;">
-<input type="file" id="inline-chat-file-input" accept=".html,.js,.css,.txt,.json,.md,.py,.ts,.jsx,.tsx,.xml,.csv" style="display:none;">
 
 <!-- New Project Modal -->
 <div id="new-project-overlay" onclick="if(event.target===this)closeNewProjectModal()">
@@ -2093,9 +2091,10 @@
         <input type="text" id="agent-api-key" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"
             placeholder="AIza… / gsk_… / sk-or-… / sk-…"
             style="width:100%;padding:10px 12px;border-radius:10px;background:rgba(0,0,0,0.2);border:1px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:7px;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;outline:none;"
->
-        <div id="agent-detect-badge" style="display:none;">
-            <span id="agent-detect-text"></span>
+            oninput="agentKeyPreview(this.value)">
+        <div id="agent-detect-badge" style="display:none;align-items:center;gap:7px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.35);border-radius:8px;padding:7px 11px;margin-bottom:8px;font-size:11px;font-weight:600;color:var(--accent);">
+            <span class="material-icons-round" style="font-size:14px;pointer-events:none;">auto_awesome</span>
+            <span id="agent-detect-text">Detected: —</span>
         </div>
         <button class="modal-btn" onclick="connectAgent()" style="width:100%;display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;">
             <span class="material-icons-round" style="font-size:15px;pointer-events:none;">add_circle</span>Connect Agent
@@ -2169,24 +2168,6 @@
     }
     _setBodyHeight();
 
-    // ── Pin top bar heights so fixed header+tabs never cover content ──
-    function _updateTopBarHeights() {
-        const header = document.getElementById('header');
-        const tabsBar = document.getElementById('file-tabs-bar');
-        if (!header) return;
-        const hh = header.offsetHeight;
-        const th = tabsBar ? tabsBar.offsetHeight : 0;
-        const total = hh + th;
-        document.documentElement.style.setProperty('--header-h', hh + 'px');
-        document.documentElement.style.setProperty('--tabs-h', th + 'px');
-        document.documentElement.style.setProperty('--top-bar-h', total + 'px');
-        const wrapper = document.getElementById('editor-wrapper');
-        if (wrapper) wrapper.style.paddingTop = total + 'px';
-    }
-    // Run after DOM is painted so offsetHeight is accurate
-    requestAnimationFrame(_updateTopBarHeights);
-    window.addEventListener('resize', _updateTopBarHeights);
-
     // ── Restore saved theme ──
     (function() {
         const savedTheme = localStorage.getItem('codx_theme');
@@ -2215,37 +2196,24 @@
     // layout viewport unchanged. Panel at bottom:0 is already correct.
     // Only fullscreen mode needs adjustment (panel fills screen top-to-bottom).
     function _handleChatKeyboard() {
-        if (_inPreview) return;
+        if (_inPreview) return; // never touch layout while preview is active
         if (!_inlineChatOpen) { _setBodyHeight(); return; }
         const vv = window.visualViewport;
         if (!vv) return;
         const panel = document.getElementById('inline-chat-panel');
         if (!panel) return;
 
-        // Header is always position:fixed via CSS — no JS manipulation needed.
-        // kbHeight = how much keyboard is covering from bottom
-        const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
-        const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-bar-h')) || 80;
-
         if (_chatIsFullscreen) {
+            const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+            const hh = parseInt(getComputedStyle(document.documentElement)
+                .getPropertyValue('--header-h')) || 48;
             if (kbHeight > 50) {
-                // Keyboard open in fullscreen: panel fills visible area below top bars
-                panel.style.position = 'fixed';
-                panel.style.top      = hh + 'px';
-                panel.style.bottom   = kbHeight + 'px';
-                panel.style.height   = '';
+                panel.style.height = (vv.height - hh) + 'px';
+                panel.style.top    = hh + 'px';
+                panel.style.bottom = '';
             } else {
-                // Keyboard closed — let CSS class handle it
-                panel.style.position = '';
-                panel.style.top      = '';
-                panel.style.bottom   = '';
-                panel.style.height   = '';
-            }
-        } else {
-            // Normal mode: just push panel above keyboard
-            if (kbHeight > 50) {
-                panel.style.bottom = kbHeight + 'px';
-            } else {
+                panel.style.height = '';
+                panel.style.top    = '';
                 panel.style.bottom = '';
             }
         }
@@ -2953,8 +2921,6 @@
             el.onclick = (e) => { if(!e.target.classList.contains('ft-close')) switchFileTab(tab.id); };
             bar.appendChild(el);
         });
-        // Update top bar heights after tabs render (tabs bar may appear/disappear)
-        requestAnimationFrame(_updateTopBarHeights);
     }
 
     function switchFileTab(id) {
@@ -3703,20 +3669,19 @@
         </div>`;
 
         try {
-            const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=100`);
+            const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=10`);
             if (!commits || commits.length === 0) {
                 histBox.innerHTML = `<div style="padding:10px 12px;font-size:11px;opacity:0.5;font-family:'Poppins',sans-serif;">No commits found for this file.</div>`;
                 return;
             }
 
             const header = `<div style="padding:6px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;opacity:0.4;font-family:'Poppins',sans-serif;border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--glass-bg);">
-                ${commits.length} commits — tap to restore
+                Last ${commits.length} commits — tap to restore
             </div>`;
 
             const rows = commits.map((c, i) => {
                 const msg   = (c.commit.message || '').split('\n')[0].slice(0, 38);
-                const _d = new Date(c.commit.author.date);
-                const date = _d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ', ' + _d.toLocaleTimeString([], { hour:'2-digit', minute:'2-digit' });
+                const date  = new Date(c.commit.author.date).toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
                 const sha7  = c.sha.slice(0, 7);
                 const isCurrent = i === 0;
                 return `<div onclick="${isCurrent ? '' : `_restoreCommit('${c.sha}','${fname.replace(/'/g,"\\'")}',this)`}"
@@ -3970,36 +3935,25 @@
                 model:'llama-3.3-70b-versatile', label:'Groq – Llama 3.3 70B · Free <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>' };
         if (/^sk-or-/i.test(key))
             return [
-                // ── Coding ──
-                { provider:'openrouter', providerName:'Qwen3 Coder (Free)',       category:'Coding',
+                { provider:'openrouter', providerName:'Qwen3 Coder (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'qwen/qwen3-coder:free', label:'OpenRouter – Qwen3 Coder · Free' },
-                // ── Reasoning ──
-
-                { provider:'openrouter', providerName:'Liquid LFM 2.5 Thinking (Free)', category:'Reasoning',
-                  url:'https://openrouter.ai/api/v1/chat/completions',
-                  model:'liquid/lfm-2.5-1.2b-thinking:free', label:'OpenRouter – Liquid LFM 2.5 Thinking · Free' },
-                // ── General ──
-                { provider:'openrouter', providerName:'GLM 4.5 Air (Free)',       category:'General',
+                { provider:'openrouter', providerName:'GLM 4.5 Air (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'z-ai/glm-4.5-air:free', label:'OpenRouter – Z.AI GLM 4.5 Air · Free' },
-                { provider:'openrouter', providerName:'Arcee Trinity Large (Free)', category:'General',
+                { provider:'openrouter', providerName:'Arcee Trinity Large (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'arcee-ai/trinity-large-preview:free', label:'OpenRouter – Arcee Trinity Large · Free' },
-
-
-                // ── Nvidia ──
-                { provider:'openrouter', providerName:'Nemotron 3 Super 120B (Free)', category:'Nvidia',
+                { provider:'openrouter', providerName:'Nvidia Nemotron 3 Super 120B (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'nvidia/nemotron-3-super-120b-a12b:free', label:'OpenRouter – Nvidia Nemotron 3 Super 120B · Free' },
-                { provider:'openrouter', providerName:'Nemotron Nano 30B (Free)',  category:'Nvidia',
+                { provider:'openrouter', providerName:'Nvidia Nemotron Nano 30B (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'nvidia/nemotron-3-nano-30b-a3b:free', label:'OpenRouter – Nvidia Nemotron Nano 30B · Free' },
-                { provider:'openrouter', providerName:'Nemotron Nano 12B VL (Free)', category:'Nvidia',
+                { provider:'openrouter', providerName:'Nvidia Nemotron Nano 12B Vision (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'nvidia/nemotron-nano-12b-v2-vl:free', label:'OpenRouter – Nvidia Nemotron Nano 12B VL · Free' },
-                // ── Auto ──
-                { provider:'openrouter', providerName:'Auto Free',                 category:'Auto',
+                { provider:'openrouter', providerName:'OpenRouter – Auto Free',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'openrouter/free', label:'OpenRouter – Auto Free' },
             ];
@@ -4018,55 +3972,22 @@
         return null;
     }
 
-    function agentKeyPreview(val) {}
-
-
-
-    // ── Shared error card builder ──
-    // SVG icons for each error type
-    const _ERR_SVGS = {
-        quota:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>',
-        block:    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="4.93" y1="4.93" x2="19.07" y2="19.07"/></svg>',
-        provider: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-        timeout:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/><line x1="2" y1="2" x2="22" y2="22"/></svg>',
-        key:      '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>',
-        network:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="1" y1="1" x2="23" y2="23"/><path d="M16.72 11.06A10.94 10.94 0 0 1 19 12.55"/><path d="M5 12.55a10.94 10.94 0 0 1 5.17-2.39"/><path d="M10.71 5.05A16 16 0 0 1 22.56 9"/><path d="M1.42 9a15.91 15.91 0 0 1 4.7-2.88"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/></svg>',
-        generic:  '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',
-    };
-
-    function _buildErrorCard(msg) {
-        let svgKey, title, hint;
-        if (/quota|rate.?limit|limit.*0|exceeded/i.test(msg)) {
-            svgKey = 'quota'; title = 'Quota Exceeded';
-            hint = 'Free tier limit reached. Wait a bit or switch to another model.';
-        } else if (/no endpoints|endpoint.*found|guardrail|data policy/i.test(msg)) {
-            svgKey = 'block'; title = 'No Endpoints Available';
-            hint = 'This model has no available providers right now. Try a different model.';
-        } else if (/provider.*error|provider returned/i.test(msg)) {
-            svgKey = 'provider'; title = 'Provider Error';
-            hint = 'The model provider returned an error. Try again or switch model.';
-        } else if (/timeout|abort|timed out/i.test(msg)) {
-            svgKey = 'timeout'; title = 'Request Timed Out';
-            hint = 'Model took too long. Try a shorter prompt or a faster model.';
-        } else if (/401|403|invalid.*key|api.?key/i.test(msg)) {
-            svgKey = 'key'; title = 'Invalid API Key';
-            hint = 'Reconnect your agent with a valid API key.';
-        } else if (/network|fetch|failed to fetch/i.test(msg)) {
-            svgKey = 'network'; title = 'Network Error';
-            hint = 'Check your internet connection and try again.';
+    function agentKeyPreview(val) {
+        const badge = document.getElementById('agent-detect-badge');
+        const text  = document.getElementById('agent-detect-text');
+        const inp   = document.getElementById('agent-api-key');
+        const d = _detectProviderFromKey(val);
+        if (d) {
+            badge.style.display = 'flex';
+            text.textContent = Array.isArray(d) ? (d[0]?.provider === 'gemini' ? `${d.length} Gemini models` : `${d.length} OpenRouter free models`) : d.label;
+            inp.style.borderColor = 'var(--accent)';
         } else {
-            svgKey = 'generic'; title = 'Agent Error';
-            hint = msg.slice(0, 120) + (msg.length > 120 ? '…' : '');
+            badge.style.display = 'none';
+            inp.style.borderColor = '';
         }
-        const el = document.createElement('div');
-        el.style.cssText = 'display:flex;align-items:flex-start;gap:10px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.25);border-radius:12px;padding:10px 13px;margin:2px 0;';
-        el.innerHTML = `<span style="flex-shrink:0;margin-top:1px;">${_ERR_SVGS[svgKey]}</span>
-            <div style="flex:1;min-width:0;">
-                <div style="font-size:12px;font-weight:700;color:#ef4444;font-family:Poppins,sans-serif;">${title}</div>
-                <div style="font-size:11px;color:var(--text-color);opacity:0.65;margin-top:3px;font-family:Poppins,sans-serif;line-height:1.4;">${hint}</div>
-            </div>`;
-        return el;
     }
+
+
     function connectAgent() {
         const keyInp = document.getElementById('agent-api-key');
         const key = keyInp.value.trim();
@@ -4115,9 +4036,51 @@
         const list = document.getElementById('agent-list-container');
         list.innerHTML = '';
 
+        const _GEMINI_LIMITS = {
+            'gemini-2.5-flash':      { rpm: 10, rpd: 250  },
+            'gemini-2.5-flash-lite': { rpm: 15, rpd: 1000 },
+        };
+
         agentList.forEach((ag, i) => {
             const isActive = i === activeAgentIdx;
+
+            // ── Usage bar for Gemini models ──
             let usageHTML = '';
+            if (ag.provider === 'gemini' && _GEMINI_LIMITS[ag.model]) {
+                const lim = _GEMINI_LIMITS[ag.model];
+                const usageKey = '_geminiUsage_' + ag.model.replace(/\./g,'_');
+                // Load from localStorage if not yet in memory (survives refresh)
+                if (!window[usageKey]) {
+                    try {
+                        const _s = localStorage.getItem(usageKey);
+                        window[usageKey] = _s ? JSON.parse(_s) : { rpm: [], rpd: [] };
+                    } catch(e) { window[usageKey] = { rpm: [], rpd: [] }; }
+                }
+                const usage = window[usageKey] || { rpm: [], rpd: [] };
+                const now = Date.now();
+                const rpmUsed = (usage.rpm || []).filter(t => now - t < 60000).length;
+                const rpdUsed = (usage.rpd || []).filter(t => now - t < 86400000).length;
+                const rpmPct = Math.min(100, Math.round(rpmUsed / lim.rpm * 100));
+                const rpdPct = Math.min(100, Math.round(rpdUsed / lim.rpd * 100));
+                const rpmCol = rpmPct >= 80 ? '#ef4444' : rpmPct >= 60 ? '#f59e0b' : 'var(--accent)';
+                const rpdCol = rpdPct >= 80 ? '#ef4444' : rpdPct >= 60 ? '#f59e0b' : 'var(--accent)';
+                usageHTML = `<div style="margin-top:5px;display:flex;flex-direction:column;gap:3px;">
+                    <div style="display:flex;align-items:center;gap:5px;">
+                        <span style="font-size:8px;font-family:Poppins,sans-serif;color:var(--text-color);opacity:0.45;min-width:28px;">RPM</span>
+                        <div style="flex:1;height:3px;background:rgba(128,128,128,0.15);border-radius:2px;">
+                            <div style="height:100%;width:${rpmPct}%;background:${rpmCol};border-radius:2px;transition:width 0.3s;"></div>
+                        </div>
+                        <span style="font-size:8px;font-family:'Courier New',monospace;color:${rpmCol};min-width:32px;text-align:right;">${rpmUsed}/${lim.rpm}</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:5px;">
+                        <span style="font-size:8px;font-family:Poppins,sans-serif;color:var(--text-color);opacity:0.45;min-width:28px;">RPD</span>
+                        <div style="flex:1;height:3px;background:rgba(128,128,128,0.15);border-radius:2px;">
+                            <div style="height:100%;width:${rpdPct}%;background:${rpdCol};border-radius:2px;transition:width 0.3s;"></div>
+                        </div>
+                        <span style="font-size:8px;font-family:'Courier New',monospace;color:${rpdCol};min-width:32px;text-align:right;">${rpdUsed}/${lim.rpd}</span>
+                    </div>
+                </div>`;
+            }
 
             const row = document.createElement('div');
             row.style.cssText = `padding:7px 10px;border-radius:10px;border:1.5px solid ${isActive ? 'var(--accent)' : 'var(--glass-border)'};background:${isActive ? 'var(--accent-dim)' : 'transparent'};cursor:pointer;transition:all 0.18s;`;
@@ -4291,6 +4254,57 @@
                 return textBlock.text.trim();
 
             } else if (cfg.provider === 'gemini') {
+                // ── Per-model limits (free tier) ──
+                const _GEMINI_LIMITS = {
+                    'gemini-2.5-flash':      { rpm: 10, rpd: 250  },
+                    'gemini-2.5-flash-lite': { rpm: 15, rpd: 1000 },
+                };
+                const _limits = _GEMINI_LIMITS[cfg.model] || { rpm: 10, rpd: 250 };
+                // Warning thresholds — 80% of limit
+                const _warnRpm = Math.floor(_limits.rpm * 0.8);
+                const _warnRpd = Math.floor(_limits.rpd * 0.8);
+                // Hard stop — 95% of limit (safety margin)
+                const _hardRpm = Math.floor(_limits.rpm * 0.95);
+                const _hardRpd = Math.floor(_limits.rpd * 0.95);
+
+                const _now = Date.now();
+                const _usageKey = '_geminiUsage_' + cfg.model.replace(/\./g,'_');
+                // Restore from localStorage on first access (survives page refresh)
+                if (!window[_usageKey]) {
+                    try {
+                        const _stored = localStorage.getItem(_usageKey);
+                        window[_usageKey] = _stored ? JSON.parse(_stored) : { rpm: [], rpd: [] };
+                    } catch(e) { window[_usageKey] = { rpm: [], rpd: [] }; }
+                }
+                const _g = window[_usageKey];
+                _g.rpm = _g.rpm.filter(t => _now - t < 60000);
+                _g.rpd = _g.rpd.filter(t => _now - t < 86400000);
+
+                // ── Hard stop — show countdown timer in chat ──
+                if (_g.rpm.length >= _hardRpm) {
+                    const waitMs = 60000 - (_now - _g.rpm[0]);
+                    const waitSec = Math.ceil(waitMs / 1000);
+                    _geminiShowCountdown(cfg.model, 'rpm', waitSec, _limits.rpm);
+                    throw new Error(`__RATE_LIMIT_SHOWN__`);
+                }
+                if (_g.rpd.length >= _hardRpd) {
+                    _geminiShowCountdown(cfg.model, 'rpd', null, _limits.rpd);
+                    throw new Error(`__RATE_LIMIT_SHOWN__`);
+                }
+
+                // ── Warning in chat — 80% threshold ──
+                if (_g.rpm.length >= _warnRpm) {
+                    _geminiWarnInChat(cfg.model, 'rpm', _g.rpm.length, _limits.rpm);
+                }
+                if (_g.rpd.length >= _warnRpd) {
+                    _geminiWarnInChat(cfg.model, 'rpd', _g.rpd.length, _limits.rpd);
+                }
+
+                // Record this request
+                _g.rpm.push(_now);
+                _g.rpd.push(_now);
+                // Persist to localStorage so thresholds survive page refresh
+                try { localStorage.setItem(_usageKey, JSON.stringify(_g)); } catch(e) {}
                 // Gemini: history roles must be 'user' or 'model' (not 'assistant')
                 // System prompt injected into first user message
                 const geminiHistory = conversationHistory.map(m => ({
@@ -4761,18 +4775,31 @@ Rules:
             attachBtn.style.color = '';
         } catch(err) {
             const raw = err.message || 'Something went wrong.';
+            // Smart error classification — show short friendly message
+            let errMsg, errHint;
+            if(/quota|rate.?limit|limit.*0|exceeded/i.test(raw)) {
+                errMsg = 'Quota exceeded';
+                errHint = 'Free tier limit hit. Wait a bit or use a different API key.';
+            } else if(/timeout|abort|timed out/i.test(raw)) {
+                errMsg = 'AI took too long';
+                errHint = 'Free models are slow with large code. Try a shorter prompt or smaller file.';
+            } else if(/401|403|invalid.*key|api.?key/i.test(raw)) {
+                errMsg = 'Invalid API key';
+                errHint = 'Reconnect agent with a valid key.';
+            } else if(/network|fetch|failed to fetch/i.test(raw)) {
+                errMsg = 'Network error';
+                errHint = 'Check your internet connection.';
+            } else {
+                errMsg = 'Agent error';
+                errHint = raw.slice(0, 80) + (raw.length > 80 ? '…' : '');
+            }
             const bar = document.getElementById('agent-bar');
             const oldErr = document.getElementById('agent-inline-error');
             if(oldErr) oldErr.remove();
-            const errEl = _buildErrorCard(raw);
+            const errEl = document.createElement('div');
             errEl.id = 'agent-inline-error';
-            errEl.style.margin = '4px 10px';
-            const closeBtn = document.createElement('span');
-            closeBtn.className = 'material-icons-round';
-            closeBtn.style.cssText = 'font-size:15px;color:#ef4444;opacity:0.5;cursor:pointer;flex-shrink:0;align-self:flex-start;';
-            closeBtn.textContent = 'close';
-            closeBtn.onclick = () => errEl.remove();
-            errEl.appendChild(closeBtn);
+            errEl.style.cssText = 'display:flex;align-items:flex-start;justify-content:space-between;gap:8px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:7px 10px;margin:4px 10px;';
+            errEl.innerHTML = `<div style="min-width:0;"><div style="font-size:11px;font-weight:700;color:#ef4444;">${errMsg}</div><div style="font-size:10px;color:#ef4444;opacity:0.75;margin-top:2px;word-break:break-word;">${errHint}</div></div><span class="material-icons-round" style="font-size:15px;color:#ef4444;opacity:0.6;cursor:pointer;flex-shrink:0;pointer-events:auto;" onclick="this.parentElement.remove()">close</span>`;
             const inputRow = document.getElementById('agent-compact-row');
             bar.insertBefore(errEl, inputRow);
             setTimeout(() => { if(errEl.parentElement) errEl.remove(); }, 12000);
@@ -5470,13 +5497,8 @@ Rules:
 
         footer.appendChild(ts);
         footer.appendChild(copyBtn);
-        if (extraEl && !text) {
-            // extraEl is a standalone card — skip bubble, append card directly
-            wrap.appendChild(extraEl);
-        } else {
-            wrap.appendChild(bubble);
-            if (extraEl) bubble.appendChild(extraEl);
-        }
+        wrap.appendChild(bubble);
+        if (extraEl) bubble.appendChild(extraEl);
         wrap.appendChild(footer);
         box.appendChild(wrap);
         _chatScrollBottom();
@@ -5876,7 +5898,7 @@ No markdown, no backticks, no explanation outside the array.`;
                     const t = document.getElementById('chat-step-typing');
                     if (t) t.remove();
                     if (e.message !== '__REJECTED__') {
-                        _appendChatMsg('agent', '', _chatTime(), _buildErrorCard(e.message || 'Something went wrong.'));
+                        _appendChatMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + (e.message || 'Something went wrong.'), _chatTime());
                     }
                 });
 
@@ -5893,12 +5915,13 @@ No markdown, no backticks, no explanation outside the array.`;
         } catch (err) {
             _hideChatTyping();
             const raw = err.message || 'Something went wrong.';
-            const errEl = _buildErrorCard(raw);
-            const wrap = document.createElement('div');
-            wrap.className = 'chat-msg agent';
-            wrap.appendChild(errEl);
-            const box = document.getElementById('chat-messages');
-            if (box) { box.appendChild(wrap); box.scrollTop = box.scrollHeight; }
+            let errMsg;
+            if (/quota|rate.?limit|exceeded/i.test(raw))      errMsg = 'Quota exceeded — wait a bit or switch agent.';
+            else if (/timeout|abort|timed out/i.test(raw))    errMsg = 'AI is still thinking... took too long. Try again with a shorter request.';
+            else if (/401|403|invalid.*key|api.?key/i.test(raw)) errMsg = 'Invalid API key — reconnect your agent.';
+            else if (/network|fetch|failed to fetch/i.test(raw)) errMsg = 'Network error — check your internet.';
+            else errMsg = raw.slice(0, 100);
+            _appendChatMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + errMsg, _chatTime());
         } finally {
             sendBtn.disabled = false;
         }
@@ -6120,19 +6143,9 @@ No markdown, no backticks, no explanation outside the array.`;
                     <div class="code-canvas-body">${escaped}</div>
                 </div>`;
             }
-            // Text: render inline markdown — preserve inline SVG tags, escape rest
-            // Step 1: extract SVG tags and replace with placeholders
-            const svgStore = [];
-            let safe = p.content.replace(/<svg[\s\S]*?<\/svg>/gi, (match) => {
-                svgStore.push(match);
-                return '\x00SVG' + (svgStore.length - 1) + '\x00';
-            });
-            // Step 2: escape HTML in non-SVG content
-            safe = safe.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-            // Step 3: restore SVG tags
-            safe = safe.replace(/\x00SVG(\d+)\x00/g, (_, i) => svgStore[+i]);
-            // Step 4: markdown formatting
-            let html = safe
+            // Text: render inline markdown — strip line number prefixes from inline code too
+            let html = p.content
+                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
                 .replace(/\*\*(.+?)\*\*/g, '<span class="chat-md-bold">$1</span>')
                 .replace(/`([^`]+)`/g, '<span class="chat-inline-code">$1</span>')
                 .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="chat-md-li" style="padding-left:18px;"><span style="position:absolute;left:0;color:var(--accent);font-weight:700;">$1.</span>$2</div>')
@@ -6298,13 +6311,8 @@ No markdown, no backticks, no explanation outside the array.`;
 
         footer.appendChild(ts);
         footer.appendChild(copyBtn);
-        if (extraEl && !text) {
-            // extraEl is a standalone card — skip bubble, append card directly
-            wrap.appendChild(extraEl);
-        } else {
-            wrap.appendChild(bubble);
-            if (extraEl) bubble.appendChild(extraEl);
-        }
+        wrap.appendChild(bubble);
+        if (extraEl) bubble.appendChild(extraEl);
         wrap.appendChild(footer);
         box.appendChild(wrap);
         _inlineChatScroll();
@@ -6628,7 +6636,7 @@ Rules:
             _inlineHideTyping();
 
             if (!raw?.trim()) {
-                _inlineAppendMsg('agent', '', _buildErrorCard('Empty response. Try again or switch model.'));
+                _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Empty response. Try again or switch model.');
                 return;
             }
 
@@ -6681,7 +6689,7 @@ Rules:
             } else if (parsed.type === 'split') {
                 const files = parsed.files || [];
                 if (!files.length) {
-                    _inlineAppendMsg('agent', '', _buildErrorCard('AI returned no files. Try again.'));
+                    _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> AI returned no files. Try again.');
                 } else {
                     if (parsed.explanation?.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
                     _inlineAppendMsg('agent', '', _buildConfirmCard({
@@ -6699,7 +6707,7 @@ Rules:
             // ── Reorganize ──
             } else if (parsed.type === 'reorganize') {
                 if (!parsed.content) {
-                    _inlineAppendMsg('agent', '', _buildErrorCard('AI returned empty content. Try again.'));
+                    _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> AI returned empty content. Try again.');
                 } else {
                     const rTab = targetTab;
                     const oldContent = rTab ? rTab.content : editor.getValue();
@@ -6732,26 +6740,16 @@ Rules:
             const msg = err.message || '';
             if (msg === '__RATE_LIMIT_SHOWN__') return;
             if (msg === '__USER_ABORTED__') {
-                const stoppedEl = document.createElement('div');
-                stoppedEl.style.cssText = 'display:flex;align-items:flex-start;gap:10px;background:rgba(107,114,128,0.10);border:1px solid rgba(107,114,128,0.25);border-radius:12px;padding:10px 13px;margin:2px 0;';
-                stoppedEl.innerHTML = `<span style="flex-shrink:0;margin-top:1px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:block;pointer-events:none;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span>
-                    <div style="flex:1;min-width:0;">
-                        <div style="font-size:12px;font-weight:700;color:var(--text-color);font-family:Poppins,sans-serif;">Stopped</div>
-                        <div style="font-size:11px;color:var(--text-color);opacity:0.55;margin-top:3px;font-family:Poppins,sans-serif;line-height:1.4;">Generation was stopped by you.</div>
-                    </div>`;
-                const stoppedWrap = document.createElement('div');
-                stoppedWrap.className = 'chat-msg agent';
-                stoppedWrap.appendChild(stoppedEl);
-                const stoppedBox = document.getElementById('inline-chat-messages');
-                if (stoppedBox) { stoppedBox.appendChild(stoppedWrap); _inlineChatScroll(); }
+                _inlineAppendMsg('agent', '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline;vertical-align:middle;pointer-events:none;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Stopped.');
                 return;
             }
-            const errEl = _buildErrorCard(msg);
-            const wrap = document.createElement('div');
-            wrap.className = 'chat-msg agent';
-            wrap.appendChild(errEl);
-            const box = document.getElementById('inline-chat-messages');
-            if (box) { box.appendChild(wrap); _inlineChatScroll(); }
+            let friendly;
+            if (/quota|rate.?limit|exceeded/i.test(msg))         friendly = 'Quota exceeded — wait or switch model.';
+            else if (/timeout|abort/i.test(msg))                  friendly = 'Request timed out. Try a shorter request.';
+            else if (/401|403|invalid.*key|api.?key/i.test(msg))  friendly = 'Invalid API key — reconnect agent.';
+            else if (/network|fetch|failed to fetch/i.test(msg))  friendly = 'Network error — check internet.';
+            else friendly = msg.slice(0, 120);
+            _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + friendly);
         } finally {
             // Restore onclick immediately — never leave button dead
             sendBtn.disabled = false;
@@ -7419,11 +7417,11 @@ Use only line numbers visible in the context. Be precise.`;
             if (!parsed || !parsed.type) {
                 _inlineAppendMsg('agent', raw.trim());
             } else if (parsed.type === 'edit') {
-                _inlineAppendMsg('agent', '↩ ' + (parsed.explanation || 'Revised fix — review and apply:'));
+                _inlineAppendMsg('agent', '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> ' + (parsed.explanation || 'Revised fix — review and apply:'));
                 const newCard = _buildInlineEditCard(parsed.edits, targetTab);
                 _inlineAppendMsg('agent', '', newCard);
             } else if (parsed.type === 'reorganize') {
-                _inlineAppendMsg('agent', '↩ ' + (parsed.explanation || 'Revised reorganize:'));
+                _inlineAppendMsg('agent', '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> ' + (parsed.explanation || 'Revised reorganize:'));
                 const newCard = _buildInlineReorganizeCard(parsed.content, targetTab);
                 _inlineAppendMsg('agent', '', newCard);
             } else {
@@ -7571,49 +7569,22 @@ Use only line numbers visible in the context. Be precise.`;
             <div style="padding:0 10px 10px;"><button onclick="_inlineCloseModelDropdown();openAgentModal();" style="width:100%;padding:8px;border-radius:8px;border:none;background:var(--accent);color:white;font-size:11px;font-weight:600;font-family:'Poppins',sans-serif;cursor:pointer;">Add Agent</button></div>`;
             return;
         }
-        // Group agents by category
-        const _catOrder = ['Coding','Reasoning','General','Nvidia','Auto'];
-        const _catColors = { Coding:'#10b981', Reasoning:'#8b5cf6', General:'#3b82f6', Nvidia:'#f59e0b', Auto:'#6b7280' };
-        const _catIcons = {
-            Coding:    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>',
-            Reasoning: '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>',
-            General:   '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>',
-            Nvidia:    '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>',
-            Auto:      '<svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>',
-        };
-        // Group by category — non-openrouter agents go under their provider name
-        const groups = {};
+        // Agent list
         agentList.forEach((ag, i) => {
-            const cat = ag.category || ag.provider || 'Other';
-            if (!groups[cat]) groups[cat] = [];
-            groups[cat].push({ ag, i });
-        });
-        // Render in order
-        const orderedCats = [..._catOrder.filter(c => groups[c]), ...Object.keys(groups).filter(c => !_catOrder.includes(c))];
-        orderedCats.forEach(cat => {
-            // Category header
-            const color = _catColors[cat] || 'var(--accent)';
-            const iconSvg = _catIcons[cat] || _catIcons.General;
-            const hdr = document.createElement('div');
-            hdr.style.cssText = `display:flex;align-items:center;gap:5px;padding:6px 14px 4px;margin-top:2px;`;
-            hdr.innerHTML = `<span style="color:${color};display:flex;align-items:center;">${iconSvg.replace('stroke="currentColor"','stroke="'+color+'"')}</span><span style="font-size:9px;font-weight:700;color:${color};font-family:Poppins,sans-serif;letter-spacing:0.05em;text-transform:uppercase;">${cat}</span>`;
-            dd.appendChild(hdr);
-            // Models in this category
-            groups[cat].forEach(({ ag, i }) => {
-                const isSelected = i === activeAgentIdx;
-                const row = document.createElement('div');
-                row.style.cssText = `display:flex;align-items:center;gap:10px;padding:8px 14px 8px 24px;cursor:pointer;border-bottom:1px solid var(--glass-border);background:${isSelected ? 'var(--accent-dim)' : 'transparent'};transition:background 0.15s;`;
-                row.innerHTML = `
-                    <span style="flex:1;font-size:12px;font-weight:600;color:${isSelected ? 'var(--accent)' : 'var(--text-color)'};font-family:'Poppins',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">${ag.providerName}</span>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;opacity:${isSelected ? '1' : '0'};flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
-                row.ontouchstart = () => { row.style.background = 'var(--accent-dim)'; };
-                row.onclick = (e) => {
-                    e.stopPropagation();
-                    _inlineSwitchModel(i);
-                    _inlineCloseModelDropdown();
-                };
-                dd.appendChild(row);
-            });
+            const isSelected = i === activeAgentIdx;
+            const row = document.createElement('div');
+            row.style.cssText = `display:flex;align-items:center;gap:10px;padding:10px 14px;cursor:pointer;border-bottom:1px solid var(--glass-border);background:${isSelected ? 'var(--accent-dim)' : 'transparent'};transition:background 0.15s;`;
+            row.innerHTML = `
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${isSelected ? 'var(--accent)' : 'var(--text-color)'}" stroke-width="2" stroke-linecap="round" style="flex-shrink:0;pointer-events:none;opacity:${isSelected ? '1' : '0.45'};"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/></svg>
+                <span style="flex:1;font-size:12px;font-weight:600;color:${isSelected ? 'var(--accent)' : 'var(--text-color)'};font-family:'Poppins',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">${ag.providerName}</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;opacity:${isSelected ? '1' : '0'};flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
+            row.ontouchstart = () => { row.style.background = 'var(--accent-dim)'; };
+            row.onclick = (e) => {
+                e.stopPropagation();
+                _inlineSwitchModel(i);
+                _inlineCloseModelDropdown();
+            };
+            dd.appendChild(row);
         });
         // Divider + Settings
         const divider = document.createElement('div');
@@ -7778,25 +7749,25 @@ Use only line numbers visible in the context. Be precise.`;
     let _inlineAttachment = null;
 
     function _inlineTriggerAttach() {
-        const inp = document.getElementById('inline-chat-file-input');
+        // Reuse existing hidden file input
+        const inp = document.getElementById('agent-file-input');
         if (!inp) return;
+        // Temporarily override onchange for inline chat
+        inp.onchange = (e) => {
+            const file = e.target.files[0]; if (!file) return;
+            const r = new FileReader();
+            r.onload = ev => {
+                _inlineAttachment = { name: file.name, content: ev.target.result };
+                const bar  = document.getElementById('inline-attach-bar');
+                const name = document.getElementById('inline-attach-name');
+                if (bar)  bar.style.display = 'flex';
+                if (name) name.textContent = file.name;
+            };
+            r.readAsText(file);
+            e.target.value = '';
+        };
         inp.click();
     }
-
-    // Dedicated listener for inline chat file input — no conflict with agent-file-input
-    document.getElementById('inline-chat-file-input').addEventListener('change', (e) => {
-        const file = e.target.files[0]; if (!file) return;
-        const r = new FileReader();
-        r.onload = ev => {
-            _inlineAttachment = { name: file.name, content: ev.target.result };
-            const bar  = document.getElementById('inline-attach-bar');
-            const name = document.getElementById('inline-attach-name');
-            if (bar)  bar.style.display = 'flex';
-            if (name) name.textContent = file.name;
-        };
-        r.readAsText(file);
-        e.target.value = '';
-    });
 
     function _inlineClearAttach() {
         _inlineAttachment = null;
@@ -7949,16 +7920,16 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Inline chat: fullscreen toggle ──
     function _toggleChatFullscreen() {
         _chatIsFullscreen = !_chatIsFullscreen;
-        const panel = document.getElementById('inline-chat-panel');
-        const icon  = document.getElementById('fs-icon');
+        const panel  = document.getElementById('inline-chat-panel');
+        const icon   = document.getElementById('fs-icon');
+        const header = document.getElementById('header');
+        const hh     = header ? header.offsetHeight : 48;
         if (_chatIsFullscreen) {
+            document.documentElement.style.setProperty('--header-h', hh + 'px');
             panel.classList.add('chat-fullscreen');
             if (icon) icon.innerHTML = '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>';
         } else {
             panel.classList.remove('chat-fullscreen');
-            panel.style.top    = '';
-            panel.style.bottom = '';
-            panel.style.height = '';
             if (icon) icon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
         }
     }
