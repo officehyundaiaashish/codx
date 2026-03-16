@@ -1953,7 +1953,7 @@
             </button>
         </div>
         <!-- Commit history dropdown (shown when Undo clicked) -->
-        <div id="gh-commit-history" style="display:none;margin-top:8px;border-radius:12px;border:1px solid var(--glass-border);overflow:hidden;background:var(--glass-bg);max-height:180px;overflow-y:auto;"></div>
+        <div id="gh-commit-history" style="display:none;margin-top:8px;border-radius:12px;border:1px solid var(--glass-border);overflow:hidden;background:var(--glass-bg);max-height:260px;overflow-y:auto;"></div>
     </div>
 </div>
 
@@ -3669,19 +3669,20 @@
         </div>`;
 
         try {
-            const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=10`);
+            const commits = await ghApi(`/repos/${ghCurrentRepo}/commits?path=${encodeURIComponent(ghCurrentFile)}&per_page=100`);
             if (!commits || commits.length === 0) {
                 histBox.innerHTML = `<div style="padding:10px 12px;font-size:11px;opacity:0.5;font-family:'Poppins',sans-serif;">No commits found for this file.</div>`;
                 return;
             }
 
             const header = `<div style="padding:6px 10px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.6px;opacity:0.4;font-family:'Poppins',sans-serif;border-bottom:1px solid var(--glass-border);position:sticky;top:0;background:var(--glass-bg);">
-                Last ${commits.length} commits — tap to restore
+                ${commits.length} commits — tap to restore
             </div>`;
 
             const rows = commits.map((c, i) => {
                 const msg   = (c.commit.message || '').split('\n')[0].slice(0, 38);
-                const date  = new Date(c.commit.author.date).toLocaleDateString('en-GB', { day:'2-digit', month:'short' });
+                const d     = new Date(c.commit.author.date);
+                const date  = d.toLocaleDateString('en-GB', { day:'2-digit', month:'short' }) + ' ' + d.toLocaleTimeString('en-GB', { hour:'2-digit', minute:'2-digit', hour12:false });
                 const sha7  = c.sha.slice(0, 7);
                 const isCurrent = i === 0;
                 return `<div onclick="${isCurrent ? '' : `_restoreCommit('${c.sha}','${fname.replace(/'/g,"\\'")}',this)`}"
@@ -3708,6 +3709,17 @@
     }
 
     async function _restoreCommit(sha, fname, rowEl) {
+        // Warn user before overwriting current code
+        const confirmed = await new Promise(resolve => {
+            cdConfirm(
+                'Restore Commit',
+                `This will overwrite your current code with the "${fname}" version from commit ${sha.slice(0,7)}. Continue?`,
+                'Restore', 'Cancel',
+                (ok) => resolve(ok)
+            );
+        });
+        if (!confirmed) return;
+
         // Highlight selected row
         rowEl.style.background = 'var(--accent-dim)';
         rowEl.style.pointerEvents = 'none';
@@ -3937,7 +3949,10 @@
             return [
                 { provider:'openrouter', providerName:'Qwen3 Coder (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
-                  model:'qwen/qwen3-coder:free', label:'OpenRouter – Qwen3 Coder · Free', provider_preference: ['venice'] },
+                  model:'qwen/qwen3-coder:free', label:'OpenRouter – Qwen3 Coder · Free', provider_preference: ['Venice'] },
+                { provider:'openrouter', providerName:'GPT OSS 120B (Free)',
+                  url:'https://openrouter.ai/api/v1/chat/completions',
+                  model:'openai/gpt-oss-120b:free', label:'OpenRouter – GPT OSS 120B · Free' },
                 { provider:'openrouter', providerName:'Nvidia Nemotron 3 Super 120B (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'nvidia/nemotron-3-super-120b-a12b:free', label:'OpenRouter – Nvidia Nemotron 3 Super 120B · Free' },
@@ -4342,7 +4357,7 @@
                         messages: [{ role: 'system', content: systemPrompt }, ...messages]
                     };
                 if (cfg.provider === 'openrouter' && cfg.provider_preference) {
-                    _orBody.provider = { order: cfg.provider_preference, allow_fallbacks: false };
+                    _orBody.provider = { order: cfg.provider_preference, allow_fallbacks: true };
                 }
                 res = await fetch(cfg.url, {
                     method: 'POST', signal: controller.signal,
