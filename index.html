@@ -76,7 +76,7 @@
         
         /* ──────────────────────── Header & Tabs ──────────────────────── */
 
-        .app-header { flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 200; box-shadow: 0 2px 12px rgba(0,0,0,0.10); position: relative; }
+        .app-header { flex-shrink: 0; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 4px 10px; display: flex; align-items: center; justify-content: space-between; z-index: 200; box-shadow: 0 2px 12px rgba(0,0,0,0.10); position: fixed; top: 0; left: 0; right: 0; }
         /* Tabs pill with snake border animation */
         .tabs {
             display: flex;
@@ -333,7 +333,7 @@
 
         
 /* File Tabs Bar */
-        .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; }
+        .file-tabs-bar { flex-shrink: 0; display: flex; flex-wrap: nowrap; overflow-x: auto; background: var(--glass-bg); border-bottom: 1px solid var(--glass-border); padding: 0 6px; gap: 2px; position: fixed; top: var(--header-h, 48px); left: 0; right: 0; z-index: 199; }
         .file-tabs-bar::-webkit-scrollbar { display: none; }
         .file-tab { display: flex; align-items: center; gap: 5px; padding: 6px 12px 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-color); opacity: 0.55; border-bottom: 2px solid transparent; white-space: nowrap; cursor: pointer; flex-shrink: 0; -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
         .file-tab.active { opacity: 1; border-bottom-color: var(--accent); color: var(--accent); }
@@ -1129,11 +1129,11 @@
         }
         #inline-chat-fullscreen:active { opacity: 1; background: var(--accent-dim); }
         #inline-chat-panel.chat-fullscreen {
-            top: var(--header-h, 48px) !important;
-            height: calc(100svh - var(--header-h, 48px)) !important;
+            top: var(--top-bar-h, 80px) !important;
+            height: calc(100svh - var(--top-bar-h, 80px)) !important;
             border-radius: 0 !important;
             padding-top: 0;
-            max-height: calc(100svh - var(--header-h, 48px)) !important;
+            max-height: calc(100svh - var(--top-bar-h, 80px)) !important;
         }
 
         /* Chat mode button — animated glow ring when ON */
@@ -2169,6 +2169,24 @@
     }
     _setBodyHeight();
 
+    // ── Pin top bar heights so fixed header+tabs never cover content ──
+    function _updateTopBarHeights() {
+        const header = document.getElementById('header');
+        const tabsBar = document.getElementById('file-tabs-bar');
+        if (!header) return;
+        const hh = header.offsetHeight;
+        const th = tabsBar ? tabsBar.offsetHeight : 0;
+        const total = hh + th;
+        document.documentElement.style.setProperty('--header-h', hh + 'px');
+        document.documentElement.style.setProperty('--tabs-h', th + 'px');
+        document.documentElement.style.setProperty('--top-bar-h', total + 'px');
+        const wrapper = document.getElementById('editor-wrapper');
+        if (wrapper) wrapper.style.paddingTop = total + 'px';
+    }
+    // Run after DOM is painted so offsetHeight is accurate
+    requestAnimationFrame(_updateTopBarHeights);
+    window.addEventListener('resize', _updateTopBarHeights);
+
     // ── Restore saved theme ──
     (function() {
         const savedTheme = localStorage.getItem('codx_theme');
@@ -2201,65 +2219,33 @@
         if (!_inlineChatOpen) { _setBodyHeight(); return; }
         const vv = window.visualViewport;
         if (!vv) return;
-        const panel  = document.getElementById('inline-chat-panel');
-        const header = document.getElementById('header');
+        const panel = document.getElementById('inline-chat-panel');
         if (!panel) return;
 
+        // Header is always position:fixed via CSS — no JS manipulation needed.
         // kbHeight = how much keyboard is covering from bottom
-        const kbHeight  = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
-        // vvTop = how much visual viewport has shifted up (headers pushed off screen)
-        const vvTop     = vv.offsetTop || 0;
-        const hh        = header ? header.offsetHeight : 48;
+        const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+        const hh = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--top-bar-h')) || 80;
 
         if (_chatIsFullscreen) {
             if (kbHeight > 50) {
-                // Keyboard open in fullscreen:
-                // 1. Pin header back into view by countering the vvTop shift
-                if (header) {
-                    header.style.position = 'fixed';
-                    header.style.top      = vvTop + 'px';
-                    header.style.left     = '0';
-                    header.style.right    = '0';
-                    header.style.zIndex   = '200';
-                }
-                // 2. Pin panel just below header, stop above keyboard
+                // Keyboard open in fullscreen: panel fills visible area below top bars
                 panel.style.position = 'fixed';
-                panel.style.top      = (vvTop + hh) + 'px';
-                panel.style.bottom   = '';
-                panel.style.height   = (vv.height - hh) + 'px';
+                panel.style.top      = hh + 'px';
+                panel.style.bottom   = kbHeight + 'px';
+                panel.style.height   = '';
             } else {
-                // Keyboard closed — reset everything
-                if (header) {
-                    header.style.position = '';
-                    header.style.top      = '';
-                    header.style.left     = '';
-                    header.style.right    = '';
-                }
+                // Keyboard closed — let CSS class handle it
                 panel.style.position = '';
                 panel.style.top      = '';
                 panel.style.bottom   = '';
                 panel.style.height   = '';
             }
         } else {
-            // Normal (non-fullscreen) mode
+            // Normal mode: just push panel above keyboard
             if (kbHeight > 50) {
-                // Pin header so it doesn't scroll off screen when keyboard opens
-                if (header) {
-                    header.style.position = 'fixed';
-                    header.style.top      = vvTop + 'px';
-                    header.style.left     = '0';
-                    header.style.right    = '0';
-                    header.style.zIndex   = '200';
-                }
                 panel.style.bottom = kbHeight + 'px';
             } else {
-                // Keyboard closed — reset header
-                if (header) {
-                    header.style.position = '';
-                    header.style.top      = '';
-                    header.style.left     = '';
-                    header.style.right    = '';
-                }
                 panel.style.bottom = '';
             }
         }
@@ -2967,6 +2953,8 @@
             el.onclick = (e) => { if(!e.target.classList.contains('ft-close')) switchFileTab(tab.id); };
             bar.appendChild(el);
         });
+        // Update top bar heights after tabs render (tabs bar may appear/disappear)
+        requestAnimationFrame(_updateTopBarHeights);
     }
 
     function switchFileTab(id) {
@@ -7960,25 +7948,15 @@ Use only line numbers visible in the context. Be precise.`;
     // ── Inline chat: fullscreen toggle ──
     function _toggleChatFullscreen() {
         _chatIsFullscreen = !_chatIsFullscreen;
-        const panel  = document.getElementById('inline-chat-panel');
-        const icon   = document.getElementById('fs-icon');
-        const header = document.getElementById('header');
-        // Always reset header inline styles before toggling fullscreen
-        if (header) {
-            header.style.position = '';
-            header.style.top      = '';
-            header.style.left     = '';
-            header.style.right    = '';
-        }
-        const hh     = header ? header.offsetHeight : 48;
+        const panel = document.getElementById('inline-chat-panel');
+        const icon  = document.getElementById('fs-icon');
         if (_chatIsFullscreen) {
-            document.documentElement.style.setProperty('--header-h', hh + 'px');
             panel.classList.add('chat-fullscreen');
             if (icon) icon.innerHTML = '<polyline points="4 14 10 14 10 20"/><polyline points="20 10 14 10 14 4"/><line x1="10" y1="14" x2="3" y2="21"/><line x1="21" y1="3" x2="14" y2="10"/>';
         } else {
             panel.classList.remove('chat-fullscreen');
-            // Reset panel position fully when leaving fullscreen
             panel.style.top    = '';
+            panel.style.bottom = '';
             panel.style.height = '';
             if (icon) icon.innerHTML = '<polyline points="15 3 21 3 21 9"/><polyline points="9 21 3 21 3 15"/><line x1="21" y1="3" x2="14" y2="10"/><line x1="3" y1="21" x2="10" y2="14"/>';
         }
