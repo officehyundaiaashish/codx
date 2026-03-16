@@ -5481,8 +5481,13 @@ Rules:
 
         footer.appendChild(ts);
         footer.appendChild(copyBtn);
-        wrap.appendChild(bubble);
-        if (extraEl) bubble.appendChild(extraEl);
+        if (extraEl && !text) {
+            // extraEl is a standalone card — skip bubble, append card directly
+            wrap.appendChild(extraEl);
+        } else {
+            wrap.appendChild(bubble);
+            if (extraEl) bubble.appendChild(extraEl);
+        }
         wrap.appendChild(footer);
         box.appendChild(wrap);
         _chatScrollBottom();
@@ -5882,7 +5887,7 @@ No markdown, no backticks, no explanation outside the array.`;
                     const t = document.getElementById('chat-step-typing');
                     if (t) t.remove();
                     if (e.message !== '__REJECTED__') {
-                        _appendChatMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> ' + (e.message || 'Something went wrong.'), _chatTime());
+                        _appendChatMsg('agent', '', _chatTime(), _buildErrorCard(e.message || 'Something went wrong.'));
                     }
                 });
 
@@ -6126,9 +6131,19 @@ No markdown, no backticks, no explanation outside the array.`;
                     <div class="code-canvas-body">${escaped}</div>
                 </div>`;
             }
-            // Text: render inline markdown — strip line number prefixes from inline code too
-            let html = p.content
-                .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+            // Text: render inline markdown — preserve inline SVG tags, escape rest
+            // Step 1: extract SVG tags and replace with placeholders
+            const svgStore = [];
+            let safe = p.content.replace(/<svg[\s\S]*?<\/svg>/gi, (match) => {
+                svgStore.push(match);
+                return '\x00SVG' + (svgStore.length - 1) + '\x00';
+            });
+            // Step 2: escape HTML in non-SVG content
+            safe = safe.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+            // Step 3: restore SVG tags
+            safe = safe.replace(/\x00SVG(\d+)\x00/g, (_, i) => svgStore[+i]);
+            // Step 4: markdown formatting
+            let html = safe
                 .replace(/\*\*(.+?)\*\*/g, '<span class="chat-md-bold">$1</span>')
                 .replace(/`([^`]+)`/g, '<span class="chat-inline-code">$1</span>')
                 .replace(/^(\d+)\.\s+(.+)$/gm, '<div class="chat-md-li" style="padding-left:18px;"><span style="position:absolute;left:0;color:var(--accent);font-weight:700;">$1.</span>$2</div>')
@@ -6294,8 +6309,13 @@ No markdown, no backticks, no explanation outside the array.`;
 
         footer.appendChild(ts);
         footer.appendChild(copyBtn);
-        wrap.appendChild(bubble);
-        if (extraEl) bubble.appendChild(extraEl);
+        if (extraEl && !text) {
+            // extraEl is a standalone card — skip bubble, append card directly
+            wrap.appendChild(extraEl);
+        } else {
+            wrap.appendChild(bubble);
+            if (extraEl) bubble.appendChild(extraEl);
+        }
         wrap.appendChild(footer);
         box.appendChild(wrap);
         _inlineChatScroll();
@@ -6619,7 +6639,7 @@ Rules:
             _inlineHideTyping();
 
             if (!raw?.trim()) {
-                _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> Empty response. Try again or switch model.');
+                _inlineAppendMsg('agent', '', _buildErrorCard('Empty response. Try again or switch model.'));
                 return;
             }
 
@@ -6672,7 +6692,7 @@ Rules:
             } else if (parsed.type === 'split') {
                 const files = parsed.files || [];
                 if (!files.length) {
-                    _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> AI returned no files. Try again.');
+                    _inlineAppendMsg('agent', '', _buildErrorCard('AI returned no files. Try again.'));
                 } else {
                     if (parsed.explanation?.trim()) _inlineAppendMsg('agent', parsed.explanation.trim());
                     _inlineAppendMsg('agent', '', _buildConfirmCard({
@@ -6690,7 +6710,7 @@ Rules:
             // ── Reorganize ──
             } else if (parsed.type === 'reorganize') {
                 if (!parsed.content) {
-                    _inlineAppendMsg('agent', '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg> AI returned empty content. Try again.');
+                    _inlineAppendMsg('agent', '', _buildErrorCard('AI returned empty content. Try again.'));
                 } else {
                     const rTab = targetTab;
                     const oldContent = rTab ? rTab.content : editor.getValue();
@@ -6723,7 +6743,18 @@ Rules:
             const msg = err.message || '';
             if (msg === '__RATE_LIMIT_SHOWN__') return;
             if (msg === '__USER_ABORTED__') {
-                _inlineAppendMsg('agent', '<svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:inline;vertical-align:middle;pointer-events:none;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg> Stopped.');
+                const stoppedEl = document.createElement('div');
+                stoppedEl.style.cssText = 'display:flex;align-items:flex-start;gap:10px;background:rgba(107,114,128,0.10);border:1px solid rgba(107,114,128,0.25);border-radius:12px;padding:10px 13px;margin:2px 0;';
+                stoppedEl.innerHTML = `<span style="flex-shrink:0;margin-top:1px;"><svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="none" style="display:block;pointer-events:none;"><rect x="4" y="4" width="16" height="16" rx="2"/></svg></span>
+                    <div style="flex:1;min-width:0;">
+                        <div style="font-size:12px;font-weight:700;color:var(--text-color);font-family:Poppins,sans-serif;">Stopped</div>
+                        <div style="font-size:11px;color:var(--text-color);opacity:0.55;margin-top:3px;font-family:Poppins,sans-serif;line-height:1.4;">Generation was stopped by you.</div>
+                    </div>`;
+                const stoppedWrap = document.createElement('div');
+                stoppedWrap.className = 'chat-msg agent';
+                stoppedWrap.appendChild(stoppedEl);
+                const stoppedBox = document.getElementById('inline-chat-messages');
+                if (stoppedBox) { stoppedBox.appendChild(stoppedWrap); _inlineChatScroll(); }
                 return;
             }
             const errEl = _buildErrorCard(msg);
@@ -7399,11 +7430,11 @@ Use only line numbers visible in the context. Be precise.`;
             if (!parsed || !parsed.type) {
                 _inlineAppendMsg('agent', raw.trim());
             } else if (parsed.type === 'edit') {
-                _inlineAppendMsg('agent', '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> ' + (parsed.explanation || 'Revised fix — review and apply:'));
+                _inlineAppendMsg('agent', '↩ ' + (parsed.explanation || 'Revised fix — review and apply:'));
                 const newCard = _buildInlineEditCard(parsed.edits, targetTab);
                 _inlineAppendMsg('agent', '', newCard);
             } else if (parsed.type === 'reorganize') {
-                _inlineAppendMsg('agent', '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:inline;vertical-align:middle;pointer-events:none;"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 11-2.12-9.36L23 10"/></svg> ' + (parsed.explanation || 'Revised reorganize:'));
+                _inlineAppendMsg('agent', '↩ ' + (parsed.explanation || 'Revised reorganize:'));
                 const newCard = _buildInlineReorganizeCard(parsed.content, targetTab);
                 _inlineAppendMsg('agent', '', newCard);
             } else {
