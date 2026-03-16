@@ -3937,13 +3937,10 @@
             return [
                 { provider:'openrouter', providerName:'Qwen3 Coder (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
-                  model:'qwen/qwen3-coder:free', label:'OpenRouter – Qwen3 Coder · Free' },
-                { provider:'openrouter', providerName:'GLM 4.5 Air (Free)',
+                  model:'qwen/qwen3-coder:free', label:'OpenRouter – Qwen3 Coder · Free', provider_preference: ['Venice'] },
+                { provider:'openrouter', providerName:'GPT OSS 120B (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
-                  model:'z-ai/glm-4.5-air:free', label:'OpenRouter – Z.AI GLM 4.5 Air · Free' },
-                { provider:'openrouter', providerName:'Arcee Trinity Large (Free)',
-                  url:'https://openrouter.ai/api/v1/chat/completions',
-                  model:'arcee-ai/trinity-large-preview:free', label:'OpenRouter – Arcee Trinity Large · Free' },
+                  model:'openai/gpt-oss-120b:free', label:'OpenRouter – GPT OSS 120B · Free' },
                 { provider:'openrouter', providerName:'Nvidia Nemotron 3 Super 120B (Free)',
                   url:'https://openrouter.ai/api/v1/chat/completions',
                   model:'nvidia/nemotron-3-super-120b-a12b:free', label:'OpenRouter – Nvidia Nemotron 3 Super 120B · Free' },
@@ -4341,15 +4338,19 @@
                 // OpenAI-compatible: OpenAI, Groq, OpenRouter, DeepSeek
                 const headers = { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + cfg.key };
                 if (cfg.provider === 'openrouter') { headers['HTTP-Referer'] = 'https://codx.app'; headers['X-Title'] = 'CodX'; }
-                res = await fetch(cfg.url, {
-                    method: 'POST', signal: controller.signal,
-                    headers,
-                    body: JSON.stringify({
+                const _orBody = {
                         model: cfg.model,
                         max_tokens: _maxTok,
                         temperature: 0.1,
                         messages: [{ role: 'system', content: systemPrompt }, ...messages]
-                    })
+                    };
+                if (cfg.provider === 'openrouter' && cfg.provider_preference) {
+                    _orBody.provider = { order: cfg.provider_preference, allow_fallbacks: true };
+                }
+                res = await fetch(cfg.url, {
+                    method: 'POST', signal: controller.signal,
+                    headers,
+                    body: JSON.stringify(_orBody)
                 });
                 d = await res.json();
                 if (!res.ok) throw new Error(d.error?.message || `HTTP ${res.status}`);
