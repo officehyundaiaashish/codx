@@ -2194,29 +2194,39 @@
     // Keyboard handler for chat panel
     // interactive-widget=resizes-visual: keyboard overlaps fixed elements,
     // layout viewport unchanged. Panel at bottom:0 is already correct.
-    // Only fullscreen mode needs adjustment (panel fills screen top-to-bottom).
+    // Half mode: body height must NOT change when keyboard opens — header stays pinned.
+    // Full mode: panel height shrinks to fit above keyboard.
     function _handleChatKeyboard() {
         if (_inPreview) return; // never touch layout while preview is active
         if (!_inlineChatOpen) { _setBodyHeight(); return; }
+        // Chat is open — do NOT call _setBodyHeight() here.
+        // Calling it would resize body when keyboard fires window resize,
+        // pushing app-header and tab bar off the top of the screen.
         const vv = window.visualViewport;
         if (!vv) return;
         const panel = document.getElementById('inline-chat-panel');
         if (!panel) return;
 
+        const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
+
         if (_chatIsFullscreen) {
-            const kbHeight = Math.max(0, window.innerHeight - vv.offsetTop - vv.height);
             const hh = parseInt(getComputedStyle(document.documentElement)
                 .getPropertyValue('--header-h')) || 48;
             if (kbHeight > 50) {
+                // Shrink panel so it fits between header and keyboard top
                 panel.style.height = (vv.height - hh) + 'px';
                 panel.style.top    = hh + 'px';
                 panel.style.bottom = '';
             } else {
+                // Keyboard gone — restore fullscreen CSS values
                 panel.style.height = '';
                 panel.style.top    = '';
                 panel.style.bottom = '';
             }
         }
+        // Half mode: panel is position:fixed bottom:0 — it stays in place.
+        // Keyboard slides up over it naturally. No adjustment needed.
+        // Body height intentionally left unchanged to keep header pinned.
     }
 
     window.visualViewport && window.visualViewport.addEventListener('resize', _handleChatKeyboard);
