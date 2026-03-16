@@ -2306,26 +2306,17 @@
         <div style="width:32px;height:32px;border-radius:10px;background:var(--accent-dim);border:1px solid rgba(16,185,129,0.3);display:flex;align-items:center;justify-content:center;flex-shrink:0;">
             <span class="material-icons-round" style="color:var(--accent);font-size:16px;pointer-events:none;">tune</span>
         </div>
-        <div style="flex:1;font-weight:700;font-size:13px;color:var(--text-color);">Custom Model</div>
-        <button onclick="closeCustomModelDialog()" style="background:none;border:none;cursor:pointer;color:var(--text-color);opacity:0.4;padding:4px;display:flex;align-items:center;">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        <div style="flex:1;">
+            <div style="font-weight:700;font-size:13px;color:var(--text-color);line-height:1.2;">Custom Model</div>
+            <div id="cm-detect-label" style="font-size:10px;color:var(--accent);font-weight:600;margin-top:1px;min-height:13px;"></div>
+        </div>
+        <button onclick="closeCustomModelDialog()" style="background:rgba(128,128,128,0.1);border:none;border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;color:var(--text-color);opacity:0.45;">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
     </div>
-    <div style="font-size:10px;font-weight:700;color:var(--text-color);opacity:0.45;margin-bottom:4px;">API Key</div>
-    <input id="cm-api-key" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="sk-… / AIza… / gsk_…" style="width:100%;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'">
-    <div style="font-size:10px;font-weight:700;color:var(--text-color);opacity:0.45;margin-bottom:4px;">Provider</div>
-    <select id="cm-provider" style="width:100%;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:8px;outline:none;appearance:none;-webkit-appearance:none;cursor:pointer;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'">
-        <option value="openai">OpenAI</option>
-        <option value="anthropic">Anthropic</option>
-        <option value="groq">Groq</option>
-        <option value="gemini">Gemini</option>
-        <option value="openrouter">OpenRouter</option>
-        <option value="deepseek">DeepSeek</option>
-    </select>
-    <div style="font-size:10px;font-weight:700;color:var(--text-color);opacity:0.45;margin-bottom:4px;">Model ID</div>
-    <input id="cm-model" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. gpt-4o / claude-3-5-sonnet…" style="width:100%;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'">
-    <div style="font-size:10px;font-weight:700;color:var(--text-color);opacity:0.45;margin-bottom:4px;">Display Name</div>
-    <input id="cm-name" type="text" autocomplete="off" spellcheck="false" placeholder="e.g. My GPT-4o" style="width:100%;padding:9px 11px;border-radius:10px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:14px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.15s;" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'">
+    <input id="cm-api-key" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="API Key" oninput="_cmKeyPreview(this.value)" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Courier New',monospace;font-size:13px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
+    <input id="cm-model" type="text" autocomplete="off" spellcheck="false" placeholder="Model ID" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Courier New',monospace;font-size:13px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
+    <input id="cm-name" type="text" autocomplete="off" spellcheck="false" placeholder="Name (optional)" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:14px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
     <div style="display:flex;gap:7px;">
         <button onclick="closeCustomModelDialog()" style="flex:1;padding:10px;border-radius:11px;border:1px solid var(--glass-border);background:rgba(128,128,128,0.08);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
         <button onclick="connectCustomModel()" style="flex:1.5;padding:10px;border-radius:11px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -4424,14 +4415,22 @@
     }
 
     // ── Custom Model Dialog ──
-    const _providerUrls = {
-        openai:     'https://api.openai.com/v1/chat/completions',
-        anthropic:  'https://api.anthropic.com/v1/messages',
-        groq:       'https://api.groq.com/openai/v1/chat/completions',
-        gemini:     null, // built dynamically
-        openrouter: 'https://openrouter.ai/api/v1/chat/completions',
-        deepseek:   'https://api.deepseek.com/chat/completions',
-    };
+    function _cmDetectProvider(key) {
+        key = (key || '').trim();
+        if (/^AIza[A-Za-z0-9_-]{20,}/.test(key))   return { provider:'gemini',    label:'Gemini' };
+        if (/^gsk_[A-Za-z0-9]{20,}/.test(key))      return { provider:'groq',      label:'Groq' };
+        if (/^sk-or-/i.test(key))                    return { provider:'openrouter', label:'OpenRouter' };
+        if (/^sk-ant-[A-Za-z0-9]{10,}/.test(key))   return { provider:'anthropic', label:'Anthropic' };
+        if (/^sk-[a-f0-9]{32}$/.test(key))           return { provider:'deepseek',  label:'DeepSeek' };
+        if (/^sk-[A-Za-z0-9]{20,}/.test(key))        return { provider:'openai',    label:'OpenAI' };
+        return null;
+    }
+
+    function _cmKeyPreview(val) {
+        const d = _cmDetectProvider(val);
+        const lbl = document.getElementById('cm-detect-label');
+        if (lbl) lbl.textContent = d ? d.label + ' detected' : (val.length > 3 ? 'Unknown — will use OpenAI-compatible' : '');
+    }
 
     function openCustomModelDialog() {
         const overlay = document.getElementById('custom-model-overlay');
@@ -4444,10 +4443,11 @@
             dialog.style.pointerEvents = 'auto';
             dialog.style.transform = 'translate(-50%,-50%) scale(1)';
         });
-        // Clear fields
         document.getElementById('cm-api-key').value = '';
         document.getElementById('cm-model').value   = '';
         document.getElementById('cm-name').value    = '';
+        const lbl = document.getElementById('cm-detect-label');
+        if (lbl) lbl.textContent = '';
     }
 
     function closeCustomModelDialog() {
@@ -4462,25 +4462,29 @@
     }
 
     function connectCustomModel() {
-        const key      = document.getElementById('cm-api-key').value.trim();
-        const provider = document.getElementById('cm-provider').value;
-        const model    = document.getElementById('cm-model').value.trim();
-        const name     = document.getElementById('cm-name').value.trim();
+        const key   = document.getElementById('cm-api-key').value.trim();
+        const model = document.getElementById('cm-model').value.trim();
+        const name  = document.getElementById('cm-name').value.trim();
         if (!key)   { cdAlert('Custom Model', 'API key is required.', 'warn'); return; }
         if (!model) { cdAlert('Custom Model', 'Model ID is required.', 'warn'); return; }
+
+        const detected    = _cmDetectProvider(key);
+        const provider    = detected ? detected.provider : 'openai';
         const displayName = name || model;
-        let url = _providerUrls[provider] || _providerUrls.openai;
+
+        let url;
         if (provider === 'gemini') {
             url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`;
-        }
-        const entry = { provider, providerName: displayName, url, model, key, label: displayName };
+        } else if (provider === 'groq')       url = 'https://api.groq.com/openai/v1/chat/completions';
+        else if (provider === 'openrouter')   url = 'https://openrouter.ai/api/v1/chat/completions';
+        else if (provider === 'anthropic')    url = 'https://api.anthropic.com/v1/messages';
+        else if (provider === 'deepseek')     url = 'https://api.deepseek.com/chat/completions';
+        else                                  url = 'https://api.openai.com/v1/chat/completions';
+
+        const entry  = { provider, providerName: displayName, url, model, key, label: displayName };
         const exists = agentList.findIndex(a => a.model === model && a.provider === provider);
-        if (exists !== -1) {
-            agentList[exists] = entry;
-        } else {
-            agentList.push(entry);
-            activeAgentIdx = agentList.length - 1;
-        }
+        if (exists !== -1) { agentList[exists] = entry; }
+        else { agentList.push(entry); activeAgentIdx = agentList.length - 1; }
         _saveAgentList();
         closeCustomModelDialog();
         _renderConnectedAgents();
