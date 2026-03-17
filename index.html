@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -3142,9 +3143,12 @@
             edEl.style.opacity = '0';
             edEl.style.pointerEvents = 'none';
             jumpers.style.display = 'none';
-            const t = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
-            if(outerEl) { outerEl.style.transition = t; outerEl.style.transform = 'translateY(100%)'; }
-            if(innerEl) { innerEl.style.transition = t; innerEl.style.transform = 'translateY(100%)'; }
+            const isDesktop = window.innerWidth >= 768;
+            if (!isDesktop) {
+                const t = 'transform 0.3s cubic-bezier(0.4,0,0.2,1)';
+                if(outerEl) { outerEl.style.transition = t; outerEl.style.transform = 'translateY(100%)'; }
+                if(innerEl) { innerEl.style.transition = t; innerEl.style.transform = 'translateY(100%)'; }
+            }
             // Force hide chat panel in preview — it's fixed positioned and would overlay preview
             const chatPanel = document.getElementById('inline-chat-panel');
             if (chatPanel) { chatPanel.style.transform = 'translateY(100%)'; chatPanel.style.pointerEvents = 'none'; }
@@ -8438,18 +8442,18 @@ Use only line numbers visible in the context. Be precise.`;
     }
 
     function desktopZoomIn() {
-        let size = parseInt(editor.getOption('fontSize')) || 16;
+        let size = parseInt(editor.getOption('fontSize')) || 14;
         size = Math.min(size + 1, 40);
-        _origSetFontSize(size + 'px');
+        editor.setOptions({ fontSize: size + 'px' });
         _lastZoomSize = size;
         localStorage.setItem('codx_fontsize', size);
         showToast('Font ' + size + 'px', 'zoom_in');
     }
 
     function desktopZoomOut() {
-        let size = parseInt(editor.getOption('fontSize')) || 16;
+        let size = parseInt(editor.getOption('fontSize')) || 14;
         size = Math.max(size - 1, 10);
-        _origSetFontSize(size + 'px');
+        editor.setOptions({ fontSize: size + 'px' });
         _lastZoomSize = size;
         localStorage.setItem('codx_fontsize', size);
         showToast('Font ' + size + 'px', 'zoom_out');
