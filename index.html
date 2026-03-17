@@ -1432,7 +1432,7 @@
             #bottom-panel {
                 position: fixed !important;
                 left: 0; top: 0; bottom: 0;
-                width: 188px;
+                width: 220px;
                 height: 100% !important;
                 transform: none !important;
                 transition: transform 0.3s cubic-bezier(0.4,0,0.2,1) !important;
@@ -1480,7 +1480,7 @@
             .toolbar-rows {
                 flex-direction: column;
                 gap: 2px;
-                padding: 0 8px 8px 8px;
+                padding: 0 10px 10px 10px;
                 opacity: 1 !important;
                 transform: none !important;
                 pointer-events: auto !important;
@@ -1500,19 +1500,19 @@
                 gap: 1px;
             }
 
-            /* Desktop toolbar buttons — horizontal icon+label, compact */
+            /* Desktop toolbar buttons — horizontal icon+label, comfortable */
             .toolbar-btn {
                 flex-direction: row !important;
                 justify-content: flex-start !important;
-                gap: 8px;
-                padding: 7px 10px !important;
-                border-radius: 8px !important;
-                font-size: 11px !important;
+                gap: 10px;
+                padding: 9px 12px !important;
+                border-radius: 9px !important;
+                font-size: 13px !important;
                 opacity: 0.75;
                 width: 100%;
             }
             .toolbar-btn:hover { background: rgba(128,128,128,0.1); opacity: 1; }
-            .toolbar-btn .material-icons-round { font-size: 16px !important; flex-shrink: 0; }
+            .toolbar-btn .material-icons-round { font-size: 18px !important; flex-shrink: 0; }
 
             /* Section label dividers between groups */
             .toolbar-row::before {
@@ -1524,7 +1524,7 @@
                 display: flex !important;
                 flex-direction: column !important;
                 gap: 1px;
-                padding: 0 8px;
+                padding: 0 10px;
                 margin-top: 4px;
             }
             #bottom-panel .bottom-area > div[style*="justify-content: center"] .toolbar-btn {
@@ -1539,7 +1539,7 @@
                 flex-direction: column !important;
                 width: 100% !important;
                 margin-top: 0 !important;
-                padding: 0 8px !important;
+                padding: 0 10px !important;
             }
             #bottom-panel .toolbar-rows > div[style*="justify-content: center"] .toolbar-btn {
                 width: 100% !important;
@@ -1547,29 +1547,29 @@
 
             /* Sidebar section header labels */
             .dt-section-label {
-                font-size: 8px;
+                font-size: 9px;
                 font-weight: 700;
                 color: var(--text-color);
                 opacity: 0.35;
                 text-transform: uppercase;
                 letter-spacing: 0.7px;
-                padding: 10px 10px 3px;
+                padding: 12px 12px 4px;
             }
 
             /* Push editor + header right to make room for sidebar */
             .app-layout {
-                padding-left: 188px;
+                padding-left: 220px;
             }
 
             /* Inline chat panel — account for sidebar */
             #inline-chat-panel {
-                left: 188px !important;
+                left: 220px !important;
             }
 
             /* Find modal — account for sidebar */
             #find-modal {
-                left: calc(188px + 2%) !important;
-                width: calc(96% - 188px) !important;
+                left: calc(220px + 2%) !important;
+                width: calc(96% - 220px) !important;
             }
 
             /* Nav hide button in header — on desktop toggles sidebar */
