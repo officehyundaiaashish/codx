@@ -2378,7 +2378,12 @@
     </div>
     <input id="cm-api-key" type="text" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="API Key" oninput="_cmKeyPreview(this.value)" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Courier New',monospace;font-size:13px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
     <input id="cm-model" type="text" autocomplete="off" spellcheck="false" placeholder="Model ID" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Courier New',monospace;font-size:13px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
-    <input id="cm-name" type="text" autocomplete="off" spellcheck="false" placeholder="Name (optional)" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:14px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
+    <input id="cm-name" type="text" autocomplete="off" spellcheck="false" placeholder="Name (optional)" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(0,0,0,0.18);border:1.5px solid var(--glass-border);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;margin-bottom:8px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='var(--accent)';this.style.boxShadow='0 0 0 3px var(--accent-dim)'" onblur="this.style.borderColor='var(--glass-border)';this.style.boxShadow='none'">
+    <div id="cm-proxy-wrap" style="display:none;margin-bottom:14px;">
+        <div style="font-size:9px;font-weight:700;color:#76b900;font-family:'Poppins',sans-serif;margin-bottom:5px;display:flex;align-items:center;gap:5px;"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#76b900" stroke-width="2.5" stroke-linecap="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>NVIDIA PROXY URL (required)</div>
+        <input id="cm-proxy-url" type="text" autocomplete="off" spellcheck="false" placeholder="https://your-proxy.vercel.app/api/nvidia" style="width:100%;padding:10px 12px;border-radius:11px;background:rgba(118,185,0,0.07);border:1.5px solid rgba(118,185,0,0.35);color:var(--text-color);font-family:'Courier New',monospace;font-size:11px;outline:none;user-select:text;-webkit-user-select:text;transition:border-color 0.18s,box-shadow 0.18s;" onfocus="this.style.borderColor='#76b900';this.style.boxShadow='0 0 0 3px rgba(118,185,0,0.15)'" onblur="this.style.borderColor='rgba(118,185,0,0.35)';this.style.boxShadow='none'">
+        <div style="font-size:9px;color:var(--text-color);opacity:0.45;margin-top:4px;font-family:'Poppins',sans-serif;">Deploy free proxy from the ZIP — see README inside</div>
+    </div>
     <div style="display:flex;gap:7px;">
         <button onclick="closeCustomModelDialog()" style="flex:1;padding:10px;border-radius:11px;border:1px solid var(--glass-border);background:rgba(128,128,128,0.08);color:var(--text-color);font-family:'Poppins',sans-serif;font-size:12px;font-weight:600;cursor:pointer;">Cancel</button>
         <button onclick="connectCustomModel()" style="flex:1.5;padding:10px;border-radius:11px;border:none;background:var(--accent);color:white;font-family:'Poppins',sans-serif;font-size:12px;font-weight:700;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
@@ -4306,7 +4311,7 @@
         const GEM = 'https://generativelanguage.googleapis.com/v1beta/models/';
         const OR  = 'https://openrouter.ai/api/v1/chat/completions';
         const GRQ = 'https://api.groq.com/openai/v1/chat/completions';
-        const NIM = 'https://integrate.api.nvidia.com/v1/chat/completions';
+        const NIM = window._nvidiaProxyUrl || 'https://codx-ashy.vercel.app/api/nvidia';
 
         if (/^nvapi-[A-Za-z0-9_-]{20,}/.test(key)) return [
             // NVIDIA FREE MODELS
@@ -4581,6 +4586,9 @@
         const d = _cmDetectProvider(val);
         const lbl = document.getElementById('cm-detect-label');
         if (lbl) lbl.textContent = d ? d.label + ' detected' : (val.length > 3 ? 'Unknown — will use OpenAI-compatible' : '');
+        // Show/hide proxy URL field for NVIDIA keys
+        const proxyWrap = document.getElementById('cm-proxy-wrap');
+        if (proxyWrap) proxyWrap.style.display = (d && d.provider === 'nvidia') ? 'block' : 'none';
     }
 
     function openCustomModelDialog() {
@@ -4597,6 +4605,10 @@
         document.getElementById('cm-api-key').value = '';
         document.getElementById('cm-model').value   = '';
         document.getElementById('cm-name').value    = '';
+        const proxyInp = document.getElementById('cm-proxy-url');
+        if (proxyInp) proxyInp.value = '';
+        const proxyWrap = document.getElementById('cm-proxy-wrap');
+        if (proxyWrap) proxyWrap.style.display = 'none';
         const lbl = document.getElementById('cm-detect-label');
         if (lbl) lbl.textContent = '';
     }
@@ -4616,12 +4628,23 @@
         const key   = document.getElementById('cm-api-key').value.trim();
         const model = document.getElementById('cm-model').value.trim();
         const name  = document.getElementById('cm-name').value.trim();
+        const proxyUrl = (document.getElementById('cm-proxy-url')?.value || '').trim();
         if (!key)   { cdAlert('Custom Model', 'API key is required.', 'warn'); return; }
         if (!model) { cdAlert('Custom Model', 'Model ID is required.', 'warn'); return; }
 
         const detected    = _cmDetectProvider(key);
         const provider    = detected ? detected.provider : 'openai';
         const displayName = name || model;
+
+        // For NVIDIA — require proxy URL
+        if (provider === 'nvidia' && !proxyUrl) {
+            cdAlert('NVIDIA Proxy Required', 'Please enter your deployed proxy URL. See the README in the proxy ZIP for setup instructions.', 'warn');
+            return;
+        }
+        if (provider === 'nvidia' && proxyUrl) {
+            window._nvidiaProxyUrl = proxyUrl;
+            try { localStorage.setItem('nvidia_proxy_url', proxyUrl); } catch(e) {}
+        }
 
         let url;
         if (provider === 'gemini') {
@@ -4630,7 +4653,7 @@
         else if (provider === 'openrouter')   url = 'https://openrouter.ai/api/v1/chat/completions';
         else if (provider === 'anthropic')    url = 'https://api.anthropic.com/v1/messages';
         else if (provider === 'deepseek')     url = 'https://api.deepseek.com/chat/completions';
-        else if (provider === 'nvidia')       url = 'https://integrate.api.nvidia.com/v1/chat/completions';
+        else if (provider === 'nvidia')       url = proxyUrl;
         else                                  url = 'https://api.openai.com/v1/chat/completions';
 
         const entry  = { provider, providerName: displayName, url, model, key, label: displayName };
@@ -4760,7 +4783,7 @@
             // Per-provider max_tokens — free models have tight output limits
             const _maxTok = {
                 groq: 8000, gemini: 8192, openai: 8000,
-                anthropic: 8000, openrouter: 8000, deepseek: 8000
+                anthropic: 8000, openrouter: 8000, deepseek: 8000, nvidia: 8000
             }[cfg.provider] ?? 8000;
 
             if (cfg.provider === 'anthropic') {
