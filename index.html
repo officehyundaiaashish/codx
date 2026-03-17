@@ -2374,7 +2374,7 @@
     // Declared early — used in visualViewport resize handler before full init
     var _inlineChatOpen = false;
     // Declared early — used before their definition blocks to prevent TDZ crash
-    let _forcePlainText = false;
+    let _forcePlainText = true;
     let _animationsDisabled = false;
     let _chatIsFullscreen = false;
     let _pythonMode = false;
@@ -2721,8 +2721,10 @@
             const btn = document.getElementById('no-anim-btn');
             if (btn) { btn.style.color = 'var(--accent)'; btn.style.background = 'var(--accent-dim)'; }
         }
-        // Restore plain text setting
-        if (localStorage.getItem('codx_plain_text')) {
+        // Plain text ON by default — only disable if user explicitly turned it off
+        if (localStorage.getItem('codx_plain_text') === '0') {
+            _forcePlainText = false;
+        } else {
             _forcePlainText = true;
             editor.session.setMode('ace/mode/text');
             const btn = document.getElementById('plain-text-btn');
@@ -8417,7 +8419,7 @@ Use only line numbers visible in the context. Be precise.`;
             editor.session.setMode('ace/mode/text');
             if (btn) { btn.style.color = 'var(--accent)'; btn.style.background = 'var(--accent-dim)'; }
             showToast('Plain Text ON', 'text_fields');
-            localStorage.setItem('codx_plain_text', '1');
+            localStorage.removeItem('codx_plain_text'); // default state, no need to store
         } else {
             // Restore correct syntax mode
             if (_pythonMode) {
@@ -8427,7 +8429,7 @@ Use only line numbers visible in the context. Be precise.`;
             }
             if (btn) { btn.style.color = ''; btn.style.background = ''; }
             showToast('Syntax ON', 'code');
-            localStorage.removeItem('codx_plain_text');
+            localStorage.setItem('codx_plain_text', '0'); // user explicitly disabled
         }
     }
 
