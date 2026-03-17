@@ -4306,6 +4306,28 @@
         const GEM = 'https://generativelanguage.googleapis.com/v1beta/models/';
         const OR  = 'https://openrouter.ai/api/v1/chat/completions';
         const GRQ = 'https://api.groq.com/openai/v1/chat/completions';
+        const NIM = 'https://integrate.api.nvidia.com/v1/chat/completions';
+
+        if (/^nvapi-[A-Za-z0-9_-]{20,}/.test(key)) return [
+            // NVIDIA FREE MODELS
+            { provider:'nvidia', providerName:'DeepSeek V3',            tag:'FREE', tagColor:'#76b900', url: NIM, model:'deepseek-ai/deepseek-v3-0324'              },
+            { provider:'nvidia', providerName:'DeepSeek R1 (671B)',     tag:'THINK',tagColor:'#76b900', url: NIM, model:'deepseek-ai/deepseek-r1'                   },
+            { provider:'nvidia', providerName:'Kimi K2 Instruct',       tag:'FREE', tagColor:'#76b900', url: NIM, model:'moonshotai/kimi-k2-instruct'               },
+            { provider:'nvidia', providerName:'Kimi K2 Thinking',       tag:'THINK',tagColor:'#76b900', url: NIM, model:'moonshotai/kimi-k2-thinking'               },
+            { provider:'nvidia', providerName:'GLM-4.7',                tag:'FREE', tagColor:'#76b900', url: NIM, model:'z-ai/glm4.7'                               },
+            { provider:'nvidia', providerName:'GLM-4.7 Flash',          tag:'FAST', tagColor:'#76b900', url: NIM, model:'z-ai/glm-4.7-flash'                        },
+            { provider:'nvidia', providerName:'MiniMax M2.5',           tag:'FREE', tagColor:'#76b900', url: NIM, model:'minimax/minimax-m2.5'                      },
+            { provider:'nvidia', providerName:'Llama 4 Maverick',       tag:'FREE', tagColor:'#76b900', url: NIM, model:'meta/llama-4-maverick-17b-128e-instruct'   },
+            { provider:'nvidia', providerName:'Llama 4 Scout',          tag:'FREE', tagColor:'#76b900', url: NIM, model:'meta/llama-4-scout-17b-16e-instruct'       },
+            { provider:'nvidia', providerName:'Llama 3.3 70B',          tag:'FREE', tagColor:'#76b900', url: NIM, model:'meta/llama-3.3-70b-instruct'               },
+            { provider:'nvidia', providerName:'Llama Nemotron Super',   tag:'FREE', tagColor:'#76b900', url: NIM, model:'nvidia/llama-3.3-nemotron-super-49b-v1'    },
+            { provider:'nvidia', providerName:'Llama Nemotron Ultra',   tag:'BEST', tagColor:'#76b900', url: NIM, model:'nvidia/llama-3.1-nemotron-ultra-253b-v1'   },
+            { provider:'nvidia', providerName:'Qwen3 235B',             tag:'FREE', tagColor:'#76b900', url: NIM, model:'qwen/qwen3-235b-a22b'                      },
+            { provider:'nvidia', providerName:'Qwen3 30B (Thinking)',   tag:'THINK',tagColor:'#76b900', url: NIM, model:'qwen/qwen3-30b-a3b'                        },
+            { provider:'nvidia', providerName:'Mistral Small 3.1',      tag:'FREE', tagColor:'#76b900', url: NIM, model:'mistralai/mistral-small-3.1-24b-instruct'  },
+            { provider:'nvidia', providerName:'Phi-4 Mini',             tag:'FAST', tagColor:'#76b900', url: NIM, model:'microsoft/phi-4-mini-instruct'              },
+            { provider:'nvidia', providerName:'Gemma 3 27B',            tag:'FREE', tagColor:'#76b900', url: NIM, model:'google/gemma-3-27b-it'                     },
+        ];
 
         if (/^AIza[A-Za-z0-9_-]{20,}/.test(key)) return [
             { provider:'gemini', providerName:'Gemini 2.5 Flash',      tag:'FREE', tagColor:'#10b981', url: GEM+'gemini-2.5-flash:generateContent',      model:'gemini-2.5-flash'      },
@@ -4545,6 +4567,7 @@
     // ── Custom Model Dialog ──
     function _cmDetectProvider(key) {
         key = (key || '').trim();
+        if (/^nvapi-[A-Za-z0-9_-]{20,}/.test(key))  return { provider:'nvidia',    label:'NVIDIA NIM' };
         if (/^AIza[A-Za-z0-9_-]{20,}/.test(key))   return { provider:'gemini',    label:'Gemini' };
         if (/^gsk_[A-Za-z0-9]{20,}/.test(key))      return { provider:'groq',      label:'Groq' };
         if (/^sk-or-/i.test(key))                    return { provider:'openrouter', label:'OpenRouter' };
@@ -4607,6 +4630,7 @@
         else if (provider === 'openrouter')   url = 'https://openrouter.ai/api/v1/chat/completions';
         else if (provider === 'anthropic')    url = 'https://api.anthropic.com/v1/messages';
         else if (provider === 'deepseek')     url = 'https://api.deepseek.com/chat/completions';
+        else if (provider === 'nvidia')       url = 'https://integrate.api.nvidia.com/v1/chat/completions';
         else                                  url = 'https://api.openai.com/v1/chat/completions';
 
         const entry  = { provider, providerName: displayName, url, model, key, label: displayName };
