@@ -8438,18 +8438,18 @@ Use only line numbers visible in the context. Be precise.`;
     }
 
     function desktopZoomIn() {
-        let size = parseInt(editor.getFontSize()) || 16;
+        let size = parseInt(editor.getOption('fontSize')) || 16;
         size = Math.min(size + 1, 40);
-        editor.setFontSize(size + 'px');
+        _origSetFontSize(size + 'px');
         _lastZoomSize = size;
         localStorage.setItem('codx_fontsize', size);
         showToast('Font ' + size + 'px', 'zoom_in');
     }
 
     function desktopZoomOut() {
-        let size = parseInt(editor.getFontSize()) || 16;
+        let size = parseInt(editor.getOption('fontSize')) || 16;
         size = Math.max(size - 1, 10);
-        editor.setFontSize(size + 'px');
+        _origSetFontSize(size + 'px');
         _lastZoomSize = size;
         localStorage.setItem('codx_fontsize', size);
         showToast('Font ' + size + 'px', 'zoom_out');
