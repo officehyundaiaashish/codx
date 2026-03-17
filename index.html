@@ -8065,6 +8065,7 @@ Use only line numbers visible in the context. Be precise.`;
                 row.style.cssText = `display:flex;align-items:center;gap:10px;padding:8px 14px 8px 24px;cursor:pointer;border-bottom:1px solid var(--glass-border);background:${isSelected ? 'var(--accent-dim)' : 'transparent'};transition:background 0.15s;`;
                 row.innerHTML = `
                     <span style="flex:1;font-size:12px;font-weight:600;color:${isSelected ? 'var(--accent)' : 'var(--text-color)'};font-family:'Poppins',sans-serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;pointer-events:none;">${ag.providerName}</span>
+                    ${ag.tag ? `<span style="font-size:8px;font-weight:700;padding:2px 5px;border-radius:4px;flex-shrink:0;font-family:'Poppins',sans-serif;color:${ag.tagColor||'var(--accent)'};background:${ag.tagColor||'var(--accent)'}22;pointer-events:none;">${ag.tag}</span>` : ''}
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" style="pointer-events:none;opacity:${isSelected ? '1' : '0'};flex-shrink:0;"><polyline points="20 6 9 17 4 12"/></svg>`;
                 row.ontouchstart = () => { row.style.background = 'var(--accent-dim)'; };
                 row.onclick = (e) => {
