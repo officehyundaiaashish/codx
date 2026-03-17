@@ -4291,6 +4291,13 @@
         this.style.height = 'auto';
         this.style.height = Math.min(this.scrollHeight, 100) + 'px';
     });
+    document.getElementById('agent-prompt').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && window.innerWidth >= 768) {
+            if (e.shiftKey) { return; } // Shift+Enter = newline, do nothing
+            e.preventDefault();
+            sendAgentPrompt();
+        }
+    });
 
     // ── API KEY AUTO-DETECT ──
     // Returns array of model entries for a given key
@@ -6099,6 +6106,11 @@ Rules:
         });
         chatTA.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) { e.stopPropagation(); }
+            if (e.key === 'Enter' && window.innerWidth >= 768) {
+                if (e.shiftKey) { return; }
+                e.preventDefault();
+                sendChatMessage();
+            }
         });
     }, 0);
 
@@ -6512,6 +6524,11 @@ No markdown, no backticks, no explanation outside the array.`;
         });
         ta.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) { e.stopPropagation(); }
+            if (e.key === 'Enter' && window.innerWidth >= 768) {
+                if (e.shiftKey) { return; }
+                e.preventDefault();
+                sendInlineChat();
+            }
         });
     }, 0);
 
