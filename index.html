@@ -147,6 +147,25 @@
         
 
         /* ──────────────────────── Toolbar & Cursor Nav ──────────────────────── */
+.cursor-nav { touch-action: pan-x pan-y; }
+        #editor { touch-action: pan-x pan-y pinch-zoom; }
+        /* Promote scrollable layers to own GPU composite layer */
+        .file-tabs-bar { transform: translateZ(0); }
+        .main-container { flex-grow: 1; position: relative; background-color: var(--editor-bg); overflow: hidden; }
+
+        /* FASTEST MONOSPACE FOR EDITOR ONLY */
+        #editor { position: absolute; top: 0; right: 0; bottom: 0; left: 0; font-size: 14px; font-family: 'Courier New', Courier, monospace !important; z-index: 10; contain: size layout; }
+        #preview { position: absolute; top: 0; right: 0; bottom: 0; left: 0; width: 100%; height: 100%; border: none; background: white; visibility: hidden; opacity: 0; z-index: 20; transform: translateZ(0); }
+        #preview.active-pane { visibility: visible; opacity: 1; }
+
+        .ace_mobile-menu, .ace_tooltip, .ace_callout { display: none !important; opacity: 0 !important; pointer-events: none !important; visibility: hidden !important; }
+        .ace_selection { background: rgba(16, 185, 129, 0.35) !important; }
+        .ace_selected-word { background: rgba(16, 185, 129, 0.3) !important; border: 1px solid rgba(16, 185, 129, 0.6) !important; border-radius: 2px; }
+
+        .scroll-jumpers { position: absolute; right: 10px; top: 38%; transform: translateY(-50%); display: none; flex-direction: column; gap: 15px; z-index: 35; opacity: 0; transition: opacity 0.3s; }
+        .scroll-jumpers.visible { opacity: 1; }
+        .jumper-btn { background: var(--glass-bg); border: 1px solid var(--glass-border); border-radius: 50%; width: 42px; height: 42px; display: flex; align-items: center; justify-content: center; color: var(--accent); box-shadow: none; opacity: 0.5; transition: opacity 0.15s, transform 0.15s; cursor: pointer; }
+        .jumper-btn:active { transform: scale(0.9); opacity: 1; }
 
         /* Nav panel */
         .bottom-wrapper { position: absolute; bottom: 0; left: 0; right: 0; z-index: 40; }
@@ -2006,7 +2025,7 @@
 
     </div>
 
-    <!-- Hidden checkboxes for case/regex state (required by JS) -->
+    <!-- Hidden checkboxes required by JS for case/regex state -->
     <input type="checkbox" id="find-case" style="display:none;">
     <input type="checkbox" id="find-regex" style="display:none;">
 
@@ -3392,7 +3411,6 @@
 
     async function ghApi(endpoint, method='GET', body=null) {
         let token = localStorage.getItem('gh_token');
-        if(!token) throw new Error('No GitHub token. Please connect your account first.');
         let opts = { method, headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json' }};
         if(body) opts.body = JSON.stringify(body);
         let res = await fetch(`https://api.github.com${endpoint}`, opts);
@@ -3414,10 +3432,10 @@
                 _ghTree = []; _ghCurrentPath = ''; _ghSelectedItem = null;
                 fetchGhFiles();
             });
-            // Auto-restore last repo — set _value only, fetchGhFiles is triggered by onChange above
+            // Auto-restore last repo — set _value only, fetchGhFiles already called via onChange above
             if (lastRepo) {
                 const el = document.getElementById('gh-repo-select');
-                if (el) { el._value = lastRepo; ghCurrentRepo = lastRepo; _ghUpdateHeaderStatus(); }
+                if (el) { el._value = lastRepo; ghCurrentRepo = lastRepo; _ghUpdateHeaderStatus(); fetchGhFiles(); }
             }
         } catch(e) { cdAlert('GitHub', 'Failed to load repos. Check your token.', 'error'); ghLogout(); }
     }
@@ -3435,8 +3453,8 @@
     }
 
     async function fetchGhFiles() {
-        const repoEl = document.getElementById('gh-repo-select');
-        ghCurrentRepo = (repoEl ? repoEl._value : '') || ghCurrentRepo || '';
+        const _repoEl = document.getElementById('gh-repo-select');
+        ghCurrentRepo = (_repoEl ? _repoEl._value : '') || ghCurrentRepo || '';
         if(!ghCurrentRepo) return;
         localStorage.setItem('gh_last_repo', ghCurrentRepo);
         _ghUpdateHeaderStatus();
