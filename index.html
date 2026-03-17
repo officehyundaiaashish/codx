@@ -738,8 +738,10 @@
         }
         .am-model-row:active { transform: scale(0.97); }
         .am-model-row:hover, .am-model-row.selected { border-color: var(--accent); background: var(--accent-dim); }
-        .am-model-dot { width:7px; height:7px; border-radius:50%; background:var(--accent); flex-shrink:0; opacity:0.5; }
-        .am-model-row.selected .am-model-dot { opacity:1; }
+        .am-model-dot { width:15px; height:15px; border-radius:4px; border:1.5px solid var(--glass-border); background:transparent; flex-shrink:0; transition:background 0.15s,border-color 0.15s; display:flex; align-items:center; justify-content:center; }
+        .am-model-row.selected .am-model-dot { background:var(--accent); border-color:var(--accent); }
+        .am-model-dot::after { content:''; display:none; width:4px; height:7px; border:2px solid white; border-top:none; border-left:none; transform:rotate(45deg) translate(0px,-1px); }
+        .am-model-row.selected .am-model-dot::after { display:block; }
         .am-model-name { flex:1; font-size:11px; font-weight:700; color:var(--text-color); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-family:'Poppins',sans-serif; }
         .am-model-tag { font-size:8px; font-weight:700; padding:2px 6px; border-radius:5px; flex-shrink:0; font-family:'Poppins',sans-serif; }
 
@@ -2859,7 +2861,7 @@
             let cur = fileTabs.find(t => t.id === activeTabId);
             if(cur) cur.content = editor.getValue();
             const key = _pythonMode ? 'codx_session_py' : 'codx_session_html';
-            try { localStorage.setItem(key, JSON.stringify({tabs: fileTabs, active: activeTabId, counter: tabIdCounter})); } catch(e) {}
+            localStorage.setItem(key, JSON.stringify({tabs: fileTabs, active: activeTabId, counter: tabIdCounter}));
         }
     }
     window.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') saveSession(); });
@@ -4356,8 +4358,8 @@
         return null;
     }
 
-    // Selected model index in the list (for connectAgent)
-    let _agentSelectedModelIdx = 0;
+    // Selected model indices in the list (multi-select Set)
+    let _agentSelectedModelIdxs = new Set();
 
     function agentKeyPreview(val) {
         val = (val || '').trim();
@@ -4374,12 +4376,12 @@
         }
 
         const arr = Array.isArray(models) ? models : [models];
-        _agentSelectedModelIdx = 0;
+        _agentSelectedModelIdxs = new Set(arr.map((_, i) => i)); // all selected by default
 
         inner.innerHTML = '';
         arr.forEach((m, i) => {
             const row = document.createElement('div');
-            row.className = 'am-model-row' + (i === 0 ? ' selected' : '');
+            row.className = 'am-model-row selected';
             row.style.animationDelay = (i * 35) + 'ms';
             row.innerHTML = `
                 <div class="am-model-dot"></div>
@@ -4387,9 +4389,13 @@
                 <span class="am-model-tag" style="color:${m.tagColor};background:${m.tagColor}22;">${m.tag||''}</span>
             `;
             row.onclick = () => {
-                _agentSelectedModelIdx = i;
-                inner.querySelectorAll('.am-model-row').forEach(r => r.classList.remove('selected'));
-                row.classList.add('selected');
+                if (_agentSelectedModelIdxs.has(i)) {
+                    _agentSelectedModelIdxs.delete(i);
+                    row.classList.remove('selected');
+                } else {
+                    _agentSelectedModelIdxs.add(i);
+                    row.classList.add('selected');
+                }
             };
             inner.appendChild(row);
         });
@@ -4456,15 +4462,19 @@
             return;
         }
         const arr = Array.isArray(d) ? d : [d];
-        // Connect only the selected model from the list
-        const entry = arr[_agentSelectedModelIdx] || arr[0];
-        const exists = agentList.findIndex(a => a.model === entry.model);
-        if (exists !== -1) {
-            agentList[exists] = { ...entry, key };
-        } else {
-            agentList.push({ ...entry, key });
-        }
-        activeAgentIdx = agentList.findIndex(a => a.model === entry.model);
+        const selectedIdxs = _agentSelectedModelIdxs.size > 0 ? _agentSelectedModelIdxs : new Set([0]);
+        let lastEntry = null;
+        selectedIdxs.forEach(i => {
+            const entry = arr[i] || arr[0];
+            const exists = agentList.findIndex(a => a.model === entry.model);
+            if (exists !== -1) {
+                agentList[exists] = { ...entry, key };
+            } else {
+                agentList.push({ ...entry, key });
+            }
+            lastEntry = entry;
+        });
+        activeAgentIdx = agentList.findIndex(a => a.model === lastEntry.model);
         _saveAgentList();
         keyInp.value = '';
         // Close model list
@@ -4472,9 +4482,11 @@
         const inner = document.getElementById('agent-model-list-inner');
         if (list) list.classList.remove('open');
         if (inner) inner.innerHTML = '';
+        _agentSelectedModelIdxs = new Set();
         document.getElementById('agent-detect-badge').style.display = 'none';
         _renderConnectedAgents();
-        showToast(`${entry.providerName} connected`, 'check_circle');
+        const count = selectedIdxs.size;
+        showToast(count > 1 ? `${count} models connected` : `${lastEntry.providerName} connected`, 'check_circle');
     }
 
     function _renderConnectedAgents() {
@@ -8445,7 +8457,7 @@ Use only line numbers visible in the context. Be precise.`;
         size = Math.min(size + 1, 40);
         editor.setOptions({ fontSize: size + 'px' });
         _lastZoomSize = size;
-        try { localStorage.setItem('codx_fontsize', size); } catch(e) {}
+        localStorage.setItem('codx_fontsize', size);
         showToast('Font ' + size + 'px', 'zoom_in');
     }
 
@@ -8454,7 +8466,7 @@ Use only line numbers visible in the context. Be precise.`;
         size = Math.max(size - 1, 10);
         editor.setOptions({ fontSize: size + 'px' });
         _lastZoomSize = size;
-        try { localStorage.setItem('codx_fontsize', size); } catch(e) {}
+        localStorage.setItem('codx_fontsize', size);
         showToast('Font ' + size + 'px', 'zoom_out');
     }
 
